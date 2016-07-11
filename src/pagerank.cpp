@@ -16,7 +16,7 @@ unordered_map<int, int> nodes2indices;
 vector<int> edges;
 vector<int> edgesPerNode;
 int edgesNo = -1;
-vector<float> ranks;
+vector<double> ranks;
 vector<int> indices2nodes;
 
 string separator = "--------------------------------------------------------------------------------";
@@ -100,11 +100,11 @@ void getEdges(istream& in) {
 void initializePagerank() {
     cout << "Initializing weights." << endl;
     int nodes = nodes2indices.size();
-    ranks = vector<float>(nodes, 1./nodes);
+    ranks = vector<double>(nodes, 1./nodes);
     cout << separator << "\n";
 }
 
-double getConvergence(const vector<float>& old, const vector<float>& fresh) {
+double getConvergence(const vector<double>& old, const vector<double>& fresh) {
     double maxCoef = 0.;
     for (int i = 0; i < old.size(); ++i) {
         double c;
@@ -122,7 +122,7 @@ double getConvergence(const vector<float>& old, const vector<float>& fresh) {
 }
 
 double doPagerankIteration(double dampingFactor=0.85) {
-    auto newRanks = vector<float>(ranks.size(), (1 - dampingFactor) / ranks.size());
+    auto newRanks = vector<double>(ranks.size(), (1 - dampingFactor) / ranks.size());
 
     int edge = 0;
     for (int node = 0; node < edgesPerNode.size(); ++node) {
