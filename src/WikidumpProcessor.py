@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import mmap
 import re
 import logging
@@ -184,16 +182,3 @@ def processWikidump(rebuild=False):
     stats.linkTotalConstrTime.stop()
 
     stats.log()
-
-def main():
-    Utils.configLogging()
-
-    parser = argparse.ArgumentParser(description='Process Wikidump files to obtain a list of all the links.')
-    parser.add_argument('--rebuild', '-r', action='store_true', default=False, help='Do not use files from previous runs if any are present.')
-
-    args = parser.parse_args()
-
-    processWikidump(rebuild=args.rebuild)
-
-if __name__ == '__main__':
-    main()
