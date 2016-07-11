@@ -24,20 +24,6 @@ delimitedWord = r"'(?:\\.|[^\\']+)'" # (?: ) --> match either; \\. --> any speci
 whatever = r"[^)]+"
 
 
-class Stats(object):
-    def __init__(self):
-        self.dictConstrTime = Utils.Timer('Dictionary construction')
-        self.dictLoadTime = Utils.Timer(name='Dictionary load')
-        self.linkTotalConstrTime = Utils.Timer(name='Total link construction')
-
-    def log(self):
-        logger = logging.getLogger(__name__)
-
-        logger.info(str(self.dictConstrTime))
-        logger.info(str(self.dictLoadTime))
-        logger.info(str(self.linkTotalConstrTime))
-
-
 def processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatFun):
     logger = logging.getLogger(__name__)
 
@@ -138,12 +124,9 @@ def aggregateLinks(input, output):
 
 def processWikidump(rebuild=False):
     logger = logging.getLogger(__name__)
-    stats = Stats()
 
     # STEP 1: Construct the dictionary
     logger.info('CONSTRUCTING DICTIONARY ID <---> TITLE.')
-
-    stats.dictConstrTime.start()
 
     if not os.path.exists(dictionaryPath):
         logger.info('Dictionary not found, starting construction.')
@@ -154,22 +137,17 @@ def processWikidump(rebuild=False):
     else:
         logger.info('Dictionary found, skipping construction.')
 
-    stats.dictConstrTime.stop()
-
     # STEP 2: Load the dictionary from disk
     logger.info('LOADING DICTIONARY FROM DISK')
 
-    stats.dictLoadTime.start()
     dictionary = Dictionary.Dictionary()
     dictionary.load(dictionaryPath)
-    stats.dictLoadTime.stop()
 
     logger.info('Dictionary has {} records.'.format(len(dictionary.id2title)))
 
     #STEP 3: Construct the list of links
     logger.info('CONSTRUCTING LINKS')
 
-    stats.linkTotalConstrTime.start()
     if not os.path.exists(linksPath):
         logger.info('Links not found, starting construction.')
         constructLinks(linksTablePath, linksPath, dictionary)
@@ -178,7 +156,3 @@ def processWikidump(rebuild=False):
         constructLinks(linksTablePath, linksPath, dictionary)
     else:
         logger.info('Links found, skipping construction.')
-
-    stats.linkTotalConstrTime.stop()
-
-    stats.log()
