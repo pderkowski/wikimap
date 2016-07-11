@@ -3,26 +3,15 @@ import re
 import logging
 import os
 import sys
-import argparse
 import tempfile
 import subprocess
 import itertools
 import Dictionary
 import Utils
 
-
-dataPath = '../data'
-
-pageTablePath = os.path.join(dataPath, 'enwiki-latest-page.sql')
-linksTablePath = os.path.join(dataPath, 'enwiki-latest-pagelinks.sql')
-
-dictionaryPath = os.path.join(dataPath, 'dictionary')
-linksPath = os.path.join(dataPath, 'links')
-
 num = r'[0-9]+'
 delimitedWord = r"'(?:\\.|[^\\']+)'" # (?: ) --> match either; \\. --> any special char; | --> or; [^\\']++ --> not \ and ';
 whatever = r"[^)]+"
-
 
 def processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatFun):
     logger = logging.getLogger(__name__)
@@ -56,7 +45,7 @@ def processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatF
     input.close()
 
 
-def constructDictionary(input, output):
+def buildDictionary(input, output):
     logger = logging.getLogger(__name__)
 
     startPattern = 'INSERT INTO `page` VALUES'
@@ -74,7 +63,7 @@ def constructDictionary(input, output):
     processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatFun)
 
 
-def constructLinks(input, output, dictionary):
+def buildLinks(input, output, dictionary):
     logger = logging.getLogger(__name__)
 
     startPattern = 'INSERT INTO `pagelinks` VALUES'
@@ -94,25 +83,12 @@ def constructLinks(input, output, dictionary):
         idTo = dictionary.title2id[title]
         return '{} {}\n'.format(idFrom, idTo)
 
-    try:
-        tmpOutput = tempfile.NamedTemporaryFile(delete=False)
-        processSqlDump(input, tmpOutput.name, startPattern, matchPattern, acceptFun, formatFun) # make a list of <idFrom, idTo> newline separated, write to tmpOutput
-        logger.info('Started sorting links.')
-        command = 'sort -n -o {} {}'.format(tmpOutput.name, tmpOutput.name)
-        logger.info('Running sort: {}'.format(command))
-        subprocess.call(command.split()) # sort this list
-        logger.info('Finished sorting links.')
-        logger.info('Started aggregating links.')
-        aggregateLinks(tmpOutput.name, output) # aggregate the links to lists
-        logger.info('Finished aggregating links.')
-    except KeyboardInterrupt:
-        logger.info('Interrupted, cleaning up.')
-    finally:
-        os.unlink(tmpOutput.name)
+    processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatFun) # make a list of <idFrom, idTo> newline separated, write to tmpOutput
+    command = 'sort -n -o {} {}'.format(output, output)
+    logger.info('Running sort: {}'.format(command))
+    subprocess.call(command.split()) # sort this list
 
-def aggregateLinks(input, output):
-    logger = logging.getLogger(__name__)
-
+def buildAggregatedLinks(input, output):
     input = Utils.openOrExit(input,'r')
     output = Utils.openOrExit(output,'w')
 
@@ -122,37 +98,3 @@ def aggregateLinks(input, output):
     output.close()
     input.close()
 
-def processWikidump(rebuild=False):
-    logger = logging.getLogger(__name__)
-
-    # STEP 1: Construct the dictionary
-    logger.info('CONSTRUCTING DICTIONARY ID <---> TITLE.')
-
-    if not os.path.exists(dictionaryPath):
-        logger.info('Dictionary not found, starting construction.')
-        constructDictionary(pageTablePath, dictionaryPath)
-    elif rebuild:
-        logger.info('Rebuild flag is on, starting construction.')
-        constructDictionary(pageTablePath, dictionaryPath)
-    else:
-        logger.info('Dictionary found, skipping construction.')
-
-    # STEP 2: Load the dictionary from disk
-    logger.info('LOADING DICTIONARY FROM DISK')
-
-    dictionary = Dictionary.Dictionary()
-    dictionary.load(dictionaryPath)
-
-    logger.info('Dictionary has {} records.'.format(len(dictionary.id2title)))
-
-    #STEP 3: Construct the list of links
-    logger.info('CONSTRUCTING LINKS')
-
-    if not os.path.exists(linksPath):
-        logger.info('Links not found, starting construction.')
-        constructLinks(linksTablePath, linksPath, dictionary)
-    elif rebuild:
-        logger.info('Rebuild flag is on, starting construction.')
-        constructLinks(linksTablePath, linksPath, dictionary)
-    else:
-        logger.info('Links found, skipping construction.')

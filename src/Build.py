@@ -8,13 +8,14 @@ class Paths(object):
         self.baseDir = os.path.realpath(base)
         self.binDir = self.path(self.baseDir, 'bin')
         self.srcDir = self.path(self.baseDir, 'src')
-        self.dataDir = self.path(self.baseDir, 'data')
+        self.dataDir = self.path(self.baseDir, 'test')
 
         self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql')
         self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql')
 
         self.dictionary = self.path(self.dataDir, 'dictionary')
         self.links = self.path(self.dataDir, 'links')
+        self.aggregatedLinks = self.path(self.dataDir, 'aggregatedLinks')
 
     def path(self, path, *paths):
         return os.path.realpath(os.path.join(path, *paths))
@@ -119,7 +120,7 @@ class Jobs(object):
 
 # DICTIONARY
 def buildDictionary():
-    WikidumpProcessor.constructDictionary(paths.pageTable, paths.dictionary)
+    WikidumpProcessor.buildDictionary(paths.pageTable, paths.dictionary)
 
 def skipDictionary():
     return os.path.exists(paths.dictionary)
@@ -128,18 +129,27 @@ def skipDictionary():
 def buildLinks():
     dictionary = Dictionary.Dictionary()
     dictionary.load(paths.dictionary)
-    WikidumpProcessor.constructLinks(paths.linksTable, paths.links, dictionary)
+    WikidumpProcessor.buildLinks(paths.linksTable, paths.links, dictionary)
 
 def skipLinks():
     return os.path.exists(paths.links)
+
+#AGGREGATED LINKS
+def buildAggregatedLinks():
+    WikidumpProcessor.buildAggregatedLinks(paths.links, paths.aggregatedLinks)
+
+def skipAggregatedLinks():
+    return os.path.exists(paths.aggregatedLinks)
+
 
 
 def main():
     Utils.configLogging()
 
     jobs = Jobs()
-    jobs.add(Job('BUILD DICTIONARY', buildDictionary, skipDictionary))
-    jobs.add(Job('BUILD LINKS', buildLinks, skipLinks))
+    jobs.add(Job('BUILD DICTIONARY', buildDictionary, skipDictionary)) #id title
+    jobs.add(Job('BUILD LINKS', buildLinks, skipLinks)) #source target
+    jobs.add(Job('BUILD AGGREGATED LINKS', buildAggregatedLinks, skipAggregatedLinks)) #source list-of-targets-space-separated
 
     jobs.run()
 
