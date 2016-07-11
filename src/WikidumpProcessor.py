@@ -55,8 +55,6 @@ def processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatF
     written = 0
     total = 0
 
-    logger.info('Started processing the dump.')
-
     for i, match in enumerate(re.finditer(reMatch, mm)):
         if i % 1000000 == 0:
             logger.info('Processed {} records.'.format(i, written))
@@ -67,7 +65,7 @@ def processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatF
             output.write(formatFun(match))
             written += 1
 
-    logger.info('Finished processing: read {} records, {} of them were written to the output.'.format(total, written))
+    logger.info('Processed {} records, {} of them matched the pattern.'.format(total, written))
 
     mm.close()
     output.close()

@@ -50,5 +50,10 @@ def getProgName(fileName):
 #     logger.addHandler(handler)
 #     return logger
 
+def formatDuration(secs):
+    hours, rem = divmod(secs, 3600)
+    minutes, seconds = divmod(rem, 60)
+    return "{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds)
+
 def configLogging():
-    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
