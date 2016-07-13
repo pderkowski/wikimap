@@ -175,7 +175,7 @@ map<string, string> parseArguments(int argc, char* argv[]) {
 
 void computePagerank() {
     double stopConvergence = 1e-7;
-    int maxIterations = 100;
+    int maxIterations = 200;
 
     cout << "COMPUTING PAGERANK" << endl;
     cout << "Stop condition: convergence coefficient less than " << stopConvergence << " or " << maxIterations << " iterations." << endl;

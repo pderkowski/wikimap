@@ -8,7 +8,7 @@ class Paths(object):
         self.baseDir = os.path.realpath(base)
         self.binDir = self.path(self.baseDir, 'bin')
         self.srcDir = self.path(self.baseDir, 'src')
-        self.dataDir = self.path(self.baseDir, 'test')
+        self.dataDir = self.path(self.baseDir, 'data')
 
         self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql')
         self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql')
@@ -16,6 +16,10 @@ class Paths(object):
         self.dictionary = self.path(self.dataDir, 'dictionary')
         self.links = self.path(self.dataDir, 'links')
         self.aggregatedLinks = self.path(self.dataDir, 'aggregatedLinks')
+        self.pagerank = self.path(self.dataDir, 'pagerank')
+
+        self.pagerankBin = self.path(self.binDir, 'pagerank')
+        self.pagerankScript = self.path(self.srcDir, 'Pagerank.sh')
 
     def path(self, path, *paths):
         return os.path.realpath(os.path.join(path, *paths))
@@ -33,6 +37,7 @@ import Dictionary
 import Utils
 import time
 import logging
+import subprocess
 
 class Job(object):
     SUCCESS = 'SUCCESS'
@@ -84,7 +89,7 @@ class Jobs(object):
                 summary.append((job.outcome, job.title, job.duration))
             except KeyboardInterrupt:
                 summary.append((job.outcome, job.title, job.duration))
-                self._printResults(summary)
+                self._printSummary(summary)
                 sys.exit(1)
             except Exception, e:
                 logger.error(str(e))
@@ -95,7 +100,7 @@ class Jobs(object):
 
     def _printSummary(self, summary):
         print '-'*80
-        print '{:30} OUTCOME   DURATION'.format('JOB SUMMARY')
+        print '{:30} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')
         print '-'*80
 
         OKGREEN = '\033[92m'
@@ -114,7 +119,7 @@ class Jobs(object):
             else:
                 COLOR = WARNING
 
-            print '{:30} {}[{}]{} {}'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))
+            print '{:30} | {}[{}]{} | {} |'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))
 
         print '-'*80
 
@@ -122,7 +127,7 @@ class Jobs(object):
 def buildDictionary():
     WikidumpProcessor.buildDictionary(paths.pageTable, paths.dictionary)
 
-def skipDictionary():
+def skipBuildingDictionary():
     return os.path.exists(paths.dictionary)
 
 #LINKS
@@ -131,25 +136,33 @@ def buildLinks():
     dictionary.load(paths.dictionary)
     WikidumpProcessor.buildLinks(paths.linksTable, paths.links, dictionary)
 
-def skipLinks():
+def skipBuildingLinks():
     return os.path.exists(paths.links)
 
 #AGGREGATED LINKS
 def buildAggregatedLinks():
     WikidumpProcessor.buildAggregatedLinks(paths.links, paths.aggregatedLinks)
 
-def skipAggregatedLinks():
+def skipBuildingAggregatedLinks():
     return os.path.exists(paths.aggregatedLinks)
 
+#PAGERANK
+def buildPagerank():
+    command = ' '.join([paths.pagerankScript, paths.pagerankBin, paths.dictionary, paths.links, paths.pagerank])
+    subprocess.call(command, shell=True)
+
+def skipBuildingPagerank():
+    return os.path.exists(paths.pagerank)
 
 
 def main():
     Utils.configLogging()
 
     jobs = Jobs()
-    jobs.add(Job('BUILD DICTIONARY', buildDictionary, skipDictionary)) #id title
-    jobs.add(Job('BUILD LINKS', buildLinks, skipLinks)) #source target
-    jobs.add(Job('BUILD AGGREGATED LINKS', buildAggregatedLinks, skipAggregatedLinks)) #source list-of-targets-space-separated
+    jobs.add(Job('BUILD DICTIONARY', buildDictionary, skipBuildingDictionary)) #id title
+    jobs.add(Job('BUILD LINKS', buildLinks, skipBuildingLinks)) #source target
+    jobs.add(Job('BUILD AGGREGATED LINKS', buildAggregatedLinks, skipBuildingAggregatedLinks)) #source list-of-targets-space-separated
+    jobs.add(Job('BUILD PAGERANK', buildPagerank, skipBuildingPagerank))
 
     jobs.run()
 
