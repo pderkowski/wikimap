@@ -17,6 +17,7 @@ class Paths(object):
         self.links = self.path(self.dataDir, 'links')
         self.aggregatedLinks = self.path(self.dataDir, 'aggregatedLinks')
         self.pagerank = self.path(self.dataDir, 'pagerank')
+        self.embeddings = self.path(self.dataDir, 'embeddings')
 
         self.pagerankBin = self.path(self.binDir, 'pagerank')
         self.pagerankScript = self.path(self.srcDir, 'Pagerank.sh')
@@ -34,6 +35,7 @@ paths.include()
 
 import WikidumpProcessor
 import Dictionary
+import Link2Vec
 import Utils
 import time
 import logging
@@ -154,6 +156,13 @@ def buildPagerank():
 def skipBuildingPagerank():
     return os.path.exists(paths.pagerank)
 
+#EMBEDDINGS
+def buildEmbeddings():
+    Link2Vec.build(paths.aggregatedLinks, paths.embeddings)
+
+def skipBuildingEmbeddings():
+    return os.path.exists(paths.embeddings)
+
 
 def main():
     Utils.configLogging()
@@ -162,8 +171,8 @@ def main():
     jobs.add(Job('BUILD DICTIONARY', buildDictionary, skipBuildingDictionary)) #id title
     jobs.add(Job('BUILD LINKS', buildLinks, skipBuildingLinks)) #source target
     jobs.add(Job('BUILD AGGREGATED LINKS', buildAggregatedLinks, skipBuildingAggregatedLinks)) #source list-of-targets-space-separated
-    jobs.add(Job('BUILD PAGERANK', buildPagerank, skipBuildingPagerank))
-
+    jobs.add(Job('BUILD PAGERANK', buildPagerank, skipBuildingPagerank)) # title pagerank
+    jobs.add(Job('BUILD EMBEDDINGS', buildEmbeddings, skipBuildingEmbeddings))
     jobs.run()
 
 if __name__ == "__main__":
