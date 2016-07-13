@@ -152,7 +152,7 @@ def skipBuildingAggregatedLinks():
 
 #PAGERANK
 def buildPagerank():
-    command = ' '.join([paths.pagerankScript, paths.pagerankBin, paths.dictionary, paths.links, paths.pagerank])
+    command = ' '.join([paths.pagerankScript, paths.pagerankBin, paths.links, paths.pagerank])
     subprocess.call(command, shell=True)
 
 def skipBuildingPagerank():
