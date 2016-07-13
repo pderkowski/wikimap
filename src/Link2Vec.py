@@ -5,12 +5,12 @@ import logging
 import Utils
 
 class LinkListsIterator(object):
-    logger = logging.getLogger(__name__)
-
     def __init__(self, aggregatedLinks):
         self.aggregatedLinks = aggregatedLinks
 
     def __iter__(self):
+        logger = logging.getLogger(__name__)
+
         with Utils.openOrExit(self.aggregatedLinks,'r') as links:
             for i, line in enumerate(links):
                 if i % 100000 == 0:

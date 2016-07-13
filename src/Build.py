@@ -8,7 +8,7 @@ class Paths(object):
         self.baseDir = os.path.realpath(base)
         self.binDir = self.path(self.baseDir, 'bin')
         self.srcDir = self.path(self.baseDir, 'src')
-        self.dataDir = self.path(self.baseDir, 'data')
+        self.dataDir = self.path(self.baseDir, 'test')
 
         self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql')
         self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql')
@@ -18,6 +18,7 @@ class Paths(object):
         self.aggregatedLinks = self.path(self.dataDir, 'aggregatedLinks')
         self.pagerank = self.path(self.dataDir, 'pagerank')
         self.embeddings = self.path(self.dataDir, 'embeddings')
+        self.tsne = self.path(self.dataDir, 'tsne')
 
         self.pagerankBin = self.path(self.binDir, 'pagerank')
         self.pagerankScript = self.path(self.srcDir, 'Pagerank.sh')
@@ -36,6 +37,7 @@ paths.include()
 import WikidumpProcessor
 import Dictionary
 import Link2Vec
+import TSNE
 import Utils
 import time
 import logging
@@ -163,6 +165,13 @@ def buildEmbeddings():
 def skipBuildingEmbeddings():
     return os.path.exists(paths.embeddings)
 
+#TSNE
+def buildTSNE():
+    TSNE.build(paths.embeddings, paths.tsne)
+
+def skipBuildingTSNE():
+    return os.path.exists(paths.tsne)
+
 
 def main():
     Utils.configLogging()
@@ -173,6 +182,7 @@ def main():
     jobs.add(Job('BUILD AGGREGATED LINKS', buildAggregatedLinks, skipBuildingAggregatedLinks)) #source list-of-targets-space-separated
     jobs.add(Job('BUILD PAGERANK', buildPagerank, skipBuildingPagerank)) # title pagerank
     jobs.add(Job('BUILD EMBEDDINGS', buildEmbeddings, skipBuildingEmbeddings))
+    jobs.add(Job('BUILD TSNE', buildTSNE, skipBuildingTSNE))
     jobs.run()
 
 if __name__ == "__main__":
