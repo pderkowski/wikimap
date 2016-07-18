@@ -9,6 +9,7 @@ class Paths(object):
         self.binDir = self.path(self.baseDir, 'bin')
         self.srcDir = self.path(self.baseDir, 'src')
         self.dataDir = self.path(self.baseDir, 'test')
+        self.libDir = self.path(self.baseDir, 'lib')
 
         self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql')
         self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql')
@@ -127,6 +128,15 @@ class Jobs(object):
 
         print '-'*80
 
+# DIRS
+def createDirs():
+    for d in [paths.binDir, paths.libDir, paths.dataDir]:
+        if not os.path.exists(d):
+            os.makedirs(d)
+
+def skipCreatingDirs():
+    return all(os.path.exists(d) for d in [paths.binDir, paths.libDir, paths.dataDir])
+
 # DICTIONARY
 def buildDictionary():
     WikidumpProcessor.buildDictionary(paths.pageTable, paths.dictionary)
@@ -177,6 +187,7 @@ def main():
     Utils.configLogging()
 
     jobs = Jobs()
+    jobs.add(Job('CREATE DIRECTORIES', createDirs, skipCreatingDirs))
     jobs.add(Job('BUILD DICTIONARY', buildDictionary, skipBuildingDictionary)) #id title
     jobs.add(Job('BUILD LINKS', buildLinks, skipBuildingLinks)) #source target
     jobs.add(Job('BUILD AGGREGATED LINKS', buildAggregatedLinks, skipBuildingAggregatedLinks)) #source list-of-targets-space-separated
