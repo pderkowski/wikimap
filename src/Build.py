@@ -4,14 +4,15 @@ import WikidumpProcessor
 import Dictionary
 import Link2Vec
 import TSNE
+from Job import Jobs, Job
+from Paths import Paths
 import Utils
-import Paths
 import time
 import logging
 import subprocess
 import os
 
-paths = Paths.Paths(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+paths = Paths(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 paths.include()
 
 # DICTIONARY
