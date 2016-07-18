@@ -31,5 +31,9 @@ class ProgressBar(object):
 
     def report(self, count, blockSize, totalSize):
         percent = int(count*blockSize*100/totalSize)
-        sys.stdout.write("\33[2K\r" + self.name + "...%d%%" % percent)
+
+        if count*blockSize > totalSize:
+            sys.stdout.write("\33[2K\r" + self.name + "...DONE\n")
+        else:
+            sys.stdout.write("\33[2K\r" + self.name + "...%d%%" % percent)
         sys.stdout.flush()
