@@ -6,7 +6,7 @@ def openOrExit(file, mode='r'):
     logger = logging.getLogger(__name__)
 
     if mode == 'r' and not os.path.isfile(file):
-        logger.error('File does not exist.')
+        logger.error('File {} does not exist.'.format(file))
         sys.exit()
     else:
         return open(file, mode)
