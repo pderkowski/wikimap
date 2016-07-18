@@ -15,8 +15,8 @@ class Paths(object):
         self.pageTableUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page.sql.gz'
         self.linksTableUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz'
 
-        self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql')
-        self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql')
+        self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql.gz')
+        self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql.gz')
 
         self.dictionary = self.path(self.dataDir, 'dictionary')
         self.links = self.path(self.dataDir, 'links')
@@ -24,6 +24,8 @@ class Paths(object):
         self.pagerank = self.path(self.dataDir, 'pagerank')
         self.embeddings = self.path(self.dataDir, 'embeddings')
         self.tsne = self.path(self.dataDir, 'tsne')
+
+        self.pagerankSources = [self.path(self.srcDir, 'pagerank.cpp')]
 
         self.pagerankBin = self.path(self.binDir, 'pagerank')
         self.pagerankScript = self.path(self.srcDir, 'Pagerank.sh')
