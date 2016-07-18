@@ -12,6 +12,9 @@ class Paths(object):
         else:
             self.dataDir = self.path(self.baseDir, 'data')
 
+        self.pageTableUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page.sql.gz'
+        self.linksTableUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz'
+
         self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql')
         self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql')
 

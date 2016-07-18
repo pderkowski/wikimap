@@ -24,3 +24,12 @@ def configLogging():
 
 def getParentDirectory(file):
     return os.path.join(os.path.dirname(os.path.abspath(file)), '..')
+
+class ProgressBar(object):
+    def __init__(self, name):
+        self.name = name
+
+    def report(self, count, blockSize, totalSize):
+        percent = int(count*blockSize*100/totalSize)
+        sys.stdout.write("\33[2K\r" + self.name + "...%d%%" % percent)
+        sys.stdout.flush()
