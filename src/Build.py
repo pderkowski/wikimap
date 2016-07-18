@@ -64,7 +64,6 @@ def main():
     Utils.configLogging()
 
     jobs = Jobs()
-    jobs.add(Job('CREATE DIRECTORIES', createDirs, skipCreatingDirs))
     jobs.add(Job('BUILD DICTIONARY', buildDictionary, skipBuildingDictionary)) #id title
     jobs.add(Job('BUILD LINKS', buildLinks, skipBuildingLinks)) #source target
     jobs.add(Job('BUILD AGGREGATED LINKS', buildAggregatedLinks, skipBuildingAggregatedLinks)) #source list-of-targets-space-separated
