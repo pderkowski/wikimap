@@ -10,12 +10,12 @@ paths.include()
 
 # DIRS
 def createDirs():
-    for d in [paths.binDir, paths.libDir, paths.dataDir]:
+    for d in [paths.binDir, paths.dataDir]:
         if not os.path.exists(d):
             os.makedirs(d)
 
 def skipCreatingDirs():
-    return all(os.path.exists(d) for d in [paths.binDir, paths.libDir, paths.dataDir])
+    return all(os.path.exists(d) for d in [paths.binDir, paths.dataDir])
 
 def main():
     Utils.configLogging()

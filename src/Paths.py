@@ -7,7 +7,6 @@ class Paths(object):
         self.binDir = self.path(self.baseDir, 'bin')
         self.srcDir = self.path(self.baseDir, 'src')
         self.dataDir = self.path(self.baseDir, 'data')
-        self.libDir = self.path(self.baseDir, 'lib')
 
         self.pageTable = self.path(self.dataDir, 'enwiki-latest-page.sql')
         self.linksTable = self.path(self.dataDir, 'enwiki-latest-pagelinks.sql')
