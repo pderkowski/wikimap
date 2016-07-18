@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 import gzip
+import subprocess
 
 def openOrExit(file, mode='r'):
     logger = logging.getLogger(__name__)
@@ -41,3 +42,8 @@ class ProgressBar(object):
         else:
             sys.stdout.write("\33[2K\r" + self.name + "...%d%%" % percent)
         sys.stdout.flush()
+
+def call(command):
+    logger = logging.getLogger(__name__)
+    logger.info('Running command: {}'.format(command))
+    subprocess.call(command, shell=True)

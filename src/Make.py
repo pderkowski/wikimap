@@ -5,6 +5,7 @@ from Paths import Paths
 import Utils
 import os
 import urllib
+import logging
 
 paths = Paths(Utils.getParentDirectory(__file__))
 paths.include()
@@ -31,12 +32,8 @@ def skipDownloadingData():
 
 # COMPILATION
 def compileSources():
-    logger = logging.getLogger(__name__)
-
     command = "g++ -std=c++11 -o {} {}".format(paths.pagerankBin, ' '.join(paths.pagerankSources))
-    logger.info('Running command: {}'.format(command))
-
-    subprocess.call(command, shell=True)
+    Utils.call(command)
 
 def skipCompilation():
     return os.path.exists(paths.pagerankBin) and fileIsOlder(paths.pagerankBin, paths.pagerankSources)
