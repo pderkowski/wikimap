@@ -8,6 +8,7 @@ import subprocess
 import itertools
 import Dictionary
 import Utils
+import gzip
 
 num = r'[0-9]+'
 delimitedWord = r"'(?:\\.|[^\\']+)'" # (?: ) --> match either; \\. --> any special char; | --> or; [^\\']++ --> not \ and ';
@@ -16,30 +17,24 @@ whatever = r"[^)]+"
 def processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatFun):
     logger = logging.getLogger(__name__)
 
-    with Utils.openOrExit(input,'r') as input, Utils.openOrExit(output,'w') as output:
-        mm = mmap.mmap(input.fileno(), 0, prot=mmap.PROT_READ)
-
+    with gzip.GzipFile(input, mode="r") as input, Utils.openOrExit(output,'w') as output:
         reMatch = re.compile(matchPattern)
-
-        # move the file position to the beginning of the relevant data
-        mm.seek(mm.find(startPattern) + len(startPattern) + 1) # + 1 space
 
         written = 0
         total = 0
 
-        for i, match in enumerate(re.finditer(reMatch, mm)):
-            if i % 1000000 == 0:
-                logger.info('Processed {} records.'.format(i, written))
+        for line in input:
+            if line.startswith(startPattern):
+                for match in re.finditer(reMatch, line):
+                    total += 1
+                    if total % 1000000 == 0:
+                        logger.info('Processed {} records.'.format(total, written))
 
-            total += 1
-
-            if acceptFun(match):
-                output.write(formatFun(match))
-                written += 1
+                    if acceptFun(match):
+                        output.write(formatFun(match))
+                        written += 1
 
         logger.info('Processed {} records, {} of them matched the pattern.'.format(total, written))
-
-        mm.close()
 
 
 def buildDictionary(input, output):

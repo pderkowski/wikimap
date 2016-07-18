@@ -1,7 +1,6 @@
 import logging
 import sys
 import os
-import gzip
 import subprocess
 
 def openOrExit(file, mode='r'):
@@ -11,10 +10,7 @@ def openOrExit(file, mode='r'):
         logger.error('File {} does not exist.'.format(file))
         sys.exit()
     else:
-        if file.endswith('.gz'):
-            return gzip.open(file, mode)
-        else:
-            return open(file, mode)
+        return open(file, mode)
 
 def getProgName(fileName):
     return os.path.splitext(os.path.basename(fileName))[0]
