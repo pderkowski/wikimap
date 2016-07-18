@@ -20,8 +20,8 @@ def skipCreatingDirs():
 
 # DATA
 def downloadData():
-    urllib.urlretrieve (paths.pageTableUrl, paths.pageTable, reporthook=Utils.ProgressBar(paths.pageTableUrl).report)
-    urllib.urlretrieve (paths.linksTableUrl, paths.linksTable, reporthook=utils.ProgressBar(paths.linksTableUrl).report)
+    urllib.urlretrieve(paths.pageTableUrl, paths.pageTable, reporthook=Utils.ProgressBar(paths.pageTableUrl).report)
+    urllib.urlretrieve(paths.linksTableUrl, paths.linksTable, reporthook=Utils.ProgressBar(paths.linksTableUrl).report)
 
 def skipDownloadingData():
     return all(os.path.exists(d) for d in [paths.pageTable, paths.linksTable])
