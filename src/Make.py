@@ -10,8 +10,8 @@ import logging
 paths = Paths(Utils.getParentDirectory(__file__))
 paths.include()
 
-def fileIsOlder(file, dependencies):
-    return all(os.path.exists(dep) and os.path.getctime(dep) < os.path.getctime(file) for dep in dependencies)
+def dependencyChanged(file, dependencies):
+    return any(os.path.getctime(dep) > os.path.getctime(file) for dep in dependencies)
 
 # DIRS
 def createDirs():
@@ -32,12 +32,16 @@ def skipDownloadingData():
 
 # COMPILATION
 def compileSources():
-    command = "g++ -std=c++11 -o {} {}".format(paths.pagerankBin, ' '.join(paths.pagerankSources))
-    Utils.call(command)
+    if not skipCompilation(paths.bhtsneBin, paths.bhtsneSources):
+        compileBHTSNE = "g++ -o {} {} -O2".format(paths.bhtsneBin, ' '.join(paths.bhtsneSources))
+        Utils.call(compileBHTSNE)
 
-def skipCompilation():
-    return os.path.exists(paths.pagerankBin) and fileIsOlder(paths.pagerankBin, paths.pagerankSources)
+    if not skipCompilation(paths.pagerankBin, paths.pagerankSources):
+        compilePagerank = "g++ -std=c++11 -o {} {} -O2".format(paths.pagerankBin, ' '.join(paths.pagerankSources))
+        Utils.call(compilePagerank)
 
+def skipCompilation(binary, sources):
+    return os.path.exists(binary) and not dependencyChanged(binary, sources)
 
 def main():
     Utils.configLogging()
@@ -45,7 +49,7 @@ def main():
     jobs = Jobs()
     jobs.add(Job('CREATE DIRECTORIES', createDirs, skipCreatingDirs))
     jobs.add(Job('DOWNLOAD DATA', downloadData, skipDownloadingData))
-    jobs.add(Job('COMPILE SOURCES', compileSources, skipCompilation))
+    jobs.add(Job('COMPILE SOURCES', compileSources))
     jobs.run()
 
 if __name__ == "__main__":
