@@ -56,11 +56,12 @@ class Jobs(object):
                 self._printSummary(summary)
                 sys.exit(1)
             except Exception, e:
-                logger.error(str(e))
+                logger.exception(str(e))
                 summary.append((job.outcome, job.title, job.duration))
+                self._printSummary(summary)
+                sys.exit(1)
 
         self._printSummary(summary)
-
 
     def _printSummary(self, summary):
         print '-'*80

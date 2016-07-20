@@ -3,6 +3,7 @@ import sys
 import gensim
 import logging
 import Utils
+import multiprocessing
 
 class LinkListsIterator(object):
     def __init__(self, aggregatedLinks):
@@ -24,7 +25,8 @@ def build(aggregatedLinks, output):
     logger = logging.getLogger(__name__)
 
     logger.info('STARTED TRAINING')
-    model = gensim.models.Word2Vec(LinkListsIterator(aggregatedLinks), sg=1, workers=4)
+    model = gensim.models.Word2Vec(LinkListsIterator(aggregatedLinks), min_count=1, sg=1, workers=multiprocessing.cpu_count())
+    logger.info(model)
     model.save(output)
     logger.info('FINISHED TRAINING')
 
