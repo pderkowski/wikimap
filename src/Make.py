@@ -32,10 +32,6 @@ def skipDownloadingData():
 
 # COMPILATION
 def compileSources():
-    if not skipCompilation(paths.bhtsneBin, paths.bhtsneSources):
-        compileBHTSNE = "g++ -o {} {} -O2".format(paths.bhtsneBin, ' '.join(paths.bhtsneSources))
-        Utils.call(compileBHTSNE)
-
     if not skipCompilation(paths.pagerankBin, paths.pagerankSources):
         compilePagerank = "g++ -std=c++11 -o {} {} -O2".format(paths.pagerankBin, ' '.join(paths.pagerankSources))
         Utils.call(compilePagerank)

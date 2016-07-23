@@ -6,8 +6,6 @@ class Paths(object):
         self.baseDir = os.path.realpath(base)
         self.binDir = self.path(self.baseDir, 'bin')
         self.srcDir = self.path(self.baseDir, 'src')
-        self.extDir = self.path(self.baseDir, 'external')
-        self.bhtsneDir = self.path(self.extDir, 'bhtsne')
 
         if 'DATAPATH' in os.environ:
             self.dataDir = os.environ['DATAPATH']
@@ -28,10 +26,8 @@ class Paths(object):
         self.tsne = self.path(self.dataDir, 'tsne')
 
         self.pagerankSources = [self.path(self.srcDir, 'pagerank.cpp')]
-        self.bhtsneSources = [self.path(self.bhtsneDir, 'sptree.cpp'), self.path(self.bhtsneDir, 'tsne.cpp')]
 
         self.pagerankBin = self.path(self.binDir, 'pagerank')
-        self.bhtsneBin = self.path(self.binDir, 'bhtsne')
 
         self.pagerankScript = self.path(self.srcDir, 'Pagerank.sh')
 
