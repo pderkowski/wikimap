@@ -6,10 +6,10 @@ OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
 CXX = g++
 CXXFLAGS  = -I../src/quadtree -std=c++11
 
-EXE = run_tests
+EXE = ../bin/run_tests
 
 build: $(OBJECTS)
-	$(CXX) -o $(EXE) $^
+	$(CXX) $(CXXFLAGS) -o $(EXE) $^
 
 test: build
 	./$(EXE)
