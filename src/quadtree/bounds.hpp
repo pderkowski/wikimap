@@ -7,6 +7,8 @@ struct Point {
     double y;
 };
 
+bool operator == (const Point& lhs, const Point& rhs);
+
 class Bounds {
 public:
     Bounds(const Point& topLeft, const Point& bottomRight);

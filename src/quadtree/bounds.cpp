@@ -6,6 +6,10 @@ Point::Point(double x, double y)
 : x(x), y(y)
 { }
 
+bool operator == (const Point& lhs, const Point& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
 Bounds::Bounds(const Point& topLeft, const Point& bottomRight)
 : topLeft_(topLeft), bottomRight_(bottomRight)
 {

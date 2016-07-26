@@ -3,6 +3,17 @@
 #include "catch.hpp"
 #include "bounds.hpp"
 
+TEST_CASE("Point comparison returns true for equivalent points and false otherwise", "[point]") {
+    Point p1(0, 0);
+    Point p2(0, 0);
+    Point p3(0, 1);
+    Point p4(1, 0);
+
+    REQUIRE(p1 == p2);
+    REQUIRE((p1 == p3) == false);
+    REQUIRE((p1 == p4) == false);
+}
+
 TEST_CASE("Bounds.contain returns true for points inside", "[bounds]") {
     Bounds bounds(Point(-1, -1), Point(1, 1));
 
