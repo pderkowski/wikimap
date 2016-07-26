@@ -1,5 +1,5 @@
 PROGDIR = ../src/quadtree
-PROGSOURCES = $(PROGDIR)/bounds.cpp
+PROGSOURCES = $(PROGDIR)/bounds.cpp $(PROGDIR)/node.cpp
 TESTSOURCES = $(wildcard *.cpp)
 SOURCES = $(PROGSOURCES) $(TESTSOURCES)
 OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
