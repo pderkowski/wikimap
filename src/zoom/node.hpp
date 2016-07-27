@@ -18,6 +18,7 @@ public:
     Node* getChildContainingPoint(const Point& p);
 
     std::vector<Point> getPoints() const { return points_; }
+    Bounds getBounds() const { return bounds_; }
 
     bool isLeaf() const;
     bool contains(const Point& p) const;

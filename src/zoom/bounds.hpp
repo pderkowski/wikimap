@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 struct Point {
     Point(double x, double y);
 
@@ -20,7 +22,14 @@ public:
     Bounds getBottomRightQuadrant() const;
     Bounds getBottomLeftQuadrant() const;
 
+    std::array<Point, 4> getCorners() const;
+
 private:
     Point topLeft_;
     Point bottomRight_;
+
+private:
+    friend bool operator == (const Bounds& lhs, const Bounds& rhs);
 };
+
+bool operator == (const Bounds& lhs, const Bounds& rhs);

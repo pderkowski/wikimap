@@ -1,10 +1,10 @@
-PROGDIR = ../src/quadtree
-PROGSOURCES = $(PROGDIR)/bounds.cpp $(PROGDIR)/node.cpp $(PROGDIR)/quadtree.cpp
+PROGDIR = ../src/zoom
+PROGSOURCES = $(PROGDIR)/bounds.cpp $(PROGDIR)/node.cpp $(PROGDIR)/partitiontree.cpp
 TESTSOURCES = $(wildcard *.cpp)
 SOURCES = $(PROGSOURCES) $(TESTSOURCES)
 OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
 CXX = g++
-CXXFLAGS  = -I../src/quadtree -std=c++11
+CXXFLAGS  = -I$(PROGDIR) -std=c++11
 
 EXE = ../bin/run_tests
 

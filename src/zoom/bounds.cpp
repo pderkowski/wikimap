@@ -1,7 +1,6 @@
 #include "bounds.hpp"
 #include <cassert>
 
-
 Point::Point(double x, double y)
 : x(x), y(y)
 { }
@@ -51,4 +50,12 @@ Bounds Bounds::getBottomLeftQuadrant() const {
 
     return Bounds(Point(tl.x, (tl.y + br.y) / 2.0),
                   Point((tl.x + br.x) / 2.0, br.y));
+}
+
+std::array<Point, 4> Bounds::getCorners() const {
+    return { topLeft_, Point(bottomRight_.x, topLeft_.y), bottomRight_, Point(topLeft_.x, bottomRight_.y) };
+}
+
+bool operator == (const Bounds& lhs, const Bounds& rhs) {
+    return lhs.topLeft_ == rhs.topLeft_ && lhs.bottomRight_ == rhs.bottomRight_;
 }
