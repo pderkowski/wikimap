@@ -1,5 +1,7 @@
 #include "bounds.hpp"
 #include <cassert>
+#include <limits>
+#include <cmath>
 
 Point::Point(double x, double y)
 : x(x), y(y)
@@ -59,3 +61,32 @@ std::array<Point, 4> Bounds::getCorners() const {
 bool operator == (const Bounds& lhs, const Bounds& rhs) {
     return lhs.topLeft_ == rhs.topLeft_ && lhs.bottomRight_ == rhs.bottomRight_;
 }
+
+namespace helpers {
+
+Bounds getBounds(const std::vector<Point>& points) {
+    assert(points.size() > 0);
+
+    auto xMax = - std::numeric_limits<double>::infinity();
+    auto xMin =   std::numeric_limits<double>::infinity();
+
+    auto yMax = - std::numeric_limits<double>::infinity();
+    auto yMin =   std::numeric_limits<double>::infinity();
+
+    for (const auto& p : points) {
+        xMax = std::max(xMax, p.x);
+        xMin = std::min(xMin, p.x);
+
+        yMax = std::max(yMax, p.y);
+        yMin = std::min(yMin, p.y);
+    }
+
+    xMax = std::nextafter(xMax, std::numeric_limits<double>::max());
+    yMax = std::nextafter(yMax, std::numeric_limits<double>::max());
+
+    return Bounds(Point(xMin, yMin), Point(xMax, yMax));
+}
+
+}
+
+

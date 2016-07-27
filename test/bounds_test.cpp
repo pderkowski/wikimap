@@ -1,5 +1,7 @@
 #include <vector>
 #include <algorithm>
+#include <limits>
+#include <cmath>
 #include "catch.hpp"
 #include "bounds.hpp"
 
@@ -157,4 +159,55 @@ TEST_CASE("Bounds::getCorners returns correct points in correct order", "[bounds
     REQUIRE((corners[1].x == 1 && corners[1].y == 0) == true);
     REQUIRE((corners[2].x == 1 && corners[2].y == 1) == true);
     REQUIRE((corners[3].x == 0 && corners[3].y == 1) == true);
+}
+
+TEST_CASE("helpers::getBounds returns smallest bounds such that all points are contained", "[bounds]") {
+    double doubleMin = std::numeric_limits<double>::min();
+    double doubleMax = std::numeric_limits<double>::max();
+
+    Point p1(1, 0);
+    Point p2(2, 1);
+    Point p3(1, 2);
+    Point p4(0, 1);
+
+    std::vector<Point> points { p1, p2, p3, p4 };
+
+    auto bounds = helpers::getBounds(points);
+
+    Point topLeft(0, 0);
+    Point bottomRight(2, 2);
+
+    SECTION("All points inside") {
+        REQUIRE(std::all_of(points.begin(), points.end(), [&bounds] (const Point& p) { return bounds.contain(p); }) == true);
+        REQUIRE(bounds.contain(topLeft) == true);
+        REQUIRE(bounds.contain(bottomRight) == true);
+    }
+
+    SECTION("Top bound cannot be any greater") {
+        topLeft.y = std::nextafter(topLeft.y, doubleMax);
+
+        Bounds smaller(topLeft, bottomRight);
+        REQUIRE(std::all_of(points.begin(), points.end(), [&smaller] (const Point& p) { return smaller.contain(p); }) == false);
+    }
+
+    SECTION("Left bound cannot be any greater") {
+        topLeft.x = std::nextafter(topLeft.x, doubleMax);
+
+        Bounds smaller(topLeft, bottomRight);
+        REQUIRE(std::all_of(points.begin(), points.end(), [&smaller] (const Point& p) { return smaller.contain(p); }) == false);
+    }
+
+    SECTION("Right bound cannot be any smaller") {
+        bottomRight.x = std::nextafter(bottomRight.x, doubleMin);
+
+        Bounds smaller(topLeft, bottomRight);
+        REQUIRE(std::all_of(points.begin(), points.end(), [&smaller] (const Point& p) { return smaller.contain(p); }) == false);
+    }
+
+    SECTION("Bottom bound cannot be any smaller") {
+        bottomRight.y = std::nextafter(bottomRight.y, doubleMin);
+
+        Bounds smaller(topLeft, bottomRight);
+        REQUIRE(std::all_of(points.begin(), points.end(), [&smaller] (const Point& p) { return smaller.contain(p); }) == false);
+    }
 }

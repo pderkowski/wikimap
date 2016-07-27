@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 struct Point {
     Point(double x, double y);
@@ -33,3 +34,8 @@ private:
 };
 
 bool operator == (const Bounds& lhs, const Bounds& rhs);
+
+
+namespace helpers {
+    Bounds getBounds(const std::vector<Point>& points);
+}
