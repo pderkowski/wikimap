@@ -146,3 +146,15 @@ TEST_CASE("Bounds quadrant getters return correct sub-bounds.", "[bounds]") {
         REQUIRE(std::all_of(outsidePoints.begin(), outsidePoints.end(), [&q] (const Point& p) { return !q.contain(p); }) == true);
     }
 }
+
+TEST_CASE("Bounds::getCorners returns correct points in correct order", "[bounds]") {
+    Bounds b(Point(0, 0), Point(1, 1));
+
+    auto corners = b.getCorners();
+
+    REQUIRE(corners.size() == 4);
+    REQUIRE((corners[0].x == 0 && corners[0].y == 0) == true);
+    REQUIRE((corners[1].x == 1 && corners[1].y == 0) == true);
+    REQUIRE((corners[2].x == 1 && corners[2].y == 1) == true);
+    REQUIRE((corners[3].x == 0 && corners[3].y == 1) == true);
+}
