@@ -17,6 +17,7 @@ public:
     Bounds(const Point& topLeft, const Point& bottomRight);
 
     bool contain(const Point& p) const;
+    bool contain(const Bounds& b) const;
 
     Bounds getTopLeftQuadrant() const;
     Bounds getTopRightQuadrant() const;

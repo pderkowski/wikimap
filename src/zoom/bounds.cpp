@@ -22,6 +22,13 @@ bool Bounds::contain(const Point& p) const {
         && topLeft_.y <= p.y && p.y < bottomRight_.y;
 }
 
+bool Bounds::contain(const Bounds& b) const {
+    return topLeft_.x <= b.topLeft_.x
+        && topLeft_.y <= b.topLeft_.y
+        && bottomRight_.x >= b.bottomRight_.x
+        && bottomRight_.y >= b.bottomRight_.y;
+}
+
 Bounds Bounds::getTopLeftQuadrant() const {
     const auto& tl = topLeft_;
     const auto& br = bottomRight_;

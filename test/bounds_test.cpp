@@ -40,6 +40,23 @@ TEST_CASE("Bounds.contain returns true for points inside", "[bounds]") {
     }
 }
 
+TEST_CASE("Bounds::contain returns true for bounds inside", "[bounds]") {
+    Bounds bounds(Point(0, 0), Point(2, 2));
+
+    REQUIRE(bounds.contain(Bounds(Point(0, 0), Point(1, 1))) == true);
+    REQUIRE(bounds.contain(Bounds(Point(1, 1), Point(2, 2))) == true);
+    REQUIRE(bounds.contain(Bounds(Point(0, 0), Point(2, 2))) == true);
+    REQUIRE(bounds.contain(Bounds(Point(0.5, 0.5), Point(1.5, 1.5))) == true);
+}
+
+TEST_CASE("Bounds::contain returns false for bounds outside", "[bounds]") {
+    Bounds bounds(Point(0, 0), Point(2, 2));
+
+    REQUIRE(bounds.contain(Bounds(Point(-2, -2), Point(-1, -1))) == false);
+    REQUIRE(bounds.contain(Bounds(Point(-2, -2), Point(3, 3))) == false);
+    REQUIRE(bounds.contain(Bounds(Point(-2, -2), Point(1, 1))) == false);
+}
+
 TEST_CASE("Bounds.contain returns false for points outside", "[bounds]") {
     Bounds bounds(Point(-1, -1), Point(1, 1));
 
