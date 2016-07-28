@@ -1,5 +1,5 @@
 PROGDIR = ../src/zoom
-PROGSOURCES = $(PROGDIR)/bounds.cpp $(PROGDIR)/node.cpp $(PROGDIR)/partitiontree.cpp
+PROGSOURCES = $(PROGDIR)/bounds.cpp $(PROGDIR)/node.cpp $(PROGDIR)/partitiontree.cpp $(PROGDIR)/zoom.cpp
 TESTSOURCES = $(wildcard *.cpp)
 SOURCES = $(PROGSOURCES) $(TESTSOURCES)
 OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))

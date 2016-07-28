@@ -26,8 +26,13 @@ public:
     std::vector<Point> getPoints() const { return node_->getPoints(); }
 
 private:
+    friend bool operator == (const Bucket& lhs, const Bucket& rhs);
+
+private:
     const Node* node_;
 };
+
+bool operator == (const Bucket& lhs, const Bucket& rhs);
 
 class PartitionTree {
 public:

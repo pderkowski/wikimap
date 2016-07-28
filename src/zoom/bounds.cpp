@@ -69,10 +69,6 @@ Bounds Bounds::getBottomLeftQuadrant() const {
                   Point((tl.x + br.x) / 2.0, br.y));
 }
 
-std::array<Point, 4> Bounds::getCorners() const {
-    return { topLeft_, Point(bottomRight_.x, topLeft_.y), bottomRight_, Point(topLeft_.x, bottomRight_.y) };
-}
-
 Point Bounds::getMidpoint() const {
     return Point((topLeft_.x + bottomRight_.x) / 2, (topLeft_.y + bottomRight_.y) / 2);
 }
@@ -100,12 +96,32 @@ Bounds getBounds(const std::vector<Point>& points) {
         yMin = std::min(yMin, p.y);
     }
 
-    xMax = std::nextafter(xMax, std::numeric_limits<double>::max());
-    yMax = std::nextafter(yMax, std::numeric_limits<double>::max());
+    xMax = nextGreater(xMax);
+    yMax = nextGreater(yMax);
 
     return Bounds(Point(xMin, yMin), Point(xMax, yMax));
 }
 
+double nextGreater(double x) {
+    return std::nextafter(x, std::numeric_limits<double>::max());
 }
 
+double nextSmaller(double x) {
+    return std::nextafter(x, std::numeric_limits<double>::min());
+}
 
+Bounds getClosedBounds(const Bounds& openBounds) {
+    auto topLeft = openBounds.getTopLeftCorner();
+    auto bottomRight = openBounds.getBottomRightCorner();
+
+    auto closedBottomRight = Point(nextSmaller(bottomRight.x), nextSmaller(bottomRight.y));
+
+    Bounds closedBounds(topLeft, closedBottomRight);
+
+    assert(openBounds.contain(closedBounds));
+    assert(!closedBounds.contain(openBounds));
+
+    return closedBounds;
+}
+
+}

@@ -20,6 +20,10 @@ Bucket::Bucket(const Node* node)
 : node_(node)
 { }
 
+bool operator == (const Bucket& lhs, const Bucket& rhs) {
+    return lhs.node_ == rhs.node_;
+}
+
 PartitionTree::PartitionTree(const Bounds& bounds, int nodeCapacity)
 : root_(new Node(bounds, nodeCapacity))
 { }
@@ -53,6 +57,8 @@ Bucket PartitionTree::getBucket(const BucketCoords& coords) const {
 
 BucketCoords PartitionTree::getBucketCoords(const Point& p, int level) const {
     auto bounds = getBounds();
+
+    assert(bounds.contain(p));
 
     int x = 0;
     int y = 0;

@@ -1,7 +1,6 @@
 #include "catch.hpp"
 #include "partitiontree.hpp"
 #include "bounds.hpp"
-#include <iostream>
 
 TEST_CASE("Partitiontree creates and gets correct buckets", "[partitiontree]") {
     PartitionTree pt(Bounds(Point(0, 0), Point(4, 4)), 1);

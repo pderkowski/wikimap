@@ -24,7 +24,8 @@ public:
     Bounds getBottomRightQuadrant() const;
     Bounds getBottomLeftQuadrant() const;
 
-    std::array<Point, 4> getCorners() const;
+    Point getTopLeftCorner() const { return topLeft_; }
+    Point getBottomRightCorner() const { return bottomRight_; }
 
     double getWidth() const;
     double getHeight() const;
@@ -44,4 +45,8 @@ bool operator == (const Bounds& lhs, const Bounds& rhs);
 
 namespace helpers {
     Bounds getBounds(const std::vector<Point>& points);
+    Bounds getClosedBounds(const Bounds& openBounds);
+
+    double nextGreater(double x);
+    double nextSmaller(double x);
 }
