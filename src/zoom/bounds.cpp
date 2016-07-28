@@ -29,6 +29,14 @@ bool Bounds::contain(const Bounds& b) const {
         && bottomRight_.y >= b.bottomRight_.y;
 }
 
+double Bounds::getWidth() const {
+    return bottomRight_.x - topLeft_.x;
+}
+
+double Bounds::getHeight() const {
+    return bottomRight_.y - topLeft_.y;
+}
+
 Bounds Bounds::getTopLeftQuadrant() const {
     const auto& tl = topLeft_;
     const auto& br = bottomRight_;

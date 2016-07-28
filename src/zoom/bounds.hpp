@@ -26,6 +26,9 @@ public:
 
     std::array<Point, 4> getCorners() const;
 
+    double getWidth() const;
+    double getHeight() const;
+
 private:
     Point topLeft_;
     Point bottomRight_;
