@@ -29,6 +29,8 @@ public:
     double getWidth() const;
     double getHeight() const;
 
+    Point getMidpoint() const;
+
 private:
     Point topLeft_;
     Point bottomRight_;

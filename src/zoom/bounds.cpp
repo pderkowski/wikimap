@@ -73,6 +73,10 @@ std::array<Point, 4> Bounds::getCorners() const {
     return { topLeft_, Point(bottomRight_.x, topLeft_.y), bottomRight_, Point(topLeft_.x, bottomRight_.y) };
 }
 
+Point Bounds::getMidpoint() const {
+    return Point((topLeft_.x + bottomRight_.x) / 2, (topLeft_.y + bottomRight_.y) / 2);
+}
+
 bool operator == (const Bounds& lhs, const Bounds& rhs) {
     return lhs.topLeft_ == rhs.topLeft_ && lhs.bottomRight_ == rhs.bottomRight_;
 }
