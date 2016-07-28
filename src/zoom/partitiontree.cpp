@@ -32,7 +32,6 @@ void PartitionTree::insert(const Point& p) {
     root_->insert(p);
 }
 
-
 Bucket PartitionTree::getBucket(const Point& p, int level) const {
     assert(0 <= level);
     assert(root_->contains(p));
@@ -78,6 +77,7 @@ BucketCoords PartitionTree::getBucketCoords(const Point& p, int level) const {
         } else if (bl.contain(p)) {
             x *= 2;
             y = 2 * y + 1;
+            bounds = bl;
         } else {
             assert(0);
         }
