@@ -5,17 +5,28 @@
 #include "bounds.hpp"
 #include "node.hpp"
 
-class Bucket {
+class BucketCoords {
 public:
-    Bucket(const Node* node, int level);
+    BucketCoords(int x, int y, int level);
 
-    std::vector<Point> getPoints() const { return bucketNode_->getPoints(); }
-    Bounds getBounds() const { return bucketNode_->getBounds(); }
-    int getLevel() const { return level_; }
+    int x() const { return x_; }
+    int y() const { return y_; }
+    int level() const { return level_; }
 
 private:
-    const Node* bucketNode_;
-    const int level_;
+    int x_;
+    int y_;
+    int level_;
+};
+
+class Bucket {
+public:
+    explicit Bucket(const Node* node);
+
+    std::vector<Point> getPoints() const { return node_->getPoints(); }
+
+private:
+    const Node* node_;
 };
 
 class PartitionTree {
@@ -29,10 +40,16 @@ public:
 
     void insert(const Point& p);
 
+    BucketCoords getBucketCoords(const Point& p, int level) const;
+
     Bucket getBucket(const Point& p, int level) const;
+    Bucket getBucket(const BucketCoords& coords) const;
+
     Bounds getBounds() const { return root_->getBounds(); }
 
 private:
+    Point bucketCoordsToPoint(const BucketCoords& coords) const;
+
     Node* root_;
 };
 
