@@ -24,6 +24,7 @@ class Paths(object):
         self.pagerank = self.path(self.dataDir, 'pagerank')
         self.embeddings = self.path(self.dataDir, 'embeddings')
         self.tsne = self.path(self.dataDir, 'tsne')
+        self.finalTable = self.path(self.dataDir, 'final')
 
         self.pagerankSources = [self.path(self.srcDir, 'pagerank.cpp')]
 

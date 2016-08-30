@@ -11,6 +11,7 @@ import time
 import logging
 import subprocess
 import os
+import DataProcessor
 
 paths = Paths(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 paths.include()
@@ -60,6 +61,10 @@ def buildTSNE():
 def skipBuildingTSNE():
     return os.path.exists(paths.tsne)
 
+#FINAL TABLE
+def buildFinalTable():
+    DataProcessor.buildFinalTable(paths.tsne, paths.dictionary, paths.finalTable)
+
 
 def main():
     Utils.configLogging()
@@ -71,6 +76,7 @@ def main():
     jobs.add(Job('BUILD PAGERANK', buildPagerank, skipBuildingPagerank)) # title pagerank
     jobs.add(Job('BUILD EMBEDDINGS', buildEmbeddings, skipBuildingEmbeddings))
     jobs.add(Job('BUILD TSNE', buildTSNE, skipBuildingTSNE))
+    jobs.add(Job('BUILD FINAL TABLE', buildFinalTable))
     jobs.run()
 
 if __name__ == "__main__":
