@@ -3,19 +3,22 @@ import logging
 import gc
 import tsne
 import numpy as np
+import itertools as it
 
-def _loadVectors(file, vectorsNo):
+def _iterPagerank(pagerankPath):
+    with open(pagerankPath, 'r') as pagerank:
+        for line in pagerank:
+            yield line.split()[0]
+
+def _loadVectors(modelPath, pagerankPath, vectorsNo):
     logger = logging.getLogger(__name__)
 
     logger.info('Loading model.')
-    model = gensim.models.Word2Vec.load(file)
+    model = gensim.models.Word2Vec.load(modelPath)
 
-    if vectorsNo < 0:
-        ids = list(model.index2word)
-    else:
-        ids = [model.index2word[i] for i in xrange(vectorsNo)]
+    ids = list(it.islice(_iterPagerank(pagerankPath), vectorsNo))
 
-    logger.info('Getting vectors for {} most popular words.'.format(len(ids)))
+    logger.info('Getting vectors for {} words with highest pagerank score.'.format(len(ids)))
 
     vectors = np.asarray(model[ids], dtype=np.float64)
 
@@ -25,10 +28,10 @@ def _loadVectors(file, vectorsNo):
     return ids, vectors
 
 
-def run(input, output):
+def run(modelPath, pagerankPath, output):
     logger = logging.getLogger(__name__)
 
-    ids, vectors = _loadVectors(input, 1000000) # negative = load all
+    ids, vectors = _loadVectors(modelPath, pagerankPath, 5000) # if last value is None = load all
 
     logger.info('Computing TSNE.')
     result = tsne.bh_sne(vectors, pca_d=50)

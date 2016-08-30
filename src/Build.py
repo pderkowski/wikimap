@@ -56,7 +56,7 @@ def skipBuildingEmbeddings():
 
 #TSNE
 def buildTSNE():
-    TSNE.run(paths.embeddings, paths.tsne)
+    TSNE.run(paths.embeddings, paths.pagerank, paths.tsne)
 
 def skipBuildingTSNE():
     return os.path.exists(paths.tsne)
