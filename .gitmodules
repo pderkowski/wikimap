@@ -1,3 +1,0 @@
-[submodule "external/bhtsne"]
-	path = external/bhtsne
-	url = https://github.com/lvdmaaten/bhtsne.git
