@@ -4,6 +4,8 @@ import gc
 import tsne
 import numpy as np
 import itertools as it
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 def _iterPagerank(pagerankPath):
     with open(pagerankPath, 'r') as pagerank:
@@ -33,8 +35,19 @@ def run(modelPath, pagerankPath, output):
 
     ids, vectors = _loadVectors(modelPath, pagerankPath, 5000) # if last value is None = load all
 
+    logger.info('Running PCA.')
+
+    logger.info(vectors.shape)
+
+    # result = tsne.bh_sne(vectors, pca_d=50)
+    pca = PCA(50)
+    vectors = pca.fit_transform(vectors)
+
+    logger.info(vectors.shape)
     logger.info('Computing TSNE.')
-    result = tsne.bh_sne(vectors, pca_d=50)
+
+    tsne = TSNE(n_components=2, n_iter=1000, verbose=1, method='barnes_hut')
+    result = tsne.fit_transform(vectors)
 
     with open(output,'w') as output:
         for id, vec in zip(ids, result):
