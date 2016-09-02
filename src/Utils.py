@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 import subprocess
+import ast
 
 def openOrExit(file, mode='r'):
     logger = logging.getLogger(__name__)
@@ -43,3 +44,11 @@ def call(command):
     logger = logging.getLogger(__name__)
     logger.info('Running command: {}'.format(command))
     subprocess.call(command, shell=True)
+
+def loadFromFile(path):
+    with open(path, 'r') as f:
+        return ast.literal_eval(f.read()) # literal_eval only evaluates basic types instead of arbitrary code
+
+def saveToFile(path, dict_):
+    with open(path, 'w') as f:
+        f.write(str(dict_))
