@@ -1,5 +1,7 @@
 import os
 import Utils
+import logging
+import sys
 
 def getImmediateSubdirectories(directory):
     return [name for name in os.listdir(directory) if os.path.isdir(os.path.join(directory, name))]
@@ -10,6 +12,11 @@ class BuildManager(object):
         self._buildPrefix = 'build'
 
     def run(self, build, config):
+        if not os.path.exists(self._archiveDir):
+            os.makedirs(self._archiveDir)
+
+        logger = logging.getLogger(__name__)
+
         self._lastDir = self._getLastDir()
         self._lastConfig = self._getLastConfig()
         self._buildDir = self._getBuildDir()
@@ -20,13 +27,34 @@ class BuildManager(object):
         Utils.saveToFile(os.path.join(self._buildDir, 'config'), config)
 
         changedFiles = set()
+        summary = []
+
+        logger.info('STARTING BUILD IN {}'.format(self._buildDir))
+
         for job in build:
+            logger.info('STARTING JOB: {}'.format(job.name))
+
             if self._inputsChanged(job.inputs, changedFiles) or self._configChanged(config, job.name) or not self._outputsComputed(job):
                 changedFiles.update(job.outputs)
                 jobConfig = config.get(job.name, {})
-                job.run(jobConfig, self._buildDir)
+
+                try:
+                    job.run(self._buildDir, jobConfig)
+                    summary.append((job.outcome, job.name, job.duration))
+                except KeyboardInterrupt:
+                    summary.append((job.outcome, job.name, job.duration))
+                    self._printSummary(summary)
+                    sys.exit(1)
+                except Exception, e:
+                    logger.exception(str(e))
+                    summary.append((job.outcome, job.name, job.duration))
+                    self._printSummary(summary)
+                    sys.exit(1)
             else:
+                job.skip()
                 self._makeLinks(job.outputs)
+
+        self._printSummary(summary)
 
     def _outputsComputed(self, job):
         return self._lastDir and all(os.path.exists(os.path.join(self._lastDir, o)) for o in job.outputs)
@@ -91,3 +119,32 @@ class BuildManager(object):
             return 0
         else:
             return last + 1
+
+    def _printSummary(self, summary):
+        summaryStr = '\n\n'
+
+        summaryStr += '-'*80+'\n'
+        summaryStr += '{:30} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
+        summaryStr += '-'*80+'\n'
+
+        OKGREEN = '\033[92m'
+        OKBLUE = '\033[94m'
+        FAILRED = '\033[91m'
+        ENDCOLOR = '\033[0m'
+        WARNING = '\033[93m'
+
+        for outcome, title, duration in summary:
+            if outcome == 'SUCCESS':
+                COLOR = OKGREEN
+            elif outcome == 'FAILURE':
+                COLOR = FAILRED
+            elif outcome == 'SKIPPED':
+                COLOR = OKBLUE
+            else:
+                COLOR = WARNING
+
+            summaryStr += '{:30} | {}[{}]{} | {} |'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
+
+        summaryStr += '-'*80+'\n'
+
+        logging.info(summaryStr)

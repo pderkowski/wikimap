@@ -1,6 +1,7 @@
 import unittest
 import os
 import shutil
+import logging
 from BuildManager import BuildManager
 
 class DummyJob(object):
@@ -9,14 +10,19 @@ class DummyJob(object):
         self.inputs = inputs
         self.outputs = outputs
         self.skipped = True
+        self.duration = 0
+        self.outcome = ''
 
     def reset(self):
         self.skipped = True
 
-    def run(self, config, outputDirectory):
+    def run(self, outputDirectory, config):
         self.skipped = False
         for o in self.outputs:
             open(os.path.join(outputDirectory, o), 'w').close() # create empty file
+
+    def skip(self):
+        self.skipped = True
 
 class BuildDirectoryCreation(unittest.TestCase):
     def __init__(self, subdirs, *args, **kwargs):

@@ -9,6 +9,27 @@
 #include <limits>
 #include <iomanip>
 #include <map>
+#include <boost/python.hpp>
+#include <cstdio>
+#include <cstdlib>
+
+class TempFile {
+public:
+    TempFile()
+    : name_(std::tmpnam(nullptr))
+    { }
+
+    ~TempFile() {
+        std::remove(name_.c_str());
+    }
+
+    std::string name() const {
+        return name_;
+    }
+
+private:
+    std::string name_;
+};
 
 using namespace std;
 
@@ -146,33 +167,6 @@ int guardedIncrement(int i, int max, const string& errorMessage) {
     }
 }
 
-map<string, string> parseArguments(int argc, char* argv[]) {
-    string usage = "Usage: pagerank -o outputFile inputFile";
-    vector<string> obligatory{ "input", "output" };
-
-    string OUTPUT("-o");
-
-    map<string, string> args;
-
-    for (int i = 1; i < argc; ++i) {
-        if (argv[i] == OUTPUT) {
-            i = guardedIncrement(i, argc - 1,  usage);
-            args["output"] = argv[i];
-        } else if (i == argc - 1) {
-            args["input"] = argv[i];
-        } else {
-            cout << "Unrecognized argument: "  << argv[i] << endl;
-        }
-    }
-
-    if (all_of(obligatory.begin(), obligatory.end(), [&args] (const string& s) { return args.find(s) != args.end(); })) {
-        return args;
-    } else {
-        cout << usage << endl;
-        exit(1);
-    }
-}
-
 void computePagerank() {
     double stopConvergence = 1e-7;
     int maxIterations = 200;
@@ -228,14 +222,25 @@ void save(const string& fileName) {
     }
 }
 
-int main(int argc, char* argv[]) {
+void executeSort(const std::string& input, const std::string& output) {
+    std::string command = "sort -k 2 -g -r -o " + output + " " + input;
+    system(command.c_str());
+}
+
+void pagerank(const std::string& input, const std::string& output) {
     locale::global(locale(""));
 
-    auto args = parseArguments(argc, argv);
+    TempFile tmp;
 
-    readData(args["input"]);
+    readData(input);
     computePagerank();
-    save(args["output"]);
+    save(tmp.name());
 
-    return 0;
+    executeSort(tmp.name(), output);
+}
+
+namespace py = boost::python;
+
+BOOST_PYTHON_MODULE(libpagerank) {
+    py::def("pagerank", pagerank);
 }
