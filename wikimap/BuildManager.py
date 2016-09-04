@@ -52,6 +52,7 @@ class BuildManager(object):
                     sys.exit(1)
             else:
                 job.skip()
+                summary.append((job.outcome, job.name, job.duration))
                 self._makeLinks(job.outputs)
 
         self._printSummary(summary)
@@ -121,6 +122,8 @@ class BuildManager(object):
             return last + 1
 
     def _printSummary(self, summary):
+        logger = logging.getLogger(__name__)
+
         summaryStr = '\n\n'
 
         summaryStr += '-'*80+'\n'
@@ -147,4 +150,4 @@ class BuildManager(object):
 
         summaryStr += '-'*80+'\n'
 
-        logging.info(summaryStr)
+        logger.info(summaryStr)

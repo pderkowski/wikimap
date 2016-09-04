@@ -6,9 +6,9 @@ import sys
 import tempfile
 import subprocess
 import itertools
-import Dictionary
 import Utils
 import gzip
+from Dictionary import Dictionary
 
 num = r'[0-9]+'
 delimitedWord = r"'(?:\\.|[^\\']+)'" # (?: ) --> match either; \\. --> any special char; | --> or; [^\\']++ --> not \ and ';
@@ -55,11 +55,14 @@ def buildDictionary(input, output):
     processSqlDump(input, output, startPattern, matchPattern, acceptFun, formatFun)
 
 
-def buildLinks(input, output, dictionary):
+def buildLinks(dictionaryPath, input, output):
     logger = logging.getLogger(__name__)
 
     startPattern = 'INSERT INTO `pagelinks` VALUES'
     matchPattern = '\(({}),({}),({}),({})\)'.format(num, num, delimitedWord, num)
+
+    dictionary = Dictionary()
+    dictionary.load(dictionaryPath)
 
     def acceptFun(match):
         idFrom = int(match.group(1))

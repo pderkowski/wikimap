@@ -1,4 +1,4 @@
-PAGERANKDIR = wikimap/pagerank
+PAGERANKDIR = wikimap/Pagerank
 PAGERANKSOURCES = $(PAGERANKDIR)/pagerank.cpp
 PAGERANKOBJECTS = $(patsubst %.cpp, %.o, $(PAGERANKSOURCES))
 

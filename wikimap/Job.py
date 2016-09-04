@@ -8,6 +8,7 @@ class CompletionGuard(object):
 
     def __enter__(self):
         self._completed = False
+        return self
 
     def __exit__(self, type, value, traceback):
         if not self._completed:
