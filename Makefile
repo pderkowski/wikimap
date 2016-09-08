@@ -19,7 +19,7 @@ PAGERANKLIB = $(PAGERANKDIR)/libpagerank.so
 $(PAGERANKLIB): $(PAGERANKOBJECTS)
 	$(CXX) $(CXXFLAGS) $^ -shared -lboost_python -o $(PAGERANKLIB)
 
-test:
+test: $(PAGERANKLIB)
 	python -m unittest discover -s wikimap/ -v
 
 clean:

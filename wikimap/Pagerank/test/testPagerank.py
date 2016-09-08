@@ -1,7 +1,7 @@
 import unittest
 import os
 import shutil
-from pagerank import pagerank
+from Pagerank import pagerank
 
 class TestPagerank(unittest.TestCase):
     def setUp(self):
