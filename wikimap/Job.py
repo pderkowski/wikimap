@@ -25,12 +25,14 @@ class Job(object):
     SKIPPED = 'SKIPPED'
     INTERRUPT = 'INTERRUPT'
 
-    def __init__(self, name, task, inputs = [], outputs = []):
+    def __init__(self, name, task, inputs = [], outputs = [], alwaysRun = False):
         self._task = task
 
         self.name = name
         self.inputs = inputs
         self.outputs = outputs
+
+        self.alwaysRun = alwaysRun
 
         self.duration = 0
         self.outcome = 'NONE'

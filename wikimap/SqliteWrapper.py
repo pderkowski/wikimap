@@ -44,49 +44,34 @@ class TableLoader(object):
             cursor = con.cursor()
             cursor.execute("PRAGMA synchronous = OFF")
             cursor.execute("PRAGMA journal_mode = OFF")
+            cursor.execute("PRAGMA cache_size = 10000000")
 
             for i, line in enumerate(input):
                 if i % 100 == 0:
                     logger.info("Processed {} records.".format(recordsTotal))
 
                 if line.startswith(startPattern):
-                    # print
-
                     prepared = prepareLine(line)
 
                     # with timeit('Parsing. (C++)'):
-                    records = self.blueprint['parser'](prepared)
+                    records = self.blueprint['parser'](prepared, self.blueprint['namespaces'])
 
                     # with timeit('Unpacking, casting unicode. (Python)'):
-                    mapped = map(self.blueprint["unpackRecord"], records)
+                    # mapped = map(self.blueprint["unpackRecord"], records)
 
                     # with timeit('Inserting into the database. (Sqlite)'):
-                    cursor.executemany("INSERT INTO "+self.blueprint["targetName"]+" VALUES "+self.blueprint["recordPattern"], mapped)
+                    if records:
+                        cursor.executemany("INSERT INTO "+self.blueprint["targetName"]+" VALUES "+self.blueprint["recordPattern"], records)
 
-                    con.commit()
+                        con.commit()
 
-                    recordsTotal += len(records)
+                        recordsTotal += len(records)
 
         logger.info("Finished loading the page table. Processed {} lines.".format(recordsTotal))
 
-        if 'postprocessing' in self.blueprint:
-            logger.info('Starting postprocessing...')
-            con.executescript(self.blueprint['postprocessing'])
-            logger.info('Finished postprocessing.')
-
-def fixDecode(string):
-    try:
-        return unicode(string, encoding='utf8')
-    except UnicodeDecodeError:
-        logging.warn(u'Invalid utf8 encoding for: '+unicode(string, encoding='utf8', errors='replace')+u', falling back to cp1252.')
-
-        try:
-            decoded = unicode(string, encoding='cp1252')
-            logging.warn(u'Succesfully decoded a string: '+decoded+' as cp1252.')
-            return decoded
-        except UnicodeDecodeError:
-            logging.error(u'Invalid cp1252 encoding for: '+unicode(string, encoding='cp1252', errors='replace')+u', returning the incomplete utf8 version.')
-            return unicode(string, encoding='utf8', errors='ignore')
+        for step in self.blueprint['postprocessing']:
+            logger.info('Starting '+step+'...')
+            con.execute(step)
 
 pageTable = TableLoader({
     'sourceName': 'page',
@@ -94,13 +79,13 @@ pageTable = TableLoader({
     'schema': (
             "DROP TABLE IF EXISTS page;\n"
             "CREATE TABLE page (\n"
-            "page_id             INTEGER         NOT NULL                PRIMARY KEY,\n"
-            "page_namespace      INTEGER         NOT NULL  DEFAULT '0',\n"
-            "page_title          TEXT            NOT NULL  DEFAULT ''\n"
-            ");\n"),
-    'unpackRecord': lambda r: (r.id, r.ns, fixDecode(r.title)),
+            "page_id             INTEGER    NOT NULL                PRIMARY KEY,\n"
+            "page_namespace      INTEGER    NOT NULL  DEFAULT '0',\n"
+            "page_title          TEXT       NOT NULL  DEFAULT '');\n"),
     'recordPattern': '(?,?,?)',
-    'parser': Tools.parsePageValues
+    'parser': Tools.getPageRecords,
+    'namespaces': [0, 14],
+    'postprocessing': ['CREATE UNIQUE INDEX ns_title_idx ON page(page_namespace, page_title);']
 })
 
 linksTable = TableLoader({
@@ -109,12 +94,13 @@ linksTable = TableLoader({
     'schema': (
             "DROP TABLE IF EXISTS links;\n"
             "CREATE TABLE links (\n"
-            "pl_from             INTEGER         NOT NULL  DEFAULT '0',\n"
-            "pl_namespace        INTEGER         NOT NULL  DEFAULT '0',\n"
-            "pl_title            TEXT            NOT NULL  DEFAULT '',\n"
-            "pl_from_namespace   INTEGER         NOT NULL  DEFAULT '0');\n"),
-    'unpackRecord': lambda r: (r.from_, r.ns, fixDecode(r.title), r.from_ns),
+            "pl_from             INTEGER    NOT NULL  DEFAULT '0',\n"
+            "pl_namespace        INTEGER    NOT NULL  DEFAULT '0',\n"
+            "pl_title            TEXT       NOT NULL  DEFAULT '',\n"
+            "pl_from_namespace   INTEGER    NOT NULL  DEFAULT '0');\n"),
     'recordPattern': '(?,?,?,?)',
-    'parser': Tools.parseLinksValues,
-    'postprocessing': "CREATE INDEX pl_from_ids ON links(pl_from);"
+    'parser': Tools.getLinksRecords,
+    'namespaces': [0, 14],
+    'postprocessing': ["CREATE INDEX from_id_idx ON links(pl_from);",
+        "CREATE INDEX ns_title_idx ON links(pl_namespace, pl_title);"]
 })

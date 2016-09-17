@@ -33,6 +33,8 @@ def build():
     jobs.append(Job('DOWNLOAD LINKS TABLE', download(linksTableUrl), inputs = [], outputs = [linksTableSql]))
     jobs.append(Job('LOAD PAGE TABLE', SqliteWrapper.pageTable.loadTable, inputs = [pageTableSql], outputs = [pageTable]))
     jobs.append(Job('LOAD LINKS TABLE', SqliteWrapper.linksTable.loadTable, inputs = [linksTableSql], outputs = [linksTable]))
+    jobs.append(Job('TEST', DataProcessor.test, inputs = [pageTable, linksTable], outputs = [links], alwaysRun = True))
+
     # jobs.append(Job('BUILD DICTIONARY', WikidumpProcessor.buildDictionary, inputs = [pageTable], outputs = [dictionary])) #id title
     # jobs.append(Job('BUILD LINKS', WikidumpProcessor.buildLinks, inputs = [dictionary, linksTable], outputs = [links])) #source target
     # jobs.append(Job('BUILD AGGREGATED LINKS', WikidumpProcessor.buildAggregatedLinks, inputs = [links], outputs = [aggregatedLinks])) #source list-of-targets-space-separated

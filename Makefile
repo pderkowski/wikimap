@@ -3,7 +3,7 @@ PAGERANKSOURCES = $(PAGERANKDIR)/pagerank.cpp
 PAGERANKOBJECTS = $(patsubst %.cpp, %.o, $(PAGERANKSOURCES))
 
 SQLTOOLSDIR = wikimap/Tools
-SQLTOOLSSOURCES = $(SQLTOOLSDIR)/sqltools.cpp
+SQLTOOLSSOURCES = $(SQLTOOLSDIR)/sqltools.cpp $(SQLTOOLSDIR)/records.cpp $(SQLTOOLSDIR)/parser.cpp
 SQLTOOLSOBJECTS = $(patsubst %.cpp, %.o, $(SQLTOOLSSOURCES))
 
 PYTHONINCLUDE = env/include/python2.7
@@ -24,10 +24,10 @@ SQLTOOLSLIB = $(SQLTOOLSDIR)/libsqltools.so
 build: $(PAGERANKLIB) $(SQLTOOLSLIB)
 
 $(PAGERANKLIB): $(PAGERANKOBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -shared -lboost_python -o $(PAGERANKLIB)
+	$(CXX) $(CXXFLAGS) -o $(PAGERANKLIB) $^ -shared -lboost_python
 
 $(SQLTOOLSLIB): $(SQLTOOLSOBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -shared -lboost_python -o $(SQLTOOLSLIB)
+	$(CXX) $(CXXFLAGS) -o $(SQLTOOLSLIB) $^ -shared -lboost_python
 
 test:
 	python -m unittest discover -s wikimap/ -v

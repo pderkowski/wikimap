@@ -1,1 +1,1 @@
-from libsqltools import parsePageValues, parseLinksValues
+from libsqltools import getPageRecords, getLinksRecords

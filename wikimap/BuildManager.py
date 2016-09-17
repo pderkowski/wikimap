@@ -34,7 +34,7 @@ class BuildManager(object):
         for job in build:
             logger.info('STARTING JOB: {}'.format(job.name))
 
-            if self._inputsChanged(job.inputs, changedFiles) or self._configChanged(config, job.name) or not self._outputsComputed(job):
+            if job.alwaysRun or self._inputsChanged(job.inputs, changedFiles) or self._configChanged(config, job.name) or not self._outputsComputed(job):
                 changedFiles.update(job.outputs)
                 jobConfig = config.get(job.name, {})
 
