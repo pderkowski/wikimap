@@ -1,47 +1,66 @@
 import pandas as pd
 import sqlite3
 import logging
+import pprint
+import codecs
+import SqliteWrapper
+import Utils
 
-def test(pageTablePath, linksTablePath, output):
-    con = sqlite3.connect(pageTablePath)
-    con.execute('ATTACH DATABASE ? AS db2', (linksTablePath,))
-    cursor = con.cursor()
-    cursor.execute("""
-        SELECT
-            links.pl_from, page.page_id
-        FROM
-            page,
-            db2.links AS links
-        WHERE
-            links.pl_namespace = page.page_namespace
-        AND links.pl_title = page.page_title
-
-        ORDER BY
-            links.pl_from ASC""")
-
+def normalizeLinks(pageTablePath, linksTablePath, output):
     logger = logging.getLogger(__name__)
 
-    with open(output, 'w') as file:
-        i = 0
-        while True:
-            records = cursor.fetchmany(size=10000)
+    con = sqlite3.connect(pageTablePath)
 
-            i += 10000
+    cursor = con.cursor()
 
-            logger.info(i)
+    cursor.execute("PRAGMA synchronous = OFF")
+    cursor.execute("PRAGMA journal_mode = OFF")
+    cursor.execute("PRAGMA cache_size = 10000000")
 
-            if records:
-                for r in records:
-                    file.write('{} {}'.format(r[0], r[1]))
-            else:
-                break
-# def buildLinks(pageTablePath, linksTablePath, output):
-#     con = sqlite3.connect(pageTablePath)
-#     con.execute('ATTACH DATABASE ? AS db2', (linksTablePath,))
-#     cursor = con.cursor()
-#     cursor.execute('SELECT * FROM db2.links WHERE pl_from_namespace = ?, )
-#     pp = pprint.PrettyPrinter()
-#     pp.pprint(cursor.fetchall())
+    con.commit()
+
+    con.execute('ATTACH DATABASE ? AS db2', (linksTablePath,))
+    con.execute('ATTACH DATABASE ? AS out', (output,))
+
+    con.execute("""
+        CREATE TABLE out.norm_links (
+            nl_from             INTEGER    NOT NULL  DEFAULT '0',
+            nl_to               INTEGER    NOT NULL  DEFAULT '0'
+        );""")
+
+    statement = """
+        INSERT INTO
+            out.norm_links
+        SELECT
+            *
+        FROM
+            (SELECT
+                links.pl_from, page.page_id
+            FROM
+                links,
+                page
+            WHERE
+                links.pl_namespace = page.page_namespace
+            AND links.pl_title = page.page_title
+            ORDER BY
+                links.pl_namespace ASC,
+                links.pl_title ASC)
+        ORDER BY
+            pl_from"""
+
+
+    logger.info('Query plan:')
+    cursor.execute("EXPLAIN QUERY PLAN "+statement)
+    for row in cursor:
+        print row
+
+    logger.info('Starting link normalization. This may take a couple of hours.')
+
+    progressHandler = Utils.DumbProgressBar()
+    con.set_progress_handler(progressHandler.report, 10000000)
+    cursor.execute(statement)
+
+    logger.info('Finished link normalization.')
 
 def buildFinalTable(tsnePath, dictionaryPath, finalPath):
     tsne = pd.read_table(tsnePath, delim_whitespace=True, header=None, names=['id', 'x', 'y'])

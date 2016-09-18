@@ -6,7 +6,7 @@ import Tools
 import sys
 import re
 import Utils
-
+import StringIO
 import time
 from contextlib import contextmanager
 
@@ -40,7 +40,10 @@ class TableLoader(object):
         logger.info("Starting loading the {} table.".format(self.blueprint["targetName"]))
 
         recordsTotal = 0
-        with gzip.GzipFile(inputPath,'r') as input, self._createTable(outputPath) as con:
+
+        con = self._createTable(outputPath)
+
+        with gzip.GzipFile(inputPath,'r') as input:
             cursor = con.cursor()
             cursor.execute("PRAGMA synchronous = OFF")
             cursor.execute("PRAGMA journal_mode = OFF")
@@ -72,6 +75,8 @@ class TableLoader(object):
         for step in self.blueprint['postprocessing']:
             logger.info('Starting '+step+'...')
             con.execute(step)
+
+        return con
 
 pageTable = TableLoader({
     'sourceName': 'page',

@@ -40,6 +40,15 @@ class ProgressBar(object):
             sys.stdout.write("\33[2K\r" + self.name + "...%d%%" % percent)
         sys.stdout.flush()
 
+class DumbProgressBar(object):
+    def __init__(self):
+        self.ticks = 1
+
+    def report(self):
+        sys.stdout.write("\33[2K\rProcessing"+"."*self.ticks)
+        sys.stdout.flush()
+        self.ticks = (self.ticks % 3) + 1
+
 def call(command):
     logger = logging.getLogger(__name__)
     logger.info('Running command: {}'.format(command))
