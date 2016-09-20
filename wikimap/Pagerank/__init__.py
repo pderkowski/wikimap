@@ -1,1 +1,1 @@
-from libpagerank import pagerank
+from Pagerank import pagerank

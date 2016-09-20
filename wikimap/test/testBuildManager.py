@@ -13,6 +13,8 @@ class DummyJob(object):
         self.duration = 0
         self.outcome = ''
 
+        self.alwaysRun = False
+
     def reset(self):
         self.skipped = True
 

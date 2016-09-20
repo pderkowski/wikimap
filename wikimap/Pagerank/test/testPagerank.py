@@ -1,31 +1,15 @@
 import unittest
 import os
-import shutil
-from pagerank import pagerank
+import subprocess
 
-class TestPagerank(unittest.TestCase):
-    def setUp(self):
-        self.tmpDir = 'tmp'
-        self.inputPath = os.path.join(self.tmpDir, 'input')
-        self.outputPath = os.path.join(self.tmpDir, 'output')
+from Pagerank import pagerank
 
-        if not os.path.exists(self.tmpDir):
-            os.makedirs(self.tmpDir)
+class TestBinding(unittest.TestCase):
+    def runTest(self):
+        input_ = "1 2\n2 3\n3 1\n"
+        output = pagerank(input_, verbosity=0)
 
-        open(self.inputPath, 'w').close()
-
-    def tearDown(self):
-        if os.path.isdir(self.tmpDir):
-            shutil.rmtree(self.tmpDir)
-
-    def testPagerank_SimpleCase(self):
-        with open(self.inputPath, 'w') as input_:
-            input_.write("1 2\n")
-            input_.write("2 1\n")
-
-            pagerank(self.inputPath, self.outputPath)
-
-            self.assertTrue(True)
+        self.assertEqual(len(list(output)), 3)
 
 if __name__ == '__main__':
     unittest.main()

@@ -5,6 +5,8 @@ import pprint
 import codecs
 import SqliteWrapper
 import Utils
+import Pagerank
+import Link2Vec
 
 def normalizeLinks(pageTablePath, linksTablePath, output):
     logger = logging.getLogger(__name__)
@@ -59,8 +61,22 @@ def normalizeLinks(pageTablePath, linksTablePath, output):
     progressHandler = Utils.DumbProgressBar()
     con.set_progress_handler(progressHandler.report, 10000000)
     cursor.execute(statement)
+    con.commit()
 
     logger.info('Finished link normalization.')
+
+def computePagerank(normalizedLinksPath, pagerankPath):
+    selection = SqliteWrapper.iterateSelection(normalizedLinksPath, "SELECT * FROM norm_links")
+
+    prCon = sqlite3.connect(pagerankPath)
+    prCon.execute("""
+        CREATE TABLE pagerank (
+            pr_id             INTEGER    NOT NULL   UNIQUE,
+            pr_rank           REAL       NOT NULL
+        );""")
+
+    prCon.executemany("INSERT INTO pagerank VALUES (?, ?)", Pagerank.pagerank(selection))
+    prCon.commit()
 
 def buildFinalTable(tsnePath, dictionaryPath, finalPath):
     tsne = pd.read_table(tsnePath, delim_whitespace=True, header=None, names=['id', 'x', 'y'])

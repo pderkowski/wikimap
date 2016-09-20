@@ -42,12 +42,12 @@ class ProgressBar(object):
 
 class DumbProgressBar(object):
     def __init__(self):
-        self.ticks = 1
+        self.ticks = 0
 
     def report(self):
         sys.stdout.write("\33[2K\rProcessing"+"."*self.ticks)
         sys.stdout.flush()
-        self.ticks = (self.ticks % 3) + 1
+        self.ticks = (self.ticks + 1) % 4
 
 def call(command):
     logger = logging.getLogger(__name__)

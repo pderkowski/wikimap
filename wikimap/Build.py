@@ -23,7 +23,7 @@ def build():
     dictionary = 'dictionary'
     normalizedLinks = 'normalizedLinks.db'
     aggregatedLinks = 'aggregatedLinks'
-    pagerank = 'pagerank'
+    pagerank = 'pagerank.db'
     embeddings = 'embeddings'
     tsne = 'tsne'
     final = 'final'
@@ -34,7 +34,7 @@ def build():
     jobs.append(Job('LOAD PAGE TABLE', SqliteWrapper.pageTable.loadTable, inputs = [pageTableSql], outputs = [pageTable]))
     jobs.append(Job('LOAD LINKS TABLE', SqliteWrapper.linksTable.loadTable, inputs = [linksTableSql], outputs = [linksTable]))
     jobs.append(Job('NORMALIZE LINKS', DataProcessor.normalizeLinks, inputs = [pageTable, linksTable], outputs = [normalizedLinks]))
-    # jobs.append(Job('COMPUTE PAGERANK', DataProcessor.computePagerank, inputs = [normalizedLinks], outputs = [pagerank]))
+    jobs.append(Job('COMPUTE PAGERANK', DataProcessor.computePagerank, inputs = [normalizedLinks], outputs = [pagerank]))
 
     # jobs.append(Job('BUILD EMBEDDINGS', Link2Vec.build, inputs = [aggregatedLinks], outputs = [embeddings]))
     # jobs.append(Job('BUILD TSNE', TSNE.run, inputs = [embeddings, pagerank], outputs = [tsne]))
