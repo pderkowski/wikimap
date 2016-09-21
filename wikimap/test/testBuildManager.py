@@ -9,11 +9,12 @@ class DummyJob(object):
         self.name = name
         self.inputs = inputs
         self.outputs = outputs
+        self.artifacts = []
         self.skipped = True
         self.duration = 0
         self.outcome = ''
 
-        self.alwaysRun = False
+        self.noskip = False
 
     def reset(self):
         self.skipped = True

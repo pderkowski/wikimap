@@ -15,20 +15,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--list', '-l', dest='listSteps', action='store_true',
         help="print a list of steps included in a build")
-    parser.add_argument('--noskip', nargs='?', dest='noskip', type=int, default=-1,
+    parser.add_argument('--noskip', nargs='?', dest='noskip', type=int,
         help="specify which build steps should not be skipped even if otherwise they would be")
     args = parser.parse_args()
 
     build = Build.build()
 
     if args.noskip is not None:
-        if args.noskip == -1:
-            noskip = range(len(build))
-        else:
-            noskip = [args.noskip]
-
-        for j in noskip:
-            build[j].noskip = True
+        build[args.noskip].noskip = True
 
     if args.listSteps:
         for i, s in enumerate(build):
