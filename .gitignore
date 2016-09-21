@@ -5,3 +5,5 @@ libs/
 *.o
 *.so
 env/
+wikimap/Pagerank/pagerank
+wikimap/Pagerank/test/run_tests
