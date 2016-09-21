@@ -53,6 +53,14 @@ py::tuple toPython(const LinksRecord& r) {
     return py::make_tuple(r.from, r.ns, toPython(r.title), r.from_ns);
 }
 
+py::tuple toPython(const CategoryRecord& r) {
+    return py::make_tuple(r.id, toPython(r.title));
+}
+
+py::tuple toPython(const CategoryLinksRecord& r) {
+    return py::make_tuple(r.from, toPython(r.to));
+}
+
 template<class T>
 py::list toPython(const std::vector<T>& values) {
     py::list res;
@@ -64,29 +72,34 @@ py::list toPython(const std::vector<T>& values) {
     return res;
 }
 
-py::list getPageRecords(const std::string& s, const py::list& acceptedNamespaces) {
-    auto accept = to_std_vector<INTEGER>(acceptedNamespaces);
+py::list getPageRecords(const std::string& s) {
     auto records = parse<PageRecord>(s);
     decltype(records) filtered;
     std::copy_if(records.begin(), records.end(), std::back_inserter(filtered),
-        [&accept] (const decltype(records)::value_type& r) {
-            return std::find(accept.begin(), accept.end(), r.ns) != accept.end();
+        [] (const decltype(records)::value_type& r) {
+            return r.ns == 0;
         });
 
     return toPython(filtered);
 }
 
-py::list getLinksRecords(const std::string& s, const py::list& acceptedNamespaces) {
-    auto accept = to_std_vector<INTEGER>(acceptedNamespaces);
+py::list getLinksRecords(const std::string& s) {
     auto records = parse<LinksRecord>(s);
     decltype(records) filtered;
     std::copy_if(records.begin(), records.end(), std::back_inserter(filtered),
-        [&accept] (const decltype(records)::value_type& r) {
-            return std::find(accept.begin(), accept.end(), r.ns) != accept.end()
-                && std::find(accept.begin(), accept.end(), r.from_ns) != accept.end();
+        [] (const decltype(records)::value_type& r) {
+            return r.ns == 0 && r.from_ns == 0;
         });
 
     return toPython(filtered);
+}
+
+py::list getCategoryRecords(const std::string& s) {
+    return toPython(parse<CategoryRecord>(s));
+}
+
+py::list getCategoryLinksRecords(const std::string& s) {
+    return toPython(parse<CategoryLinksRecord>(s));
 }
 
 
@@ -94,4 +107,6 @@ BOOST_PYTHON_MODULE(libsqltools)
 {
     py::def("getPageRecords", getPageRecords);
     py::def("getLinksRecords", getLinksRecords);
+    py::def("getCategoryRecords", getCategoryRecords);
+    py::def("getCategoryLinksRecords", getCategoryLinksRecords);
 }

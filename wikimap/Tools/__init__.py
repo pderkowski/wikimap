@@ -1,1 +1,1 @@
-from libsqltools import getPageRecords, getLinksRecords
+from libsqltools import *

@@ -8,3 +8,11 @@ PageRecord::PageRecord(Parser& parser)
 LinksRecord::LinksRecord(Parser& parser)
 : from(parser.consumeIntegerField()), ns(parser.consumeIntegerField()), title(parser.consumeTextField()), from_ns(parser.consumeIntegerField())
 { }
+
+CategoryRecord::CategoryRecord(Parser& parser)
+: id(parser.consumeIntegerField()), title(parser.consumeTextField())
+{ }
+
+CategoryLinksRecord::CategoryLinksRecord(Parser& parser)
+: from(parser.consumeIntegerField()), to(parser.consumeTextField())
+{ }
