@@ -7,18 +7,11 @@ import itertools as it
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
-def _iterPagerank(pagerankPath):
-    with open(pagerankPath, 'r') as pagerank:
-        for line in pagerank:
-            yield line.split()[0]
-
-def _loadVectors(modelPath, pagerankPath, vectorsNo):
+def _loadVectors(modelPath, ids):
     logger = logging.getLogger(__name__)
 
     logger.info('Loading model.')
-    model = gensim.models.Word2Vec.load(modelPath)
-
-    ids = list(it.islice(_iterPagerank(pagerankPath), vectorsNo))
+    model = gensim.models.Word2Vec.load(modelPath, mmap='r')
 
     logger.info('Getting vectors for {} words with highest pagerank score.'.format(len(ids)))
 
@@ -27,19 +20,17 @@ def _loadVectors(modelPath, pagerankPath, vectorsNo):
     model = None # release memory
     gc.collect() # release memory
 
-    return ids, vectors
+    return vectors
 
 
-def run(modelPath, pagerankPath, output):
+def run(modelPath, selectedPages):
     logger = logging.getLogger(__name__)
 
-    ids, vectors = _loadVectors(modelPath, pagerankPath, 5000) # if last value is None = load all
+    vectors = _loadVectors(modelPath, map(str, selectedPages))
 
     logger.info('Running PCA.')
-
     logger.info(vectors.shape)
 
-    # result = tsne.bh_sne(vectors, pca_d=50)
     pca = PCA(50)
     vectors = pca.fit_transform(vectors)
 
@@ -49,6 +40,5 @@ def run(modelPath, pagerankPath, output):
     tsne = TSNE(n_components=2, n_iter=1000, verbose=1, method='barnes_hut')
     result = tsne.fit_transform(vectors)
 
-    with open(output,'w') as output:
-        for id, vec in zip(ids, result):
-            output.write('{} {} {}\n'.format(id, vec[0], vec[1]))
+    for i, (p, vec) in enumerate(zip(selectedPages, result)):
+        yield (p, vec[0], vec[1], i)

@@ -25,12 +25,13 @@ class Job(object):
     SKIPPED = 'SKIPPED'
     INTERRUPT = 'INTERRUPT'
 
-    def __init__(self, name, task, inputs = [], outputs = [], alwaysRun = False):
+    def __init__(self, name, task, inputs = [], outputs = [], artifacts = [], alwaysRun = False):
         self._task = task
 
         self.name = name
         self.inputs = inputs
         self.outputs = outputs
+        self.artifacts = artifacts
 
         self.alwaysRun = alwaysRun
 
@@ -40,7 +41,7 @@ class Job(object):
     def run(self, outputDir, config):
         t0 = time.time()
         try:
-            outputPaths = [os.path.join(outputDir, o) for o in self.outputs]
+            outputPaths = [os.path.join(outputDir, o) for o in self.outputs + self.artifacts]
             with CompletionGuard(outputPaths) as guard:
                 inputPaths = [os.path.join(outputDir, i) for i in self.inputs]
                 args = inputPaths + outputPaths

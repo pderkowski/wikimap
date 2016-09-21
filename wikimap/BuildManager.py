@@ -34,7 +34,7 @@ class BuildManager(object):
         for job in build:
             logger.info('STARTING JOB: {}'.format(job.name))
 
-            if job.alwaysRun or self._inputsChanged(job.inputs, changedFiles) or self._configChanged(config, job.name) or not self._outputsComputed(job):
+            if job.alwaysRun or self._inputsChanged(job.inputs, changedFiles) or self._configChanged(config, job.name) or not self._outputsComputed(job) or not self._artifactsComputed(job):
                 changedFiles.update(job.outputs)
                 jobConfig = config.get(job.name, {})
 
@@ -54,11 +54,15 @@ class BuildManager(object):
                 job.skip()
                 summary.append((job.outcome, job.name, job.duration))
                 self._makeLinks(job.outputs)
+                self._makeLinks(job.artifacts)
 
         self._printSummary(summary)
 
     def _outputsComputed(self, job):
         return self._lastDir and all(os.path.exists(os.path.join(self._lastDir, o)) for o in job.outputs)
+
+    def _artifactsComputed(self, job):
+        return self._lastDir and all(os.path.exists(os.path.join(self._lastDir, a)) for a in job.artifacts)
 
     def _inputsChanged(self, inputs, changedFiles):
         return any(input_ in changedFiles for input_ in inputs)

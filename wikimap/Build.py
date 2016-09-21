@@ -18,30 +18,24 @@ def build():
     linksTableUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz'
     pageTableSql = 'page.sql.gz'
     linksTableSql = 'pagelinks.sql.gz'
-    pageTable = 'page.db'
-    linksTable = 'links.db'
-    dictionary = 'dictionary'
+    pages = 'page.db'
+    links = 'links.db'
     normalizedLinks = 'normalizedLinks.db'
-    aggregatedLinks = 'aggregatedLinks'
     pagerank = 'pagerank.db'
     embeddings = 'embeddings'
-    tsne = 'tsne'
+    embeddingsArtifacts = [embeddings+a for a in ['.syn0_lockf.npy', '.syn0.npy', '.syn1neg.npy']]
+    tsne = 'tsne.db'
     final = 'final'
 
     jobs = []
     jobs.append(Job('DOWNLOAD PAGE TABLE', download(pageTableUrl), inputs = [], outputs = [pageTableSql]))
     jobs.append(Job('DOWNLOAD LINKS TABLE', download(linksTableUrl), inputs = [], outputs = [linksTableSql]))
-    jobs.append(Job('LOAD PAGE TABLE', SqliteWrapper.pageTable.loadTable, inputs = [pageTableSql], outputs = [pageTable]))
-    jobs.append(Job('LOAD LINKS TABLE', SqliteWrapper.linksTable.loadTable, inputs = [linksTableSql], outputs = [linksTable]))
-    jobs.append(Job('NORMALIZE LINKS', DataProcessor.normalizeLinks, inputs = [pageTable, linksTable], outputs = [normalizedLinks]))
+    jobs.append(Job('LOAD PAGE TABLE', SqliteWrapper.pages.loadTable, inputs = [pageTableSql], outputs = [pages]))
+    jobs.append(Job('LOAD LINKS TABLE', SqliteWrapper.links.loadTable, inputs = [linksTableSql], outputs = [links]))
+    jobs.append(Job('NORMALIZE LINKS', DataProcessor.normalizeLinks, inputs = [pages, links], outputs = [normalizedLinks]))
     jobs.append(Job('COMPUTE PAGERANK', DataProcessor.computePagerank, inputs = [normalizedLinks], outputs = [pagerank]))
-
-    # jobs.append(Job('BUILD EMBEDDINGS', Link2Vec.build, inputs = [aggregatedLinks], outputs = [embeddings]))
-    # jobs.append(Job('BUILD TSNE', TSNE.run, inputs = [embeddings, pagerank], outputs = [tsne]))
-    # jobs.append(Job('BUILD FINAL', DataProcessor.buildFinalTable, inputs = [tsne, dictionary], outputs = [final]))
-
-    # jobs.append(Job('BUILD DICTIONARY', WikidumpProcessor.buildDictionary, inputs = [pageTable], outputs = [dictionary])) #id title
-    # jobs.append(Job('BUILD LINKS', WikidumpProcessor.buildLinks, inputs = [dictionary, linksTable], outputs = [links])) #source target
-    # jobs.append(Job('BUILD AGGREGATED LINKS', WikidumpProcessor.buildAggregatedLinks, inputs = [links], outputs = [aggregatedLinks])) #source list-of-targets-space-separated
+    jobs.append(Job('COMPUTE EMBEDDINGS', DataProcessor.computeEmbeddings, inputs = [normalizedLinks], outputs = [embeddings], artifacts = embeddingsArtifacts))
+    jobs.append(Job('COMPUTE TSNE', DataProcessor.computeTSNE, inputs = [embeddings, pagerank], outputs = [tsne]))
+    jobs.append(Job('COMPUTE FINAL TABLE', DataProcessor.computeFinalTable, inputs = [tsne, pages], outputs = [final]))
 
     return jobs

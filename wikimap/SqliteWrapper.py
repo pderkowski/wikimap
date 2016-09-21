@@ -78,7 +78,7 @@ class TableLoader(object):
 
         return con
 
-pageTable = TableLoader({
+pages = TableLoader({
     'sourceName': 'page',
     'targetName': 'page',
     'schema': (
@@ -93,7 +93,7 @@ pageTable = TableLoader({
     'postprocessing': ['CREATE UNIQUE INDEX ns_title_idx ON page(page_namespace, page_title);']
 })
 
-linksTable = TableLoader({
+links = TableLoader({
     'sourceName': "pagelinks",
     'targetName': "links",
     'schema': (
@@ -109,3 +109,20 @@ linksTable = TableLoader({
     'postprocessing': ["CREATE INDEX from_id_idx ON links(pl_from);",
         "CREATE INDEX ns_title_idx ON links(pl_namespace, pl_title);"]
 })
+
+def iterateSelection(db, query, logFrequency=None, join=True):
+    logger = logging.getLogger(__name__)
+
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+
+    cur.execute(query)
+
+    for i, row in enumerate(cur):
+        if logFrequency and i % logFrequency == 0:
+            logger.info('Processed {} lines'.format(i))
+
+        if join:
+            yield ' '.join(row)+'\n'
+        else:
+            yield row
