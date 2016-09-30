@@ -41,8 +41,9 @@ class Job(object):
     def run(self, outputDir, config):
         t0 = time.time()
         try:
-            outputPaths = [os.path.join(outputDir, o) for o in self.outputs + self.artifacts]
-            with CompletionGuard(outputPaths) as guard:
+            outputPaths = [os.path.join(outputDir, o) for o in self.outputs]
+            guardedPaths = [os.path.join(outputDir, o) for o in self.outputs + self.artifacts]
+            with CompletionGuard(guardedPaths) as guard:
                 inputPaths = [os.path.join(outputDir, i) for i in self.inputs]
                 args = inputPaths + outputPaths
                 self._task(*args, **config)
