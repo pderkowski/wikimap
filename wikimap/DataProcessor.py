@@ -82,10 +82,23 @@ def iterateSelection(db, query, logFrequency=None, join=True):
             logger.info('Processed {} lines'.format(i))
 
         if join:
-            yield ' '.join(row)+'\n'
+            yield ' '.join(map(str, row))+'\n'
         else:
             yield row
 
+def stringify(obj):
+    if isinstance(obj, basestring):
+        return obj
+    else:
+        return str(obj)
+
+class GroupIterator(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        for k, group in itertools.groupby(self.iterator, op.itemgetter(0)):
+            yield map(stringify, [k] + [p[1] for p in group])
 
 def loadPageTable(pageSqlPath, output):
     blueprint = {
@@ -155,6 +168,23 @@ def loadCategoryLinksTable(categoryLinksSqlPath, output):
 
     categoryLinks = TableLoader(blueprint)
     categoryLinks.load(categoryLinksSqlPath, output)
+
+def loadPagePropertiesTable(pagePropertiesSqlPath, output):
+    blueprint = {
+        'sourceName': 'page_props',
+        'targetName': 'pageprops',
+        'schema': (
+                "CREATE TABLE pageprops (\n"
+                "pp_page        INTEGER     NOT NULL    DEFAULT '0',\n"
+                "pp_propname    TEXT        NOT NULL    DEFAULT '');\n"),
+        'recordPattern': '(?,?)',
+        'parser': Tools.getPagePropertiesRecords,
+        'postprocessing': ['CREATE INDEX page_idx ON pageprops(pp_page);',
+            'CREATE INDEX propname_idx ON pageprops(pp_propname);']
+    }
+
+    pageProperties = TableLoader(blueprint)
+    pageProperties.load(pagePropertiesSqlPath, output)
 
 def normalizeLinks(pageTablePath, linksTablePath, output):
     logger = logging.getLogger(__name__)
@@ -227,13 +257,8 @@ def computePagerank(normalizedLinksPath, pagerankPath):
     prCon.commit()
 
 def computeEmbeddings(normalizedLinksPath, embeddingsPath):
-    class GroupIterator(object): # gensim requires an iterable (that can be re-iterated)
-        def __iter__(self):
-            selection = iterateSelection(normalizedLinksPath, "SELECT * FROM norm_links", join=False)
-            for k, group in itertools.groupby(selection, op.itemgetter(0)):
-                yield map(str, [k] + [p[1] for p in group])
-
-    Link2Vec.build(GroupIterator(), embeddingsPath)
+    selection = iterateSelection(normalizedLinksPath, "SELECT * FROM norm_links", join=False)
+    Link2Vec.build(GroupIterator(selection), embeddingsPath)
 
 def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pagesNo=10000):
     selection = iterateSelection(pagerankPath, """
@@ -258,15 +283,106 @@ def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pagesNo=10000):
     tsneCon.executemany("INSERT INTO tsne VALUES (?, ?, ?, ?)", TSNE.run(embeddingsPath, map(op.itemgetter(0), selection)))
     tsneCon.commit()
 
+def selectCategories(categoryLinksPath, categoryPath, pagesPath, tsnePath, pagePropertiesPath, selectedPath):
+    logger = logging.getLogger(__name__)
 
-def computeFinalTable(tsnePath, pagesPath, finalPath):
+    con = sqlite3.connect(categoryLinksPath)
+
+    cursor = con.cursor()
+
+    cursor.execute("PRAGMA synchronous = OFF")
+    cursor.execute("PRAGMA journal_mode = OFF")
+    cursor.execute("PRAGMA cache_size = 10000000")
+
+    con.commit()
+
+    con.execute('ATTACH DATABASE ? AS db2', (pagesPath,))
+    con.execute('ATTACH DATABASE ? AS db3', (tsnePath,))
+    con.execute('ATTACH DATABASE ? AS db4', (categoryPath,))
+    con.execute('ATTACH DATABASE ? AS db5', (pagePropertiesPath,))
+
+    # statement = """
+    #     SELECT
+    #         cl_to,
+    #         page_title
+    #     FROM
+    #         categorylinks,
+    #         tsne,
+    #         page
+    #     WHERE
+    #         tsne_id = cl_from
+    #     AND cl_from = page_id
+    #     ORDER BY
+    #         cl_to ASC
+    #     """
+
+    statement = """
+        SELECT
+            cl_to,
+            cl_from
+        FROM
+            categorylinks,
+            tsne,
+            category
+        WHERE cl_to NOT IN
+            (SELECT
+                page_title
+            FROM
+                page,
+                pageprops
+            WHERE
+                page_id = pp_page
+            AND pp_propname = 'hiddencat')
+        AND cl_to = cat_title
+        AND tsne_id = cl_from
+        ORDER BY
+            cat_id
+        """
+
+    # statement = """
+    #     SELECT
+    #         page_title
+    #     FROM
+    #         page,
+    #         pageprops
+    #         -- category
+    #     WHERE
+    #         page_id = pp_page
+    #     -- AND page_namespace = 4
+    #     AND pp_propname = 'hiddencat'
+    #     LIMIT 100
+    #     """
+
+    # cursor.execute(statement)
+    # for row in cursor:
+    #     print row
+
+    logger.info('Query plan:')
+    cursor.execute("EXPLAIN QUERY PLAN "+statement)
+    for row in cursor:
+        print row
+
+    logger.info('Starting selecting categories.')
+
+    progressHandler = Utils.DumbProgressBar()
+    con.set_progress_handler(progressHandler.report, 10000000)
+
+    cursor.execute(statement)
+
+    with codecs.open(selectedPath,'w',encoding='utf8') as output:
+        for row in GroupIterator(cursor):
+            output.write(u' '.join(row)+'\n')
+
+    logger.info('Finished selecting categories.')
+
+def selectPoints(tsnePath, pagesPath, selectedPath):
     tsneCon = sqlite3.connect(tsnePath)
     tsneCon.execute('ATTACH DATABASE ? AS db2', (pagesPath,))
 
     cursor = tsneCon.cursor()
     cursor.execute("""
         SELECT
-            tsne_x, tsne_y, page_title
+            tsne_x, tsne_y, page_title, page_id
         FROM
             tsne,
             page
@@ -276,7 +392,6 @@ def computeFinalTable(tsnePath, pagesPath, finalPath):
             tsne_order ASC
         """)
 
-    with codecs.open(finalPath,'w',encoding='utf8') as output:
+    with codecs.open(selectedPath,'w',encoding='utf8') as output:
         for row in cursor:
-            output.write(u'{} {} {}\n'.format(row[0], row[1], row[2]))
-
+            output.write(u'{} {} {} {}\n'.format(row[0], row[1], row[2], row[3]))

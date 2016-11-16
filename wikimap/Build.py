@@ -16,34 +16,41 @@ def build():
     linksUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz'
     categoryUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-category.sql.gz'
     categoryLinksUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-categorylinks.sql.gz'
+    pagePropertiesUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page_props.sql.gz'
     pageSql = 'page.sql.gz'
     linksSql = 'pagelinks.sql.gz'
     categorySql = 'category.sql.gz'
     categoryLinksSql = 'categorylinks.sql.gz'
+    pagePropertiesSql = 'pageprops.sql.gz'
     page = 'page.db'
     links = 'links.db'
     category = 'category.db'
     categoryLinks = 'categoryLinks.db'
+    pageProperties = 'pageProperties.db'
     normalizedLinks = 'normalizedLinks.db'
     pagerank = 'pagerank.db'
     embeddings = 'embeddings'
     embeddingsArtifacts = [embeddings+a for a in ['.syn0_lockf.npy', '.syn0.npy', '.syn1neg.npy']]
     tsne = 'tsne.db'
-    final = 'final'
+    selectedPoints = 'selectedPoints'
+    selectedCategories = 'selectedCategories'
 
     jobs = []
     jobs.append(Job('DOWNLOAD PAGE TABLE', download(pageUrl), inputs = [], outputs = [pageSql]))
     jobs.append(Job('DOWNLOAD LINKS TABLE', download(linksUrl), inputs = [], outputs = [linksSql]))
     jobs.append(Job('DOWNLOAD CATEGORY TABLE', download(categoryUrl), inputs = [], outputs = [categorySql]))
     jobs.append(Job('DOWNLOAD CATEGORY LINKS TABLE', download(categoryLinksUrl), inputs = [], outputs = [categoryLinksSql]))
+    jobs.append(Job('DOWNLOAD PAGE PROPERTIES TABLE', download(pagePropertiesUrl), inputs = [], outputs = [pagePropertiesSql]))
     jobs.append(Job('LOAD PAGE TABLE', DataProcessor.loadPageTable, inputs = [pageSql], outputs = [page]))
     jobs.append(Job('LOAD LINKS TABLE', DataProcessor.loadLinksTable, inputs = [linksSql], outputs = [links]))
     jobs.append(Job('LOAD CATEGORY TABLE', DataProcessor.loadCategoryTable, inputs = [categorySql], outputs = [category]))
     jobs.append(Job('LOAD CATEGORY LINKS TABLE', DataProcessor.loadCategoryLinksTable, inputs = [categoryLinksSql], outputs = [categoryLinks]))
+    jobs.append(Job('LOAD PAGE PROPERTIES TABLE', DataProcessor.loadPagePropertiesTable, inputs = [pagePropertiesSql], outputs = [pageProperties]))
     jobs.append(Job('NORMALIZE LINKS', DataProcessor.normalizeLinks, inputs = [page, links], outputs = [normalizedLinks]))
     jobs.append(Job('COMPUTE PAGERANK', DataProcessor.computePagerank, inputs = [normalizedLinks], outputs = [pagerank]))
     jobs.append(Job('COMPUTE EMBEDDINGS', DataProcessor.computeEmbeddings, inputs = [normalizedLinks], outputs = [embeddings], artifacts = embeddingsArtifacts))
     jobs.append(Job('COMPUTE TSNE', DataProcessor.computeTSNE, inputs = [embeddings, pagerank], outputs = [tsne]))
-    jobs.append(Job('COMPUTE FINAL TABLE', DataProcessor.computeFinalTable, inputs = [tsne, page], outputs = [final]))
+    jobs.append(Job('SELECT POINTS', DataProcessor.selectPoints, inputs = [tsne, page], outputs = [selectedPoints]))
+    jobs.append(Job('SELECT CATEGORIES', DataProcessor.selectCategories, inputs = [categoryLinks, category, page, tsne, pageProperties], outputs = [selectedCategories]))
 
     return jobs

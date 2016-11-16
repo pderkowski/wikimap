@@ -77,7 +77,7 @@ py::list getPageRecords(const std::string& s) {
     decltype(records) filtered;
     std::copy_if(records.begin(), records.end(), std::back_inserter(filtered),
         [] (const decltype(records)::value_type& r) {
-            return r.ns == 0;
+            return r.ns == 0 || r.ns == 14;
         });
 
     return toPython(filtered);
@@ -102,6 +102,7 @@ py::list getCategoryLinksRecords(const std::string& s) {
     return toPython(parse<CategoryLinksRecord>(s));
 }
 
+const auto& getPagePropertiesRecords = getCategoryLinksRecords;
 
 BOOST_PYTHON_MODULE(libsqltools)
 {
@@ -109,4 +110,5 @@ BOOST_PYTHON_MODULE(libsqltools)
     py::def("getLinksRecords", getLinksRecords);
     py::def("getCategoryRecords", getCategoryRecords);
     py::def("getCategoryLinksRecords", getCategoryLinksRecords);
+    py::def("getPagePropertiesRecords", getPagePropertiesRecords);
 }
