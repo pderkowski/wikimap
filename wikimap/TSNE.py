@@ -1,44 +1,46 @@
-import gensim
 import logging
 import gc
-import tsne
 import numpy as np
-import itertools as it
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+# from MulticoreTSNE import MulticoreTSNE as TSNE
+import multiprocessing
 
-def _loadVectors(modelPath, ids):
+
+# def _loadVectors(modelPath, ids):
+#     logger = logging.getLogger(__name__)
+
+#     logger.info('Loading model.')
+#     model = gensim.models.Word2Vec.load(modelPath, mmap='r')
+
+#     logger.info('Getting vectors for {} words with highest pagerank score.'.format(len(ids)))
+
+#     vectors = np.asarray(model[ids], dtype=np.float64)
+
+#     model = None # release memory
+#     gc.collect() # release memory
+
+#     return vectors
+
+
+def train(embeddings):
     logger = logging.getLogger(__name__)
 
-    logger.info('Loading model.')
-    model = gensim.models.Word2Vec.load(modelPath, mmap='r')
-
-    logger.info('Getting vectors for {} words with highest pagerank score.'.format(len(ids)))
-
-    vectors = np.asarray(model[ids], dtype=np.float64)
-
-    model = None # release memory
-    gc.collect() # release memory
-
-    return vectors
-
-
-def run(modelPath, selectedPages):
-    logger = logging.getLogger(__name__)
-
-    vectors = _loadVectors(modelPath, map(str, selectedPages))
+    logger.info('Constructing numpy array.')
+    array = np.asarray(list(embeddings), dtype=np.float64)
 
     logger.info('Running PCA.')
-    logger.info(vectors.shape)
 
-    pca = PCA(50)
-    vectors = pca.fit_transform(vectors)
+    # pca = PCA(50)
+    # array = pca.fit_transform(array)
+    # pca = None # release memory
+    # gc.collect() # release memory
 
-    logger.info(vectors.shape)
     logger.info('Computing TSNE.')
 
-    tsne = TSNE(n_components=2, n_iter=1000, verbose=1, method='barnes_hut')
-    result = tsne.fit_transform(vectors)
+    # tsne = TSNE(n_components=2, n_iter=5000, verbose=1, method='barnes_hut', learning_rate=200, perplexity=20, n_jobs=multiprocessing.cpu_count())
+    tsne = TSNE(n_components=2, n_iter=5000, verbose=1, method='barnes_hut', learning_rate=500, perplexity=30)
 
-    for i, (p, vec) in enumerate(zip(selectedPages, result)):
-        yield (p, vec[0], vec[1], i)
+    result = tsne.fit_transform(array)
+
+    return result

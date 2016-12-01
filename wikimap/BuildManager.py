@@ -32,9 +32,13 @@ class BuildManager(object):
         logger.info('STARTING BUILD IN {}'.format(self._buildDir))
 
         for job in build:
-            logger.info('STARTING JOB: {}'.format(job.name))
+            if job.noskip \
+            or self._inputsChanged(job.inputs, changedFiles) \
+            or self._configChanged(config, job.name) \
+            or not self._outputsComputed(job) \
+            or not self._artifactsComputed(job):
+                logger.info('STARTING JOB: {}'.format(job.name))
 
-            if job.noskip or self._inputsChanged(job.inputs, changedFiles) or self._configChanged(config, job.name) or not self._outputsComputed(job) or not self._artifactsComputed(job):
                 changedFiles.update(job.outputs)
                 jobConfig = config.get(job.name, {})
 
@@ -51,6 +55,8 @@ class BuildManager(object):
                     self._printSummary(summary)
                     sys.exit(1)
             else:
+                logger.info('SKIPPING JOB: {}'.format(job.name))
+
                 job.skip()
                 summary.append((job.outcome, job.name, job.duration))
                 self._makeLinks(job.outputs)
