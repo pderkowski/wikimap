@@ -5,10 +5,11 @@ import Tools
 import Pagerank
 import Word2Vec
 import TSNE
+import NearestNeighbors
 import logging
-import itertools
 import codecs
-from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, pipe
+from itertools import imap, izip
+from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, PrintIt, pipe
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -67,7 +68,18 @@ def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pagesNo=10000):
 
     ids = pipe(pagerank.selectIdsByDescendingRank(pagesNo), StringifyIt, ColumnIt(0), list)
     mappings = TSNE.train(Word2Vec.getEmbeddings(embeddingsPath, ids))
-    tsne.populate(itertools.izip(ids, mappings[:,0], mappings[:,1], xrange(mappings.shape[0])))
+    tsne.populate(izip(ids, mappings[:,0], mappings[:,1], xrange(mappings.shape[0])))
+
+def computeHighDimensionalNeighbors(embeddingsPath, pagerankPath, outputPath, neighborsNo=10, pagesNo=10000):
+    pagerank = SQL.PagerankTable(pagerankPath)
+    ids = pipe(pagerank.selectIdsByDescendingRank(pagesNo), StringifyIt, ColumnIt(0), list)
+    embeddings = Word2Vec.getEmbeddings(embeddingsPath, ids)
+
+    table = SQL.HighDimensionalNeighborsTable(outputPath)
+    table.create()
+
+    distances, indices = NearestNeighbors.computeHighDimensionalNeighbors(embeddings, neighborsNo)
+    table.populate(izip(imap(int, ids), imap(lambda a: [int(ids[i]) for i in a], indices), imap(list, distances)))
 
 def selectVisualizedPoints(tsnePath, pagesPath, outputPath):
     source = SQL.Join(tsnePath, pagesPath)
@@ -96,7 +108,7 @@ def selectVisualizedCategories(categoryLinksPath, categoryPath, pagesPath, tsneP
 #         (id_, simList) = it
 #         return (id_, sqlite3.Binary(Utils.listToBinary(simList)))
 
-#     con.executemany("INSERT INTO similar VALUES (?, ?)", itertools.imap(extractValues, Link2Vec.iterateSimilar(embeddingsPath)))
+#     con.executemany("INSERT INTO similar VALUES (?, ?)", imap(extractValues, Link2Vec.iterateSimilar(embeddingsPath)))
 #     con.commit()
 
 

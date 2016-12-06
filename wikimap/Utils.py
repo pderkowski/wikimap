@@ -6,8 +6,9 @@ import ast
 import cPickle
 import urllib
 import time
-import itertools
 import operator
+import numpy
+from itertools import imap, groupby
 
 def openOrExit(file, mode='r'):
     logger = logging.getLogger(__name__)
@@ -92,44 +93,85 @@ def any2unicode(sth, encoding='utf8', errors='strict'):
 def pipe(arg, *funcs):
     for f in funcs:
         arg = f(arg)
+        if arg is None:
+            print f
     return arg
 
-class Logger(object):
-    def __init__(self, iterator, frequency):
-        self._iterator = iterator
-        self._frequency = frequency
+class PrintIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        def printAndReturn(sth):
+            print repr(sth)
+            return sth
+
+        return imap(printAndReturn, self.iterator)
+
+class LogIt(object):
+    def __init__(self, frequency):
+        self.frequency = frequency
+
+    def __call__(self, iterator):
+        self.iterator = iterator
+        return self
 
     def __iter__(self):
         logger = logging.getLogger(__name__)
-        for (i, e) in enumerate(self._iterator):
-            if self._frequency > 0 and i % self._frequency == 0:
+        for (i, e) in enumerate(self.iterator):
+            if self.frequency > 0 and i % self.frequency == 0:
                 logger.info('Processed {} records'.format(i))
             yield e
 
-def LogIt(frequency):
-    return lambda iterator, frequency=frequency: Logger(iterator, frequency)
-
 class GroupIt(object):
     def __init__(self, iterator):
-        self._iterator = iterator
+        self.iterator = iterator
 
     def __iter__(self):
-        for k, group in itertools.groupby(self._iterator, operator.itemgetter(0)):
-            yield [k] + [p[1] for p in group]
+        def join(arg):
+            k, group = arg
+            return [k] + [p[1] for p in group]
 
-def JoinIt(iterator):
-    return itertools.imap(lambda e: u' '.join(e)+u'\n', iterator)
+        return imap(join, groupby(self.iterator, operator.itemgetter(0)))
+
+class JoinIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return imap(lambda e: u' '.join(e)+u'\n', self.iterator)
 
 class DeferIt(object):
     def __init__(self, iteratorFactory):
-        self._iteratorFactory = iteratorFactory
+        self.iteratorFactory = iteratorFactory
 
     def __iter__(self):
-        return self._iteratorFactory()
+        return iter(self.iteratorFactory())
 
-def StringifyIt(iterator):
-    return itertools.imap(lambda e: map(any2unicode, e), iterator)
+class StringifyIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
 
-def ColumnIt(columnNo):
-    return lambda iterator, columnNo=columnNo: itertools.imap(operator.itemgetter(columnNo), iterator)
+    def __iter__(self):
+        return imap(lambda e: map(any2unicode, e), self.iterator)
 
+class ColumnIt(object):
+    def __init__(self, columnNo):
+        self.columnNo = columnNo
+
+    def __call__(self, iterator):
+        self.iterator = iterator
+        return self
+
+    def __iter__(self):
+        return imap(operator.itemgetter(self.columnNo), self.iterator)
+
+def any2array(something):
+    if isinstance(something, numpy.ndarray):
+        return something
+    elif isinstance(something, list):
+        return numpy.array(something)
+    elif hasattr(something, "__iter__"):
+        return numpy.array(list(something))
+    else:
+        raise ValueError("Argument is not convertable to an array.")

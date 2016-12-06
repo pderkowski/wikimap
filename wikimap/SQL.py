@@ -3,10 +3,19 @@ import Utils
 import contextlib
 import sqlite3
 
-def connect(*tables):
+def list2string(lst):
+    return repr(lst)
+
+def string2list(string):
+    return eval(string)
+
+sqlite3.register_adapter(list, list2string)
+sqlite3.register_converter("LIST", string2list)
+
+def connect(*tables, **kwargs):
     tables = list(tables)
 
-    con = sqlite3.connect(tables[0])
+    con = sqlite3.connect(tables[0], **kwargs)
 
     con.execute("PRAGMA synchronous = OFF")
     con.execute("PRAGMA journal_mode = OFF")
@@ -50,6 +59,7 @@ class Query(object):
 class TableProxy(object):
     def __init__(self, *paths):
         self._paths = paths
+        self._detect_types = 0
 
     def execute(self, query):
         with self._setup(query) as con:
@@ -74,7 +84,7 @@ class TableProxy(object):
         if query._logStart:
             logger.info("Starting {}".format(query._description))
 
-        con = connect(*self._paths)
+        con = connect(*self._paths, detect_types=self._detect_types)
 
         if query._logExplain:
             explain(con, query._query)
@@ -90,7 +100,6 @@ class TableProxy(object):
 
         if query._logEnd:
             logger.info("Finished {}.".format(query._description))
-
 
 class PageTable(TableProxy):
     def __init__(self, pageTablePath):
@@ -233,6 +242,22 @@ class TSNETable(TableProxy):
 
     def populate(self, values):
         self.executemany(Query("INSERT INTO tsne VALUES (?,?,?,?)", "populating tsne table", logStart=True), values)
+
+class HighDimensionalNeighborsTable(TableProxy):
+    def __init__(self, tablePath):
+        super(HighDimensionalNeighborsTable, self).__init__(tablePath)
+        self._detect_types = sqlite3.PARSE_DECLTYPES
+
+    def create(self):
+        self.execute(Query("""
+            CREATE TABLE hdnn (
+                hdnn_id                 INTEGER     NOT NULL    PRIMARY KEY,
+                hdnn_neighbors_ids      LIST        NOT NULL,
+                hdnn_neighbors_dists    LIST        NOT NULL
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query("INSERT INTO hdnn VALUES (?,?,?)", "populating hdnn table", logStart=True), values)
 
 class Join(TableProxy):
     def __init__(self, *tables):
