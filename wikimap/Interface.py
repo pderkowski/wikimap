@@ -78,8 +78,19 @@ def computeHighDimensionalNeighbors(embeddingsPath, pagerankPath, outputPath, ne
     table = SQL.HighDimensionalNeighborsTable(outputPath)
     table.create()
 
-    distances, indices = NearestNeighbors.computeHighDimensionalNeighbors(embeddings, neighborsNo)
+    distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighborsNo)
     table.populate(izip(imap(int, ids), imap(lambda a: [int(ids[i]) for i in a], indices), imap(list, distances)))
+
+def computeLowDimensionalNeighbors(tsnePath, outputPath, neighborsNo=10):
+    tsne = SQL.TSNETable(tsnePath)
+    ids = pipe(tsne.selectAll(), ColumnIt(0), list)
+    points = pipe(tsne.selectAll(), ColumnIt(1, 2))
+
+    table = SQL.LowDimensionalNeighborsTable(outputPath)
+    table.create()
+
+    distances, indices = NearestNeighbors.computeNearestNeighbors(points, neighborsNo)
+    table.populate(izip(ids, imap(lambda a: [ids[i] for i in a], indices), imap(list, distances)))
 
 def selectVisualizedPoints(tsnePath, pagesPath, outputPath):
     source = SQL.Join(tsnePath, pagesPath)

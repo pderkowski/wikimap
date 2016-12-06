@@ -27,6 +27,7 @@ class Build:
         embeddingsArtifacts = [embeddings+a for a in ['.syn0_lockf.npy', '.syn0.npy', '.syn1neg.npy']]
         tsne = 'tsne.db'
         highDimensionalNeighbors = 'hdnn.db'
+        lowDimensionalNeighbors = 'ldnn.db'
         visualizedPoints = 'visualizedPoints'
         visualizedCategories = 'visualizedCategories'
 
@@ -49,6 +50,7 @@ class Build:
         jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs = [normalizedLinks, vocabulary], outputs = [embeddings], artifacts = embeddingsArtifacts))
         jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs = [embeddings, pagerank], outputs = [tsne]))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs = [embeddings, pagerank], outputs = [highDimensionalNeighbors]))
+        jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs = [tsne], outputs = [lowDimensionalNeighbors]))
 
         jobs.append(Job('SELECT VISUALIZED POINTS', Interface.selectVisualizedPoints, inputs = [tsne, page], outputs = [visualizedPoints]))
         jobs.append(Job('SELECT VISUALIZED CATEGORIES', Interface.selectVisualizedCategories, inputs = [categoryLinks, category, page, tsne, pageProperties], outputs = [visualizedCategories]))

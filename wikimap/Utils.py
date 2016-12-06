@@ -156,15 +156,15 @@ class StringifyIt(object):
         return imap(lambda e: map(any2unicode, e), self.iterator)
 
 class ColumnIt(object):
-    def __init__(self, columnNo):
-        self.columnNo = columnNo
+    def __init__(self, *columns):
+        self.columns = columns
 
     def __call__(self, iterator):
         self.iterator = iterator
         return self
 
     def __iter__(self):
-        return imap(operator.itemgetter(self.columnNo), self.iterator)
+        return imap(operator.itemgetter(*self.columns), self.iterator)
 
 def any2array(something):
     if isinstance(something, numpy.ndarray):

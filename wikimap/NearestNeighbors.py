@@ -4,7 +4,7 @@ import logging
 import Utils
 
 
-def computeHighDimensionalNeighbors(data, neighborsNo):
+def computeNearestNeighbors(data, neighborsNo):
     logger = logging.getLogger(__name__)
 
     logger.info('Loading data.')
@@ -17,3 +17,4 @@ def computeHighDimensionalNeighbors(data, neighborsNo):
     distances, indices = nbrs.kneighbors(data)
 
     return distances[:, 1:], indices[:, 1:] # for every point its closest neighbor is the point itself, return only real neighbors
+

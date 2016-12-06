@@ -243,6 +243,9 @@ class TSNETable(TableProxy):
     def populate(self, values):
         self.executemany(Query("INSERT INTO tsne VALUES (?,?,?,?)", "populating tsne table", logStart=True), values)
 
+    def selectAll(self):
+        return self.select(Query("SELECT * FROM tsne"))
+
 class HighDimensionalNeighborsTable(TableProxy):
     def __init__(self, tablePath):
         super(HighDimensionalNeighborsTable, self).__init__(tablePath)
@@ -258,6 +261,22 @@ class HighDimensionalNeighborsTable(TableProxy):
 
     def populate(self, values):
         self.executemany(Query("INSERT INTO hdnn VALUES (?,?,?)", "populating hdnn table", logStart=True), values)
+
+class LowDimensionalNeighborsTable(TableProxy):
+    def __init__(self, tablePath):
+        super(LowDimensionalNeighborsTable, self).__init__(tablePath)
+        self._detect_types = sqlite3.PARSE_DECLTYPES
+
+    def create(self):
+        self.execute(Query("""
+            CREATE TABLE ldnn (
+                ldnn_id                 INTEGER     NOT NULL    PRIMARY KEY,
+                ldnn_neighbors_ids      LIST        NOT NULL,
+                ldnn_neighbors_dists    LIST        NOT NULL
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query("INSERT INTO ldnn VALUES (?,?,?)", "populating ldnn table", logStart=True), values)
 
 class Join(TableProxy):
     def __init__(self, *tables):
