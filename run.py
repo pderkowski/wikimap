@@ -19,7 +19,7 @@ def main():
         help="specify which build steps should not be skipped even if otherwise they would be")
     args = parser.parse_args()
 
-    build = Build.build()
+    build = Build.Build()
 
     if args.noskip is not None:
         build[args.noskip].noskip = True
@@ -28,11 +28,15 @@ def main():
         for i, s in enumerate(build):
             print '{:2}:\t{}'.format(i, s.name)
     elif "BUILDPATH" not in os.environ:
-        logger.critical("Set the BUILDPATH environment variable to a directory where you want the program to place the results in.")
+        logger.critical("Set the BUILDPATH environment variable to the directory where the program will place the generated files.")
         sys.exit(1)
     else:
         manager = BuildManager(os.environ["BUILDPATH"])
         manager.run(build, {})
+
+        # optionally copy the results (only the final files) to a new directory
+        if "EXPORTPATH" in os.environ:
+            manager.export(build.results, os.environ["EXPORTPATH"])
 
 if __name__=="__main__":
     main()

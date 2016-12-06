@@ -2,6 +2,7 @@ import os
 import Utils
 import logging
 import sys
+import shutil
 
 def getImmediateSubdirectories(directory):
     return [name for name in os.listdir(directory) if os.path.isdir(os.path.join(directory, name))]
@@ -63,6 +64,25 @@ class BuildManager(object):
                 self._makeLinks(job.artifacts)
 
         self._printSummary(summary)
+
+    def export(self, files, destDir):
+        destDir = os.path.realpath(destDir)
+
+        logger = logging.getLogger(__name__)
+        logger.info('EXPORTING RESULTS TO {}'.format(destDir))
+
+        if not os.path.isdir(destDir):
+            os.makedirs(destDir)
+
+        lastBuild = self._getLastDir()
+        for f in files:
+            path = os.path.join(lastBuild, f)
+
+            if os.path.exists(path):
+                if not os.path.isdir(destDir):
+                    os.makedirs(destDir)
+                destPath = os.path.join(destDir, f)
+                shutil.copyfile(path, destPath)
 
     def _outputsComputed(self, job):
         return self._lastDir and all(os.path.exists(os.path.join(self._lastDir, o)) for o in job.outputs)
@@ -137,7 +157,7 @@ class BuildManager(object):
         summaryStr = '\n\n'
 
         summaryStr += '-'*80+'\n'
-        summaryStr += '{:30} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
+        summaryStr += '{:35} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
         summaryStr += '-'*80+'\n'
 
         OKGREEN = '\033[92m'
@@ -156,7 +176,7 @@ class BuildManager(object):
             else:
                 COLOR = WARNING
 
-            summaryStr += '{:30} | {}[{}]{} | {} |'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
+            summaryStr += '{:35} | {}[{}]{} | {} |'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
 
         summaryStr += '-'*80+'\n'
 
