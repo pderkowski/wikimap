@@ -14,7 +14,8 @@ def train(dataIterator, vocabularyPath, outputPath):
 
     logger.info('Loading vocabulary.')
     model = gensim.models.Word2Vec.load(vocabularyPath)
-    model.train(dataIterator)
+    logger.info(model)
+    model.train(dataIterator, custom_version=True)
     logger.info(model)
     model.init_sims(replace=True)
     # model.delete_temporary_training_data(replace_word_vectors_with_normalized=True):

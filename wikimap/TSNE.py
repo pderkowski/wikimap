@@ -29,8 +29,7 @@ def train(embeddings):
     logger.info('Constructing numpy array.')
     array = np.asarray(list(embeddings), dtype=np.float64)
 
-    logger.info('Running PCA.')
-
+    # logger.info('Running PCA.')
     # pca = PCA(50)
     # array = pca.fit_transform(array)
     # pca = None # release memory
@@ -39,7 +38,7 @@ def train(embeddings):
     logger.info('Computing TSNE.')
 
     # tsne = TSNE(n_components=2, n_iter=5000, verbose=1, method='barnes_hut', learning_rate=200, perplexity=20, n_jobs=multiprocessing.cpu_count())
-    tsne = TSNE(n_components=2, n_iter=5000, verbose=1, method='barnes_hut', learning_rate=500, perplexity=30)
+    tsne = TSNE(n_components=2, n_iter=5000, verbose=1, method='barnes_hut', learning_rate=1000, perplexity=40, angle=0.8, early_exaggeration=4.0)
 
     result = tsne.fit_transform(array)
 
