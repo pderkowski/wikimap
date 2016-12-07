@@ -1,8 +1,6 @@
 from sklearn.neighbors import NearestNeighbors
-import numpy
 import logging
 import Utils
-
 
 def computeNearestNeighbors(data, neighborsNo):
     logger = logging.getLogger(__name__)

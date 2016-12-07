@@ -5,19 +5,18 @@ import subprocess
 import ast
 import cPickle
 import urllib
-import time
 import operator
 import numpy
 from itertools import imap, groupby
 
-def openOrExit(file, mode='r'):
+def openOrExit(file_, mode='r'):
     logger = logging.getLogger(__name__)
 
-    if mode == 'r' and not os.path.isfile(file):
-        logger.error('File {} does not exist.'.format(file))
+    if mode == 'r' and not os.path.isfile(file_):
+        logger.error('File {} does not exist.'.format(file_))
         sys.exit()
     else:
-        return open(file, mode)
+        return open(file_, mode)
 
 def getProgName(fileName):
     return os.path.splitext(os.path.basename(fileName))[0]
@@ -25,13 +24,13 @@ def getProgName(fileName):
 def formatDuration(secs):
     hours, rem = divmod(secs, 3600)
     minutes, seconds = divmod(rem, 60)
-    return "{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds)
+    return "{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds)
 
 def configLogging():
     logging.basicConfig(format='%(asctime)s:%(name)s:%(lineno)s:%(levelname)s:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
-def getParentDirectory(file):
-    return os.path.join(os.path.dirname(os.path.abspath(file)), '..')
+def getParentDirectory(file_):
+    return os.path.join(os.path.dirname(os.path.abspath(file_)), '..')
 
 class ProgressBar(object):
     def __init__(self, name):
@@ -44,23 +43,6 @@ class ProgressBar(object):
             sys.stdout.write("\33[2K\r" + self.name + "...DONE\n")
         else:
             sys.stdout.write("\33[2K\r" + self.name + "...%d%%" % percent)
-        sys.stdout.flush()
-
-class DumbProgressBar(object):
-    def __init__(self):
-        self.ticks = 0
-        self.lastTickTime = time.time()
-
-    def report(self):
-        now = time.time()
-        if (now - self.lastTickTime > 0.5): # prevent the progress bar from updating too frequently
-            sys.stdout.write("\33[2K\rProcessing"+"."*self.ticks)
-            sys.stdout.flush()
-            self.lastTickTime = now
-            self.ticks = (self.ticks + 1) % 4
-
-    def cleanup(self):
-        sys.stdout.write("\33[2K\r")
         sys.stdout.flush()
 
 def call(command):
@@ -111,6 +93,7 @@ class PrintIt(object):
 class LogIt(object):
     def __init__(self, frequency):
         self.frequency = frequency
+        self.iterator = None
 
     def __call__(self, iterator):
         self.iterator = iterator
@@ -158,6 +141,7 @@ class StringifyIt(object):
 class ColumnIt(object):
     def __init__(self, *columns):
         self.columns = columns
+        self.iterator = None
 
     def __call__(self, iterator):
         self.iterator = iterator

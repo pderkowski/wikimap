@@ -11,6 +11,9 @@ class BuildManager(object):
     def __init__(self, archiveDir):
         self._archiveDir = archiveDir
         self._buildPrefix = 'build'
+        self._lastDir = None
+        self._lastConfig = None
+        self._buildDir = None
 
     def run(self, build, config):
         if not os.path.exists(self._archiveDir):
@@ -140,8 +143,8 @@ class BuildManager(object):
         else:
             return None
 
-    def _getIndex(self, dir):
-        suffixStr = dir[len(self._buildPrefix):]
+    def _getIndex(self, dir_):
+        suffixStr = dir_[len(self._buildPrefix):]
         return int(suffixStr)
 
     def _getBuildIndex(self):

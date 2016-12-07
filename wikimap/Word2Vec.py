@@ -1,5 +1,3 @@
-import os
-import sys
 import gensim
 import logging
 import multiprocessing
@@ -25,16 +23,3 @@ def getEmbeddings(embeddingsPath, ids):
     model = gensim.models.Word2Vec.load(embeddingsPath, mmap='r')
     for id_ in ids:
         yield model[id_]
-
-# def
-
-# def iterateSimilar(modelPath):
-#     logger = logging.getLogger(__name__)
-
-#     logger.info('Loading model.')
-#     model = gensim.models.Word2Vec.load(modelPath, mmap='r')
-
-#     for i, word in enumerate(model.vocab):
-#         if i % 100 == 0:
-#             logger.info("Processed {} words.".format(i))
-#         yield (word, model.similar_by_word(word))
