@@ -9,7 +9,7 @@ import NearestNeighbors
 import logging
 import codecs
 from itertools import imap, izip
-from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, PrintIt, pipe
+from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, PrintIt, UnconsIt, pipe
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -92,35 +92,18 @@ def computeLowDimensionalNeighbors(tsnePath, outputPath, neighborsNo=10):
     distances, indices = NearestNeighbors.computeNearestNeighbors(points, neighborsNo)
     table.populate(izip(ids, imap(lambda a: [ids[i] for i in a], indices), imap(list, distances)))
 
-def selectVisualizedPoints(tsnePath, pagesPath, outputPath):
-    source = SQL.Join(tsnePath, pagesPath)
+def createWikimapPointsTable(tsnePath, pagesPath, hdnnPath, ldnnPath, outputPath):
+    data = SQL.Join(tsnePath, pagesPath, hdnnPath, ldnnPath)
 
-    with codecs.open(outputPath, 'w', encoding='utf8') as output:
-        for row in source.selectVisualizedPoints():
-            output.write(u'{} {} {} {}\n'.format(row[0], row[1], row[2], row[3]))
+    table = SQL.WikimapPointsTable(outputPath)
+    table.create()
 
-def selectVisualizedCategories(categoryLinksPath, categoryPath, pagesPath, tsnePath, pagePropertiesPath, outputPath):
-    source = SQL.Join(categoryLinksPath, pagesPath, tsnePath, categoryPath, pagePropertiesPath)
+    table.populate(data.selectWikimapPoints())
 
-    with codecs.open(outputPath, 'w' ,encoding='utf8') as output:
-        for row in pipe(source.selectVisualizedCategories(), GroupIt, StringifyIt, JoinIt):
-            output.write(row)
+def createWikimapCategoriesTable(categoryLinksPath, categoryPath, pagesPath, tsnePath, pagePropertiesPath, outputPath):
+    data = SQL.Join(categoryLinksPath, pagesPath, tsnePath, categoryPath, pagePropertiesPath)
 
+    table = SQL.WikimapCategoriesTable(outputPath)
+    table.create()
 
-# def computeSimilar(embeddingsPath, output):
-#     con = sqlite3.connect(output)
-#     con.execute("""
-#         CREATE TABLE similar (
-#             sim_id      INTEGER     NOT NULL    PRIMARY KEY,
-#             sim_list    BLOB        NOT NULL
-#         );""")
-
-#     def extractValues(it):
-#         (id_, simList) = it
-#         return (id_, sqlite3.Binary(Utils.listToBinary(simList)))
-
-#     con.executemany("INSERT INTO similar VALUES (?, ?)", imap(extractValues, Link2Vec.iterateSimilar(embeddingsPath)))
-#     con.commit()
-
-
-# def computeWordVectorNeighbors(modelPath, outputPath):
+    table.populate(pipe(data.selectWikimapCategories(), GroupIt, UnconsIt))

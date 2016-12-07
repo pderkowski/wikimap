@@ -303,22 +303,33 @@ class Join(TableProxy):
 
         return self.select(query)
 
-    def selectVisualizedPoints(self):
+    def selectWikimapPoints(self):
         query = Query("""
             SELECT
-                tsne_x, tsne_y, page_title, page_id
+                page_id,
+                page_title,
+                tsne_x,
+                tsne_y,
+                hdnn_neighbors_ids,
+                hdnn_neighbors_dists,
+                ldnn_neighbors_ids,
+                ldnn_neighbors_dists
             FROM
                 tsne,
-                page
+                page,
+                hdnn,
+                ldnn
             WHERE
-                tsne_id = page_id
+                page_id = tsne_id
+            AND page_id = hdnn_id
+            AND page_id = ldnn_id
             ORDER BY
                 tsne_order ASC
             """)
 
         return self.select(query)
 
-    def selectVisualizedCategories(self):
+    def selectWikimapCategories(self):
         query = Query("""
             SELECT
                 cl_to,
@@ -339,6 +350,6 @@ class Join(TableProxy):
             AND cl_to = cat_title
             AND tsne_id = cl_from
             ORDER BY
-                cat_id""", "selecting visualized categories", logProgress=True)
+                cat_id""", "selecting data for wikicategories", logProgress=True)
 
         return self.select(query)

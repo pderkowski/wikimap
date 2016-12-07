@@ -166,6 +166,13 @@ class ColumnIt(object):
     def __iter__(self):
         return imap(operator.itemgetter(*self.columns), self.iterator)
 
+class UnconsIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return imap(lambda lst: (lst[0], lst[1:]), self.iterator)
+
 def any2array(something):
     if isinstance(something, numpy.ndarray):
         return something

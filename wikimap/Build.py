@@ -28,8 +28,8 @@ class Build:
         tsne = 'tsne.db'
         highDimensionalNeighbors = 'hdnn.db'
         lowDimensionalNeighbors = 'ldnn.db'
-        visualizedPoints = 'visualizedPoints'
-        visualizedCategories = 'visualizedCategories'
+        wikimapPoints = 'wikimapPoints.db'
+        wikimapCategories = 'wikimapCategories.db'
 
         jobs = []
         jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pageUrl), inputs = [], outputs = [pageSql]))
@@ -52,11 +52,11 @@ class Build:
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs = [embeddings, pagerank], outputs = [highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs = [tsne], outputs = [lowDimensionalNeighbors]))
 
-        jobs.append(Job('SELECT VISUALIZED POINTS', Interface.selectVisualizedPoints, inputs = [tsne, page], outputs = [visualizedPoints]))
-        jobs.append(Job('SELECT VISUALIZED CATEGORIES', Interface.selectVisualizedCategories, inputs = [categoryLinks, category, page, tsne, pageProperties], outputs = [visualizedCategories]))
+        jobs.append(Job('CREATE WIKIMAP DATAPOINTS TABLE', Interface.createWikimapPointsTable, inputs = [tsne, page, highDimensionalNeighbors, lowDimensionalNeighbors], outputs = [wikimapPoints]))
+        jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.createWikimapCategoriesTable, inputs = [categoryLinks, category, page, tsne, pageProperties], outputs = [wikimapCategories]))
 
         self.jobs = jobs
-        self.results = [visualizedPoints, visualizedCategories]
+        self.results = [wikimapPoints, wikimapCategories]
 
     def __iter__(self):
         return iter(self.jobs)
