@@ -64,6 +64,31 @@ class WikimapPointsTable(TableProxy):
             VALUES (?,?,?,?,?,?,?,?)
         """, "populating wikipoints table", logStart=True), values)
 
+        self.execute(Query("CREATE UNIQUE INDEX title_idx ON wikipoints(wp_title);", "creating index title_idx in wikipoints table", logStart=True, logProgress=True))
+
+    def updateIndices(self, values):
+        self.executemany(Query("""
+            UPDATE wikipoints
+            SET
+                wp_xindex = ?,
+                wp_yindex = ?,
+                wp_zindex = ?
+            WHERE
+                wp_id = ?
+            """, "updating indices in wikipoints table", logStart=True), values)
+
+    def selectCoordsAndIds(self):
+        return self.select(Query("SELECT wp_x, wp_y, wp_id FROM wikipoints"))
+
+    def selectIds(self):
+        return self.select(Query("SELECT wp_id FROM wikipoints"))
+
+    def selectByTitle(self, title):
+        return self.select(Query("SELECT * FROM wikipoints WHERE wp_title={}".format(title)))
+
+    def selectByIds(self, ids):
+        return self.select(Query("SELECT * FROM wikipoints WHERE wp_id IN {}".format(tuple(ids))))
+
 class WikimapCategoriesTable(TableProxy):
     def __init__(self, tablePath):
         super(WikimapCategoriesTable, self).__init__(tablePath, useCustomTypes=True)
