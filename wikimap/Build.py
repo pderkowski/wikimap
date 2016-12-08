@@ -56,7 +56,7 @@ class Build(object):
         jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.createWikimapCategoriesTable, inputs=[categoryLinks, category, page, tsne, pageProperties], outputs=[wikimapCategories]))
 
         self.jobs = jobs
-        self.results = [wikimapPoints, wikimapCategories, highDimensionalNeighbors, lowDimensionalNeighbors]
+        self.results = [wikimapPoints, wikimapCategories]
 
     def __iter__(self):
         return iter(self.jobs)
