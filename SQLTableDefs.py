@@ -89,6 +89,9 @@ class WikimapPointsTable(TableProxy):
     def selectByIds(self, ids):
         return self.select(Query("SELECT * FROM wikipoints WHERE wp_id IN {}".format(tuple(ids))))
 
+    def selectTitles(self):
+        return self.select(Query("SELECT wp_title FROM wikipoints"))
+
 class WikimapCategoriesTable(TableProxy):
     def __init__(self, tablePath):
         super(WikimapCategoriesTable, self).__init__(tablePath, useCustomTypes=True)
@@ -106,3 +109,6 @@ class WikimapCategoriesTable(TableProxy):
 
     def selectByTitle(self, title):
         return self.select(Query("SELECT * FROM wikicategories WHERE wc_title={}".format(title)))
+
+    def selectTitles(self):
+        return self.select(Query("SELECT wc_title FROM wikicategories"))
