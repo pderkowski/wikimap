@@ -84,7 +84,7 @@ class WikimapPointsTable(TableProxy):
         return self.select(Query("SELECT wp_id FROM wikipoints"))
 
     def selectByTitle(self, title):
-        return self.select(Query("SELECT * FROM wikipoints WHERE wp_title={}".format(title)))
+        return self.select(Query("SELECT * FROM wikipoints WHERE wp_title='{}'".format(title)))
 
     def selectByIds(self, ids):
         return self.select(Query("SELECT * FROM wikipoints WHERE wp_id IN {}".format(tuple(ids))))
@@ -108,7 +108,7 @@ class WikimapCategoriesTable(TableProxy):
         self.execute(Query("CREATE UNIQUE INDEX title_idx ON wikicategories(wc_title);", "creating index title_idx in wikicategories table", logStart=True, logProgress=True))
 
     def selectByTitle(self, title):
-        return self.select(Query("SELECT * FROM wikicategories WHERE wc_title={}".format(title)))
+        return self.select(Query("SELECT * FROM wikicategories WHERE wc_title='{}'".format(title)))
 
     def selectTitles(self):
         return self.select(Query("SELECT wc_title FROM wikicategories"))
