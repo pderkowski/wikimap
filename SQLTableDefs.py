@@ -87,7 +87,8 @@ class WikimapPointsTable(TableProxy):
         return self.select(Query("SELECT * FROM wikipoints WHERE wp_title='{}'".format(title)))
 
     def selectByIds(self, ids):
-        return self.select(Query("SELECT * FROM wikipoints WHERE wp_id IN {}".format(tuple(ids))))
+        ids = '(' + ','.join(map(str, ids)) + ')'
+        return self.select(Query("SELECT * FROM wikipoints WHERE wp_id IN {}".format(ids)))
 
     def selectTitles(self):
         return self.select(Query("SELECT wp_title FROM wikipoints"))
