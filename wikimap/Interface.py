@@ -64,32 +64,35 @@ def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pagesNo=10000):
 
     ids = pipe(pagerank.selectIdsByDescendingRank(pagesNo), StringifyIt, ColumnIt(0), list)
     mappings = TSNE.train(Word2Vec.getEmbeddings(embeddingsPath, ids))
-    tsne.populate(izip(ids, mappings[:, 0], mappings[:, 1], xrange(mappings.shape[0])))
+    tsne.populate(izip(ids, mappings[:, 0], mappings[:, 1]))
 
-def computeHighDimensionalNeighbors(embeddingsPath, pagerankPath, outputPath, neighborsNo=10, pagesNo=10000):
-    pagerank = SQLTableDefs.PagerankTable(pagerankPath)
-    ids = pipe(pagerank.selectIdsByDescendingRank(pagesNo), StringifyIt, ColumnIt(0), list)
-    embeddings = Word2Vec.getEmbeddings(embeddingsPath, ids)
+def computeHighDimensionalNeighbors(embeddingsPath, tsnePath, pagePath, outputPath, neighborsNo=10):
+    joined = SQLTableDefs.Join(tsnePath, pagePath)
+
+    data = list(joined.select_id_title_tsneX_tsneY())
+    ids, titles = list(ColumnIt(0)(data)), list(ColumnIt(1)(data))
+    embeddings = Word2Vec.getEmbeddings(embeddingsPath, imap(str, ids))
 
     table = SQLTableDefs.HighDimensionalNeighborsTable(outputPath)
     table.create()
 
     distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighborsNo)
-    table.populate(izip(imap(int, ids), imap(lambda a: [int(ids[i]) for i in a], indices), imap(list, distances)))
+    table.populate(izip(ids, imap(lambda a: [titles[i] for i in a], indices), imap(list, distances)))
 
-def computeLowDimensionalNeighbors(tsnePath, outputPath, neighborsNo=10):
-    tsne = SQLTableDefs.TSNETable(tsnePath)
-    ids = pipe(tsne.selectAll(), ColumnIt(0), list)
-    points = pipe(tsne.selectAll(), ColumnIt(1, 2))
+def computeLowDimensionalNeighbors(tsnePath, pagePath, outputPath, neighborsNo=10):
+    joined = SQLTableDefs.Join(tsnePath, pagePath)
+
+    data = list(joined.select_id_title_tsneX_tsneY())
+    ids, titles, points = list(ColumnIt(0)(data)), list(ColumnIt(1)(data)), ColumnIt(2, 3)(data)
 
     table = SQLTableDefs.LowDimensionalNeighborsTable(outputPath)
     table.create()
 
     distances, indices = NearestNeighbors.computeNearestNeighbors(points, neighborsNo)
-    table.populate(izip(ids, imap(lambda a: [ids[i] for i in a], indices), imap(list, distances)))
+    table.populate(izip(ids, imap(lambda a: [titles[i] for i in a], indices), imap(list, distances)))
 
-def createWikimapPointsTable(tsnePath, pagesPath, hdnnPath, ldnnPath, outputPath):
-    data = SQLTableDefs.Join(tsnePath, pagesPath, hdnnPath, ldnnPath)
+def createWikimapPointsTable(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath, outputPath):
+    data = SQLTableDefs.Join(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath)
 
     table = SQLTableDefs.WikimapPointsTable(outputPath)
     table.create()

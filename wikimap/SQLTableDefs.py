@@ -136,12 +136,11 @@ class TSNETable(TableProxy):
             CREATE TABLE tsne (
                 tsne_id         INTEGER     NOT NULL    PRIMARY KEY,
                 tsne_x          REAL        NOT NULL,
-                tsne_y          REAL        NOT NULL,
-                tsne_order      INTEGER     NOT NULL
+                tsne_y          REAL        NOT NULL
             );"""))
 
     def populate(self, values):
-        self.executemany(Query("INSERT INTO tsne VALUES (?,?,?,?)", "populating tsne table", logStart=True), values)
+        self.executemany(Query("INSERT INTO tsne VALUES (?,?,?)", "populating tsne table", logStart=True), values)
 
     def selectAll(self):
         return self.select(Query("SELECT * FROM tsne"))
@@ -186,14 +185,16 @@ class Join(TableProxy):
                 tsne,
                 page,
                 hdnn,
-                ldnn
+                ldnn,
+                pagerank
             WHERE
                 page_id = tsne_id
             AND page_id = hdnn_id
             AND page_id = ldnn_id
+            AND page_id = pr_id
             ORDER BY
-                tsne_order ASC
-            """)
+                pr_rank DESC
+            """, "selecting data for wikipoints", logProgress=True)
 
         return self.select(query)
 
@@ -219,5 +220,20 @@ class Join(TableProxy):
             AND tsne_id = cl_from
             ORDER BY
                 cat_id""", "selecting data for wikicategories", logProgress=True)
+
+        return self.select(query)
+
+    def select_id_title_tsneX_tsneY(self):
+        query = Query("""
+            SELECT
+                page_id,
+                page_title,
+                tsne_x,
+                tsne_y
+            FROM
+                page,
+                tsne
+            WHERE
+                page_id = tsne_id""", logProgress=True)
 
         return self.select(query)
