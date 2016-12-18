@@ -57,12 +57,12 @@ def computeEmbeddings(normalizedLinksPath, vocabularyPath, outputPath):
     normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
     Word2Vec.train(pipe(normLinks.selectAll, DeferIt, StringifyIt), vocabularyPath, outputPath)
 
-def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pagesNo=10000):
+def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
     tsne = SQLTableDefs.TSNETable(tsnePath)
     tsne.create()
 
-    ids = pipe(pagerank.selectIdsByDescendingRank(pagesNo), StringifyIt, ColumnIt(0), list)
+    ids = pipe(pagerank.selectIdsByDescendingRank(pointCount), StringifyIt, ColumnIt(0), list)
     mappings = TSNE.train(Word2Vec.getEmbeddings(embeddingsPath, ids))
     tsne.populate(izip(ids, mappings[:, 0], mappings[:, 1]))
 

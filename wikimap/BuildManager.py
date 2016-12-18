@@ -15,7 +15,7 @@ class BuildManager(object):
         self._lastConfig = None
         self._buildDir = None
 
-    def run(self, build, config):
+    def run(self, build):
         if not os.path.exists(self._archiveDir):
             os.makedirs(self._archiveDir)
 
@@ -28,45 +28,50 @@ class BuildManager(object):
         if not os.path.exists(self._buildDir):
             os.makedirs(self._buildDir)
 
-        Utils.saveToFile(os.path.join(self._buildDir, 'config'), config)
 
         changedFiles = set()
         summary = []
+        config = {}
 
         logger.info('STARTING BUILD IN {}'.format(self._buildDir))
 
         for job in build:
             if job.noskip \
             or self._inputsChanged(job.inputs, changedFiles) \
-            or self._configChanged(config, job.name) \
+            or self._configChanged(job) \
             or not self._outputsComputed(job) \
             or not self._artifactsComputed(job):
                 logger.info('STARTING JOB: {}'.format(job.name))
 
                 changedFiles.update(job.outputs)
-                jobConfig = config.get(job.name, {})
 
                 try:
-                    job.run(self._buildDir, jobConfig)
+                    job.run(self._buildDir)
                     summary.append((job.outcome, job.name, job.duration))
+                    config[job.name] = job.config
                 except KeyboardInterrupt:
                     summary.append((job.outcome, job.name, job.duration))
                     self._printSummary(summary)
+                    Utils.saveToFile(os.path.join(self._buildDir, 'config'), config)
                     sys.exit(1)
                 except Exception, e:
                     logger.exception(str(e))
                     summary.append((job.outcome, job.name, job.duration))
                     self._printSummary(summary)
+                    Utils.saveToFile(os.path.join(self._buildDir, 'config'), config)
                     sys.exit(1)
             else:
                 logger.info('SKIPPING JOB: {}'.format(job.name))
 
                 job.skip()
                 summary.append((job.outcome, job.name, job.duration))
+                config[job.name] = job.config
+
                 self._makeLinks(job.outputs)
                 self._makeLinks(job.artifacts)
 
         self._printSummary(summary)
+        Utils.saveToFile(os.path.join(self._buildDir, 'config'), config)
 
     def export(self, files, destDir):
         destDir = os.path.realpath(destDir)
@@ -96,9 +101,9 @@ class BuildManager(object):
     def _inputsChanged(self, inputs, changedFiles):
         return any(input_ in changedFiles for input_ in inputs)
 
-    def _configChanged(self, config, jobName):
-        lastTargetConfig = self._lastConfig.get(jobName, {})
-        currentTargetConfig = config.get(jobName, {})
+    def _configChanged(self, job):
+        lastTargetConfig = self._lastConfig.get(job.name, {})
+        currentTargetConfig = job.config
         return lastTargetConfig != currentTargetConfig
 
     def _makeLinks(self, filenames):

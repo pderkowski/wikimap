@@ -32,11 +32,11 @@ def main():
         sys.exit(1)
     else:
         manager = BuildManager(os.environ["BUILDPATH"])
-        manager.run(build, {})
+        manager.run(build)
 
         # optionally copy the results (only the final files) to a new directory
         if "EXPORTPATH" in os.environ:
             manager.export(build.results, os.environ["EXPORTPATH"])
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
