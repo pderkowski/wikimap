@@ -13,6 +13,9 @@ SQLTOOLSDIR = wikimap/Tools
 SQLTOOLSSOURCES = $(SQLTOOLSDIR)/sqltools.cpp $(SQLTOOLSDIR)/records.cpp $(SQLTOOLSDIR)/parser.cpp
 SQLTOOLSOBJECTS = $(patsubst %.cpp, %.o, $(SQLTOOLSSOURCES))
 
+TSNEDIR = external/bhtsne
+TSNEBIN = $(TSNEDIR)/bh_tsne
+
 PAGERANKTESTBIN = $(PAGERANKTESTDIR)/run_tests
 PAGERANKBIN = $(PAGERANKDIR)/pagerank
 SQLTOOLSLIB = $(SQLTOOLSDIR)/libsqltools.so
@@ -32,7 +35,7 @@ CXXFLAGS = -std=c++11 -O2
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-build: $(PAGERANKBIN) $(SQLTOOLSLIB)
+build: $(PAGERANKBIN) $(SQLTOOLSLIB) $(TSNEBIN)
 
 $(PAGERANKTESTBIN): $(PAGERANKCOMMONOBJECTS) $(PAGERANKTESTOBJECTS)
 	@mkdir -p $(@D)
@@ -43,6 +46,9 @@ $(PAGERANKBIN): $(PAGERANKCOMMONOBJECTS) $(PAGERANKBINSOURCES)
 
 $(SQLTOOLSLIB): $(SQLTOOLSOBJECTS)
 	$(CXX) $(CXXFLAGS) -o $(SQLTOOLSLIB) $^ -shared -lboost_python
+
+$(TSNEBIN):
+	g++ $(TSNEDIR)/sptree.cpp $(TSNEDIR)/tsne.cpp -o $(TSNEBIN) -O2
 
 test: build $(PAGERANKTESTBIN)
 	./$(PAGERANKTESTBIN)
