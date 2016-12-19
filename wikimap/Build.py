@@ -48,7 +48,7 @@ class Build(object):
         jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[normalizedLinks], outputs=[pagerank]))
         jobs.append(Job('COMPUTE WORD VOCABULARY', Interface.computeVocabulary, inputs=[normalizedLinks], outputs=[vocabulary], artifacts=vocabularyArtifacts))
         jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs=[normalizedLinks, vocabulary], outputs=[embeddings], artifacts=embeddingsArtifacts))
-        jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=10000))
+        jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))
 

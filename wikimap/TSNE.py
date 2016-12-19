@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from sklearn.manifold import TSNE
+import bhtsne
 
 def train(embeddings):
     logger = logging.getLogger(__name__)
@@ -10,6 +10,4 @@ def train(embeddings):
 
     logger.info('Computing TSNE.')
 
-    tsne = TSNE(n_components=2, n_iter=5000, verbose=1, method='barnes_hut', learning_rate=1000, perplexity=40, angle=0.8, early_exaggeration=4.0)
-
-    return tsne.fit_transform(array)
+    return bhtsne.run_bh_tsne(array, no_dims=2, perplexity=40, theta=0.5, randseed=-1, verbose=True, initial_dims=50)
