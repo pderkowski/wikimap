@@ -41,9 +41,7 @@ class WikimapPointsTable(TableProxy):
                 wp_title                TEXT        NOT NULL,
                 wp_x                    REAL        NOT NULL,
                 wp_y                    REAL        NOT NULL,
-                wp_xindex               INTEGER     NOT NULL    DEFAULT '0', -- filled by wikimap_ui
-                wp_yindex               INTEGER     NOT NULL    DEFAULT '0', -- filled by wikimap_ui
-                wp_zindex               INTEGER     NOT NULL    DEFAULT '0', -- filled by wikimap_ui
+                wp_index                TEXT        NOT NULL    DEFAULT '',
                 wp_high_dim_neighs      LIST        NOT NULL,
                 wp_high_dim_dists       LIST        NOT NULL,
                 wp_low_dim_neighs       LIST        NOT NULL,
@@ -66,16 +64,16 @@ class WikimapPointsTable(TableProxy):
 
         self.execute(Query("CREATE UNIQUE INDEX title_idx ON wikipoints(wp_title);", "creating index title_idx in wikipoints table", logStart=True, logProgress=True))
 
-    def updateIndices(self, values):
+    def updateIndex(self, values):
         self.executemany(Query("""
             UPDATE wikipoints
             SET
-                wp_xindex = ?,
-                wp_yindex = ?,
-                wp_zindex = ?
+                wp_index = ?
             WHERE
                 wp_id = ?
             """, "updating indices in wikipoints table", logStart=True), values)
+        self.execute(Query("DROP INDEX IF EXISTS index_idx"))
+        self.execute(Query("CREATE INDEX index_idx ON wikipoints(wp_index);", "creating index index_idx in wikipoints table", logStart=True, logProgress=True))
 
     def selectCoordsAndIds(self):
         return self.select(Query("SELECT wp_x, wp_y, wp_id FROM wikipoints"))
