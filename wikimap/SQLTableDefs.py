@@ -237,3 +237,20 @@ class Join(TableProxy):
                 page_id = tsne_id""", logProgress=True)
 
         return self.select(query)
+
+    def select_id_x_y_byRank(self):
+        query = Query("""
+            SELECT
+                wp_id,
+                wp_x,
+                wp_y
+            FROM
+                wikipoints,
+                pagerank
+            WHERE
+                wp_id = pr_id
+            ORDER BY
+                pr_rank DESC
+            """, logProgress=True)
+
+        return self.select(query)

@@ -3,7 +3,7 @@ import sys
 import os
 import subprocess
 import ast
-import cPickle
+import pickle
 import urllib
 import operator
 import numpy
@@ -58,8 +58,8 @@ def saveToFile(path, dict_):
     with open(path, 'w') as f:
         f.write(str(dict_))
 
-def listToBinary(lst):
-    return cPickle.dumps(lst, -1)
+def list2bytes(lst):
+    return pickle.dumps(lst, 2)
 
 def download(url):
     return lambda output: urllib.urlretrieve(url, output, reporthook=ProgressBar(url).report)

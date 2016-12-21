@@ -4,6 +4,8 @@ import Pagerank
 import Word2Vec
 import TSNE
 import NearestNeighbors
+import ZoomIndexer
+import shelve
 from itertools import imap, izip
 from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, pipe
 
@@ -106,3 +108,19 @@ def createWikimapCategoriesTable(categoryLinksPath, categoryPath, pagesPath, tsn
     table.create()
 
     table.populate(pipe(data.selectWikimapCategories(), GroupIt, UnconsIt))
+
+def createZoomIndex(wikipointsPath, pagerankPath, indexPath, metadataPath, bucketSize=100):
+    joined = SQLTableDefs.Join(wikipointsPath, pagerankPath)
+
+    data = list(joined.select_id_x_y_byRank())
+    indexer = ZoomIndexer.Indexer(ColumnIt(1, 2)(data), ColumnIt(0)(data), bucketSize)
+
+    trie = indexer.getIndexTrie()
+    trie.save(indexPath)
+
+    wikipoints = SQLTableDefs.WikimapPointsTable(wikipointsPath)
+    wikipoints.updateIndex(indexer)
+
+    metadata = shelve.open(metadataPath)
+    metadata['bounds'] = indexer.getBounds()
+    metadata.close()
