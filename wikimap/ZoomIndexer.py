@@ -1,13 +1,13 @@
 from math import floor, ceil
 import logging
-import marisa_trie
 
 class Indexer(object):
     def __init__(self, points, data, bucketSize):
         logger = logging.getLogger(__name__)
 
         self._bucketSize = bucketSize
-        self._idx2bucket = {"": []}
+        self._idx2bucket = {u'': []}
+        self._data2index = {}
 
         points = list(points)
         data = list(data)
@@ -20,16 +20,14 @@ class Indexer(object):
 
         self._prune()
 
-    def getIndexTrie(self):
-        return marisa_trie.Trie(self._idx2bucket)
-
     def getBounds(self):
         return self._bounds
 
-    def __iter__(self):
-        for index, datalist in self._idx2bucket.iteritems():
-            for _, data in datalist:
-                yield index, data
+    def index2data(self):
+        return [(idx, [d for _, d in lst]) for idx, lst in self._idx2bucket.iteritems()]
+
+    def data2index(self):
+        return self._data2index.iteritems()
 
     def _add(self, point, data):
         bucketIdx = self._findBucket(point)
@@ -40,11 +38,14 @@ class Indexer(object):
 
         self._idx2bucket[bucketIdx].append((point, data))
 
+        if data not in self._data2index:
+            self._data2index[data] = bucketIdx
+
     def _isFull(self, idx):
         return len(self._idx2bucket[idx]) >= self._bucketSize
 
     def _findBucket(self, point):
-        idx = ""
+        idx = u''
         bounds = self._bounds
 
         while True:
@@ -62,24 +63,24 @@ class Indexer(object):
 
         if   point[0] >= xmin and point[0] < xmid \
         and  point[1] >= ymin and point[1] < ymid:
-            return idx+'0', (xmin, ymin, xmid, ymid)
+            return idx+u'0', (xmin, ymin, xmid, ymid)
         elif point[0] >= xmid and point[0] < xmax \
         and  point[1] >= ymin and point[1] < ymid:
-            return idx+'1', (xmid, ymin, xmax, ymid)
+            return idx+u'1', (xmid, ymin, xmax, ymid)
         elif point[0] >= xmid and point[0] < xmax \
         and  point[1] >= ymid and point[1] < ymax:
-            return idx+'2', (xmid, ymid, xmax, ymax)
+            return idx+u'2', (xmid, ymid, xmax, ymax)
         elif point[0] >= xmin and point[0] < xmid \
         and  point[1] >= ymid and point[1] < ymax:
-            return idx+'3', (xmin, ymid, xmid, ymax)
+            return idx+u'3', (xmin, ymid, xmid, ymax)
         else:
             raise RuntimeError('Point is not in bounds.')
 
     def _split(self, idx):
-        self._idx2bucket[idx+'0'] = []
-        self._idx2bucket[idx+'1'] = []
-        self._idx2bucket[idx+'2'] = []
-        self._idx2bucket[idx+'3'] = []
+        self._idx2bucket[idx+u'0'] = []
+        self._idx2bucket[idx+u'1'] = []
+        self._idx2bucket[idx+u'2'] = []
+        self._idx2bucket[idx+u'3'] = []
 
         for p, d in self._idx2bucket[idx]:
             self._add(p, d)

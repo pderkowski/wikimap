@@ -3,7 +3,6 @@ import sys
 import os
 import subprocess
 import ast
-import pickle
 import urllib
 import operator
 import numpy
@@ -57,9 +56,6 @@ def loadFromFile(path):
 def saveToFile(path, dict_):
     with open(path, 'w') as f:
         f.write(str(dict_))
-
-def list2bytes(lst):
-    return pickle.dumps(lst, 2)
 
 def download(url):
     return lambda output: urllib.urlretrieve(url, output, reporthook=ProgressBar(url).report)
@@ -156,6 +152,13 @@ class UnconsIt(object):
 
     def __iter__(self):
         return imap(lambda lst: (lst[0], lst[1:]), self.iterator)
+
+class FlipIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return imap(lambda cols: cols[::-1], self.iterator)
 
 def any2array(something):
     if isinstance(something, numpy.ndarray):

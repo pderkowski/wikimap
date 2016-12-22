@@ -6,8 +6,9 @@ import TSNE
 import NearestNeighbors
 import ZoomIndexer
 import shelve
+from common import Zoom
 from itertools import imap, izip
-from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, pipe
+from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, FlipIt, pipe
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -115,11 +116,11 @@ def createZoomIndex(wikipointsPath, pagerankPath, indexPath, metadataPath, bucke
     data = list(joined.select_id_x_y_byRank())
     indexer = ZoomIndexer.Indexer(ColumnIt(1, 2)(data), ColumnIt(0)(data), bucketSize)
 
-    trie = indexer.getIndexTrie()
-    trie.save(indexPath)
+    zoom = Zoom.ZoomIndex(indexPath)
+    zoom.build(indexer.index2data())
 
     wikipoints = SQLTableDefs.WikimapPointsTable(wikipointsPath)
-    wikipoints.updateIndex(indexer)
+    wikipoints.updateIndex(FlipIt(indexer.data2index()))
 
     metadata = shelve.open(metadataPath)
     metadata['bounds'] = indexer.getBounds()
