@@ -7,7 +7,9 @@ import NearestNeighbors
 import ZoomIndexer
 import shelve
 from common.Zoom import Zoom
-from itertools import imap, izip
+from common.Terms import TermIndex
+from itertools import imap, izip, repeat
+from operator import itemgetter
 from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, FlipIt, pipe
 
 def createPageTable(pageSql, outputPath):
@@ -125,3 +127,11 @@ def createZoomIndex(wikipointsPath, pagerankPath, indexPath, metadataPath, bucke
     metadata = shelve.open(metadataPath)
     metadata['bounds'] = indexer.getBounds()
     metadata.close()
+
+def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
+    wikipoints = SQLTableDefs.WikimapPointsTable(wikipointsPath)
+    categories = SQLTableDefs.WikimapCategoriesTable(wikicategoriesPath)
+
+    termIndex = TermIndex(outputPath)
+    termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
+    termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))

@@ -1,6 +1,7 @@
 import logging
 import sys
 import os
+import shutil
 import subprocess
 import ast
 import urllib
@@ -169,3 +170,42 @@ def any2array(something):
         return numpy.array(list(something))
     else:
         raise ValueError("Argument is not convertable to an array.")
+
+def linkDirectory(src, dst):
+    names = os.listdir(src)
+    os.makedirs(dst)
+    errors = []
+    for name in names:
+        srcname = os.path.join(src, name)
+        dstname = os.path.join(dst, name)
+        try:
+            if os.path.isdir(srcname):
+                linkDirectory(srcname, dstname)
+            else:
+                os.link(srcname, dstname)
+            # XXX What about devices, sockets etc.?
+        except OSError as why:
+            errors.append((srcname, dstname, str(why)))
+        # catch the Error from the recursive copytree so that we can
+        # continue with other files
+        except StandardError as err:
+            errors.extend(err.args[0])
+    try:
+        shutil.copystat(src, dst)
+    except OSError as why:
+        # can't copy file access times on Windows
+        if why.winerror is None:
+            errors.extend((src, dst, str(why)))
+    if errors:
+        raise StandardError(errors)
+
+def clearDirectory(directory):
+    for f in os.listdir(directory):
+        file_path = os.path.join(directory, f)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)

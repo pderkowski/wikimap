@@ -3,6 +3,7 @@ import Utils
 import logging
 import sys
 import shutil
+import errno
 
 def getImmediateSubdirectories(directory):
     return [name for name in os.listdir(directory) if os.path.isdir(os.path.join(directory, name))]
@@ -82,15 +83,20 @@ class BuildManager(object):
         if not os.path.isdir(destDir):
             os.makedirs(destDir)
 
+        Utils.clearDirectory(destDir)
+
         lastBuild = self._getLastDir()
         for f in files:
-            path = os.path.join(lastBuild, f)
+            src = os.path.join(lastBuild, f)
+            dst = os.path.join(destDir, f)
 
-            if os.path.exists(path):
-                if not os.path.isdir(destDir):
-                    os.makedirs(destDir)
-                destPath = os.path.join(destDir, f)
-                shutil.copyfile(path, destPath)
+            if os.path.exists(src):
+                try:
+                    shutil.copytree(src, dst)
+                except OSError as exc: # python >2.5
+                    if exc.errno == errno.ENOTDIR:
+                        shutil.copyfile(src, dst)
+                    else: raise
 
     def _outputsComputed(self, job):
         return self._lastDir and all(os.path.exists(os.path.join(self._lastDir, o)) for o in job.outputs)
@@ -108,7 +114,13 @@ class BuildManager(object):
 
     def _makeLinks(self, filenames):
         for f in filenames:
-            os.link(os.path.join(self._lastDir, f), os.path.join(self._buildDir, f))
+            src, dst = os.path.join(self._lastDir, f), os.path.join(self._buildDir, f)
+            try:
+                Utils.linkDirectory(src, dst)
+            except OSError as exc: # python >2.5
+                if exc.errno == errno.ENOTDIR:
+                    os.link(src, dst)
+                else: raise
 
     def _getBuildDir(self):
         return os.path.join(self._archiveDir, self._buildPrefix + str(self._getBuildIndex()))

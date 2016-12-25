@@ -32,6 +32,7 @@ class Build(object):
         wikimapCategories = 'wikimapCategories.db'
         zoomIndex = 'zoom.idx'
         metadata = 'metadata.db'
+        termIndex = 'term.idx'
 
         jobs = []
         jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pageUrl), inputs=[], outputs=[pageSql]))
@@ -57,9 +58,10 @@ class Build(object):
         jobs.append(Job('CREATE WIKIMAP DATAPOINTS TABLE', Interface.createWikimapPointsTable, inputs=[tsne, page, highDimensionalNeighbors, lowDimensionalNeighbors, pagerank], outputs=[wikimapPoints]))
         jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.createWikimapCategoriesTable, inputs=[categoryLinks, category, page, tsne, pageProperties], outputs=[wikimapCategories]))
         jobs.append(Job('CREATE ZOOM INDEX', Interface.createZoomIndex, inputs=[wikimapPoints, pagerank], outputs=[zoomIndex, metadata], bucketSize=100))
+        jobs.append(Job('CREATE TERM INDEX', Interface.createTermIndex, inputs=[wikimapPoints, wikimapCategories], outputs=[termIndex]))
 
         self.jobs = jobs
-        self.results = [wikimapPoints, wikimapCategories, zoomIndex, metadata]
+        self.results = [wikimapPoints, wikimapCategories, zoomIndex, metadata, termIndex]
 
     def __iter__(self):
         return iter(self.jobs)
