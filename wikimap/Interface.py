@@ -1,4 +1,4 @@
-import SQLTableDefs
+from common import SQLTableDefs
 import Tools
 import Pagerank
 import Word2Vec
@@ -6,7 +6,7 @@ import TSNE
 import NearestNeighbors
 import ZoomIndexer
 import shelve
-from common import Zoom
+from common.Zoom import Zoom
 from itertools import imap, izip
 from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, FlipIt, pipe
 
