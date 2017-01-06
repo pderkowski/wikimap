@@ -1,6 +1,6 @@
 import time
-import Utils
 import os
+import Paths
 
 class CompletionGuard(object):
     def __init__(self, files):
@@ -39,13 +39,13 @@ class Job(object):
         self.duration = 0
         self.outcome = 'NONE'
 
-    def run(self, outputDir):
+    def run(self):
         t0 = time.time()
         try:
-            outputPaths = [os.path.join(outputDir, o) for o in self.outputs]
-            guardedPaths = [os.path.join(outputDir, o) for o in self.outputs + self.artifacts]
+            outputPaths = Paths.resolve(self.outputs)
+            guardedPaths = Paths.resolve(self.outputs + self.artifacts)
             with CompletionGuard(guardedPaths) as guard:
-                inputPaths = [os.path.join(outputDir, i) for i in self.inputs]
+                inputPaths = Paths.resolve(self.inputs)
                 args = inputPaths + outputPaths
                 self._task(*args, **self.config)
                 self.outcome = Job.SUCCESS
@@ -61,3 +61,5 @@ class Job(object):
 
     def skip(self):
         self.outcome = Job.SKIPPED
+
+

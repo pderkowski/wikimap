@@ -1,6 +1,7 @@
 from Job import Job
 import Interface
 import Utils
+from Paths import paths as Path
 
 class Build(object):
     def __init__(self):
@@ -9,30 +10,34 @@ class Build(object):
         categoryUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-category.sql.gz'
         categoryLinksUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-categorylinks.sql.gz'
         pagePropertiesUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page_props.sql.gz'
-        pageSql = 'page.sql.gz'
-        linksSql = 'pagelinks.sql.gz'
-        categorySql = 'category.sql.gz'
-        categoryLinksSql = 'categorylinks.sql.gz'
-        pagePropertiesSql = 'pageprops.sql.gz'
-        page = 'page.db'
-        links = 'links.db'
-        category = 'category.db'
-        categoryLinks = 'categoryLinks.db'
-        pageProperties = 'pageProperties.db'
-        normalizedLinks = 'normalizedLinks.db'
-        pagerank = 'pagerank.db'
-        vocabulary = 'vocabulary'
-        vocabularyArtifacts = [vocabulary+a for a in ['.syn0_lockf.npy', '.syn0.npy', '.syn1neg.npy']]
-        embeddings = 'embeddings'
-        embeddingsArtifacts = [embeddings+a for a in ['.syn0_lockf.npy', '.syn0.npy', '.syn1neg.npy']]
-        tsne = 'tsne.db'
-        highDimensionalNeighbors = 'hdnn.db'
-        lowDimensionalNeighbors = 'ldnn.db'
-        wikimapPoints = 'wikimapPoints.db'
-        wikimapCategories = 'wikimapCategories.db'
-        zoomIndex = 'zoom.idx'
-        metadata = 'metadata.db'
-        termIndex = 'term.idx'
+
+        pageSql = Path['pageSql']
+        linksSql = Path['linksSql']
+        categorySql = Path['categorySql']
+        categoryLinksSql = Path['categoryLinksSql']
+        pagePropertiesSql = Path['pagePropertiesSql']
+
+        page = Path['page']
+        links = Path['links']
+        category = Path['category']
+        categoryLinks = Path['categoryLinks']
+        pageProperties = Path['pageProperties']
+        normalizedLinks = Path['normalizedLinks']
+
+        pagerank = Path['pagerank']
+        tsne = Path['tsne']
+        highDimensionalNeighbors = Path['highDimensionalNeighbors']
+        lowDimensionalNeighbors = Path['lowDimensionalNeighbors']
+        wikimapPoints = Path['wikimapPoints']
+        wikimapCategories = Path['wikimapCategories']
+        metadata = Path['metadata']
+        zoomIndex = Path['zoomIndex']
+        termIndex = Path['termIndex']
+
+        vocabulary = Path['vocabulary']
+        embeddings = Path['embeddings']
+        vocabularyArtifacts = Path['vocabularyArtifacts']
+        embeddingsArtifacts = Path['embeddingsArtifacts']
 
         jobs = []
         jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pageUrl), inputs=[], outputs=[pageSql]))
@@ -49,8 +54,8 @@ class Build(object):
         jobs.append(Job('CREATE NORMALIZED LINKS TABLE', Interface.createNormalizedLinksTable, inputs=[page, links], outputs=[normalizedLinks]))
 
         jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[normalizedLinks], outputs=[pagerank]))
-        jobs.append(Job('COMPUTE WORD VOCABULARY', Interface.computeVocabulary, inputs=[normalizedLinks], outputs=[vocabulary], artifacts=vocabularyArtifacts))
-        jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs=[normalizedLinks, vocabulary], outputs=[embeddings], artifacts=embeddingsArtifacts))
+        jobs.append(Job('COMPUTE WORD VOCABULARY', Interface.computeVocabulary, inputs=[normalizedLinks], outputs=[vocabulary], artifacts=[vocabularyArtifacts]))
+        jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs=[normalizedLinks, vocabulary], outputs=[embeddings], artifacts=[embeddingsArtifacts]))
         jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))
@@ -61,10 +66,12 @@ class Build(object):
         jobs.append(Job('CREATE TERM INDEX', Interface.createTermIndex, inputs=[wikimapPoints, wikimapCategories], outputs=[termIndex]))
 
         self.jobs = jobs
-        self.results = [wikimapPoints, wikimapCategories, zoomIndex, metadata, termIndex]
 
     def __iter__(self):
         return iter(self.jobs)
 
     def __getitem__(self, n):
         return self.jobs[n]
+
+    def setBasePath(self, path):
+        Path.base = path

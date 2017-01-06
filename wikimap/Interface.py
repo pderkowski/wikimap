@@ -6,7 +6,7 @@ import TSNE
 import NearestNeighbors
 import ZoomIndexer
 import shelve
-from common.Zoom import Zoom
+from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from itertools import imap, izip, repeat
 from operator import itemgetter
@@ -118,7 +118,7 @@ def createZoomIndex(wikipointsPath, pagerankPath, indexPath, metadataPath, bucke
     data = list(joined.select_id_x_y_byRank())
     indexer = ZoomIndexer.Indexer(ColumnIt(1, 2)(data), ColumnIt(0)(data), bucketSize)
 
-    zoom = Zoom.ZoomIndex(indexPath)
+    zoom = ZoomIndex(indexPath)
     zoom.build(indexer.index2data())
 
     wikipoints = SQLTableDefs.WikimapPointsTable(wikipointsPath)

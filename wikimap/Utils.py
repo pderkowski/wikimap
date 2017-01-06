@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 import shutil
+import errno
 import subprocess
 import ast
 import urllib
@@ -27,7 +28,7 @@ def formatDuration(secs):
     return "{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds)
 
 def configLogging():
-    logging.basicConfig(format='%(asctime)s:%(name)s:%(lineno)s:%(levelname)s:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+    logging.basicConfig(format='\33[2K\r%(asctime)s:%(name)s:%(lineno)s:%(levelname)s:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 def getParentDirectory(file_):
     return os.path.join(os.path.dirname(os.path.abspath(file_)), '..')
@@ -209,3 +210,21 @@ def clearDirectory(directory):
                 shutil.rmtree(file_path)
         except Exception as e:
             print(e)
+
+def copyFiles(files, destDir, verbose=False):
+    logger = logging.getLogger(__name__)
+
+    for f in files:
+        if os.path.exists(f):
+            if verbose:
+                logger.info("Copying {}".format(f))
+
+            name = os.path.basename(f)
+            dest = os.path.join(destDir, name)
+
+            try:
+                shutil.copytree(f, dest)
+            except OSError as exc: # python >2.5
+                if exc.errno == errno.ENOTDIR:
+                    shutil.copyfile(f, dest)
+                else: raise
