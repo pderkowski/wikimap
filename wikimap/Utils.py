@@ -6,7 +6,7 @@ import errno
 import subprocess
 import ast
 import urllib
-import operator
+from operator import itemgetter
 import numpy
 from itertools import imap, groupby
 
@@ -113,7 +113,7 @@ class GroupIt(object):
             k, group = arg
             return [k] + [p[1] for p in group]
 
-        return imap(join, groupby(self.iterator, operator.itemgetter(0)))
+        return imap(join, groupby(self.iterator, itemgetter(0)))
 
 class JoinIt(object):
     def __init__(self, iterator):
@@ -146,7 +146,7 @@ class ColumnIt(object):
         return self
 
     def __iter__(self):
-        return imap(operator.itemgetter(*self.columns), self.iterator)
+        return imap(itemgetter(*self.columns), self.iterator)
 
 class UnconsIt(object):
     def __init__(self, iterator):
@@ -161,6 +161,18 @@ class FlipIt(object):
 
     def __iter__(self):
         return imap(lambda cols: cols[::-1], self.iterator)
+
+class SumIt(object):
+    def __init__(self, *columns):
+        self.columns = columns
+        self.iterator = None
+
+    def __call__(self, iterator):
+        self.iterator = iterator
+        return self
+
+    def __iter__(self):
+        return imap(lambda cols: sum(cols[c] for c in self.columns), self.iterator)
 
 def any2array(something):
     if isinstance(something, numpy.ndarray):

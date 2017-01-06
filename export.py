@@ -10,7 +10,8 @@ import wikimap.common.Paths as Paths
 import wikimap.Utils as Utils
 
 filesets = {
-    'ui': [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex']]
+    'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex']],
+    'plots' : [Path['degreePlot']]
 }
 
 def export(files, destDir):
@@ -31,7 +32,7 @@ def main():
     logger = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('fileset', help="specify the fileset to be exported", choices=['ui'])
+    parser.add_argument('fileset', help="specify the fileset to be exported", choices=['ui', 'plots'])
     args = parser.parse_args()
 
     if "BUILDPATH" not in os.environ:

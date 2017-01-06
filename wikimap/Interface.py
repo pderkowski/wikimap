@@ -4,13 +4,15 @@ import Pagerank
 import Word2Vec
 import TSNE
 import NearestNeighbors
+import Stats
+import Plots
 import ZoomIndexer
 import shelve
 from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from itertools import imap, izip, repeat
 from operator import itemgetter
-from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, FlipIt, pipe
+from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, FlipIt, SumIt, pipe
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -135,3 +137,21 @@ def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
     termIndex = TermIndex(outputPath)
     termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
     termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
+
+def createDegreesTable(tsnePath, normalizedLinksPath, outputPath):
+    tsne = SQLTableDefs.TSNETable(tsnePath)
+    normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
+
+    ids = ColumnIt(0)(tsne.selectAll())
+    links = normLinks.selectAll()
+
+    degrees = SQLTableDefs.DegreesTable(outputPath)
+    degrees.create()
+
+    degrees.populate(Stats.countInOutDegrees(ids, links))
+
+def createPlots(degreesPath, degreePlotPath):
+    degrees = SQLTableDefs.DegreesTable(degreesPath)
+    data = Stats.countSmallNumbers(SumIt(1, 2)(degrees.selectAll()), maxCounted=30)
+    plot = Plots.createDegreePlot(data)
+    plot.savefig(degreePlotPath)

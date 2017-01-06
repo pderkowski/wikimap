@@ -256,6 +256,24 @@ class TSNETable(TableProxy):
     def selectAll(self):
         return self.select(Query("SELECT * FROM tsne"))
 
+class DegreesTable(TableProxy):
+    def __init__(self, path):
+        super(DegreesTable, self).__init__(path)
+
+    def create(self):
+        self.execute(Query("""
+            CREATE TABLE degrees (
+                deg_id          INTEGER     NOT NULL    PRIMARY KEY,
+                deg_in          INTEGER     NOT NULL,
+                deg_out         INTEGER     NOT NULL
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query("INSERT INTO degrees VALUES (?,?,?)", "populating degrees table", logStart=True), values)
+
+    def selectAll(self):
+        return self.select(Query("SELECT * FROM degrees"))
+
 class Join(TableProxy):
     def __init__(self, *tables):
         super(Join, self).__init__(*tables)
