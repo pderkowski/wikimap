@@ -15,6 +15,8 @@ SQLTOOLSOBJECTS = $(patsubst %.cpp, %.o, $(SQLTOOLSSOURCES))
 
 TSNEDIR = external/bhtsne
 TSNEBIN = $(TSNEDIR)/bh_tsne
+TSNESOURCES = $(TSNEDIR)/sptree.cpp $(TSNEDIR)/tsne.cpp
+TSNEOBJECTS = $(patsubst %.cpp, %.o, $(TSNESOURCES))
 
 PAGERANKTESTBIN = $(PAGERANKTESTDIR)/run_tests
 PAGERANKBIN = $(PAGERANKDIR)/pagerank
@@ -47,8 +49,8 @@ $(PAGERANKBIN): $(PAGERANKCOMMONOBJECTS) $(PAGERANKBINSOURCES)
 $(SQLTOOLSLIB): $(SQLTOOLSOBJECTS)
 	$(CXX) $(CXXFLAGS) -o $(SQLTOOLSLIB) $^ -shared -lboost_python
 
-$(TSNEBIN):
-	g++ $(TSNEDIR)/sptree.cpp $(TSNEDIR)/tsne.cpp -o $(TSNEBIN) -O2
+$(TSNEBIN): $(TSNEOBJECTS)
+	$(CXX) $(CXXFLAGS) -o $(TSNEBIN) $^
 
 test: build $(PAGERANKTESTBIN)
 	./$(PAGERANKTESTBIN)
