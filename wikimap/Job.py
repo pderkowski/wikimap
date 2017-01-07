@@ -29,9 +29,9 @@ class Job(object):
         self._task = task
 
         self.name = name
-        self.inputs = inputs
-        self.outputs = outputs
-        self.artifacts = artifacts
+        self._inputs = inputs
+        self._outputs = outputs
+        self._artifacts = artifacts
 
         self.noskip = noskip
         self.config = kwargs
@@ -42,10 +42,10 @@ class Job(object):
     def run(self):
         t0 = time.time()
         try:
-            outputPaths = Paths.resolve(self.outputs)
-            guardedPaths = Paths.resolve(self.outputs + self.artifacts)
+            outputPaths = self.outputs()
+            guardedPaths = self.outputs() + self.artifacts()
             with CompletionGuard(guardedPaths) as guard:
-                inputPaths = Paths.resolve(self.inputs)
+                inputPaths = self.inputs()
                 args = inputPaths + outputPaths
                 self._task(*args, **self.config)
                 self.outcome = Job.SUCCESS
@@ -59,7 +59,14 @@ class Job(object):
         finally:
             self.duration = time.time() - t0
 
+    def inputs(self, base=None):
+        return Paths.resolve(self._inputs, base=base)
+
+    def outputs(self, base=None):
+        return Paths.resolve(self._outputs, base=base)
+
+    def artifacts(self, base=None):
+        return Paths.resolve(self._artifacts, base=base)
+
     def skip(self):
         self.outcome = Job.SKIPPED
-
-

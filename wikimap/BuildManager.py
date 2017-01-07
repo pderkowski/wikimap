@@ -38,7 +38,7 @@ class BuildManager(object):
             or not self._artifactsComputed(job):
                 logger.info('STARTING JOB: {}'.format(job.name))
 
-                changedFiles.update(job.outputs)
+                changedFiles.update(job.outputs())
 
                 try:
                     job.run()
@@ -62,29 +62,28 @@ class BuildManager(object):
                 summary.append((job.outcome, job.name, job.duration))
                 config[job.name] = job.config
 
-                self._makeLinks(job.outputs)
-                self._makeLinks(job.artifacts)
+                self._makeLinks(job)
 
         self._printSummary(summary)
         Utils.saveToFile(self._newConfig, config)
 
     def _outputsComputed(self, job):
-        return self.lastBuild and all(os.path.exists(o) for o in Paths.resolve(job.outputs, base=self.lastBuild))
+        return self.lastBuild and all(os.path.exists(o) for o in job.outputs(base=self.lastBuild))
 
     def _artifactsComputed(self, job):
-        return self.lastBuild and all(os.path.exists(a) for a in Paths.resolve(job.artifacts, base=self.lastBuild))
+        return self.lastBuild and all(os.path.exists(a) for a in job.artifacts(base=self.lastBuild))
 
     def _inputsChanged(self, job, changedFiles):
-        return any(input_ in changedFiles for input_ in Paths.resolve(job.inputs))
+        return any(input_ in changedFiles for input_ in job.inputs())
 
     def _configChanged(self, job):
         lastTargetConfig = self._lastConfig.get(job.name, {})
         currentTargetConfig = job.config
         return lastTargetConfig != currentTargetConfig
 
-    def _makeLinks(self, paths):
-        old = Paths.resolve(paths, base=self.lastBuild)
-        new = Paths.resolve(paths)
+    def _makeLinks(self, job):
+        old = job.outputs(base=self.lastBuild) + job.artifacts(base=self.lastBuild)
+        new = job.outputs() + job.artifacts()
 
         for src, dst in zip(old, new):
             try:
