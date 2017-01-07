@@ -217,13 +217,15 @@ class PagerankTable(TableProxy):
     def create(self):
         self.execute(Query("""
             CREATE TABLE pagerank (
-                pr_id             INTEGER    NOT NULL   PRIMARY KEY,
-                pr_rank           REAL       NOT NULL
+                pr_id               INTEGER     NOT NULL   PRIMARY KEY,
+                pr_rank             REAL        NOT NULL,
+                pr_order            INTEGER     NOT NULL
             );"""))
 
     def populate(self, values):
-        self.executemany(Query("INSERT INTO pagerank VALUES (?,?)", "populating pagerank table", logStart=True), values)
+        self.executemany(Query("INSERT INTO pagerank VALUES (?,?,?)", "populating pagerank table", logStart=True), values)
         self.execute(Query('CREATE INDEX rank_idx ON pagerank(pr_rank);', "creating index rank_idx in pagerank table", logStart=True, logProgress=True))
+        self.execute(Query('CREATE UNIQUE INDEX order_idx ON pagerank(pr_order);', "creating index order_idx in pagerank table", logStart=True, logProgress=True))
 
     def selectIdsByDescendingRank(self, idsNo):
         query = Query("""

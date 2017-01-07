@@ -152,6 +152,6 @@ void Pagerank::writeResults(std::ostream& out) const {
     }
 
     for (int i = 0; i < order.size(); ++i) {
-        out << indices2nodes_[order[i]] << " " << ranks_[order[i]] << "\n";
+        out << indices2nodes_[order[i]] << " " << ranks_[order[i]] << " " << i << "\n";
     }
 }

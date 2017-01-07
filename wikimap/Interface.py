@@ -54,7 +54,7 @@ def computePagerank(normalizedLinksPath, pagerankPath):
     normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
     pagerank.create()
-    pagerank.populate(Pagerank.pagerank(pipe(normLinks.selectAll(), StringifyIt, JoinIt)))
+    pagerank.populate(Pagerank.pagerank(pipe(normLinks.selectAll())))
 
 def computeVocabulary(normalizedLinksPath, outputPath):
     normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
