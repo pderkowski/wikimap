@@ -66,11 +66,12 @@ def computeEmbeddings(normalizedLinksPath, vocabularyPath, outputPath):
 
 def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
-    tsne = SQLTableDefs.TSNETable(tsnePath)
-    tsne.create()
 
     ids = pipe(pagerank.selectIdsByDescendingRank(pointCount), StringifyIt, ColumnIt(0), list)
     mappings = TSNE.train(Word2Vec.getEmbeddings(embeddingsPath, ids))
+
+    tsne = SQLTableDefs.TSNETable(tsnePath)
+    tsne.create()
     tsne.populate(izip(ids, mappings[:, 0], mappings[:, 1]))
 
 def computeHighDimensionalNeighbors(embeddingsPath, tsnePath, pagePath, outputPath, neighborsNo=10):
@@ -150,8 +151,18 @@ def createDegreesTable(tsnePath, normalizedLinksPath, outputPath):
 
     degrees.populate(Stats.countInOutDegrees(ids, links))
 
-def createPlots(degreesPath, degreePlotPath):
+def createDegreePlot(degreesPath, degreePlotPath, maxDegree=30):
     degrees = SQLTableDefs.DegreesTable(degreesPath)
-    data = Stats.countSmallNumbers(SumIt(1, 2)(degrees.selectAll()), maxCounted=30)
-    plot = Plots.createDegreePlot(data)
+    plot = Plots.createDegreePlot(degrees.select_degree_count(maxDegree=maxDegree), maxDegree=maxDegree)
     plot.savefig(degreePlotPath)
+
+def createIsolatedPointsPlot(degreesPath, pagerankPath, outputPath, degreeThreshold=30):
+    degrees = SQLTableDefs.DegreesTable(degreesPath)
+
+    isolatedIds = ColumnIt(0)(degrees.selectIdsByMaxDegree(degreeThreshold))
+
+    pagerank = SQLTableDefs.PagerankTable(pagerankPath)
+    isolatedOrders = ColumnIt(0)(pagerank.selectOrdersByIds(isolatedIds))
+
+    plot = Plots.createPointOrdersPlot(isolatedOrders)
+    plot.savefig(outputPath)

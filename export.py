@@ -11,7 +11,7 @@ import wikimap.Utils as Utils
 
 filesets = {
     'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex']],
-    'plots' : [Path['degreePlot']]
+    'plots' : [Path['degreePlot'], Path['isolatedPointsPlot']]
 }
 
 def export(files, destDir):

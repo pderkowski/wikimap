@@ -24,12 +24,3 @@ def countInOutDegrees(nodes, edges):
 
     for id_ in nodes:
         yield (id_, id2indeg[id_], id2outdeg[id_])
-
-def countSmallNumbers(data, maxCounted=100):
-    counts = [0] * (maxCounted + 1)
-
-    for d in data:
-        if d <= maxCounted:
-            counts[d] += 1
-
-    return counts

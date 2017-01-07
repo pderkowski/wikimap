@@ -33,14 +33,15 @@ class Build(object):
         metadata = Path['metadata']
         zoomIndex = Path['zoomIndex']
         termIndex = Path['termIndex']
+        degrees = Path['degrees']
 
         vocabulary = Path['vocabulary']
         embeddings = Path['embeddings']
         vocabularyArtifacts = Path['vocabularyArtifacts']
         embeddingsArtifacts = Path['embeddingsArtifacts']
 
-        degrees = Path['degrees']
         degreePlot = Path['degreePlot']
+        isolatedPointsPlot = Path['isolatedPointsPlot']
 
         jobs = []
         jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pageUrl), inputs=[], outputs=[pageSql]))
@@ -68,7 +69,8 @@ class Build(object):
         jobs.append(Job('CREATE DEGREES TABLE', Interface.createDegreesTable, inputs=[tsne, normalizedLinks], outputs=[degrees]))
         jobs.append(Job('CREATE ZOOM INDEX', Interface.createZoomIndex, inputs=[wikimapPoints, pagerank], outputs=[zoomIndex, metadata], bucketSize=100))
         jobs.append(Job('CREATE TERM INDEX', Interface.createTermIndex, inputs=[wikimapPoints, wikimapCategories], outputs=[termIndex]))
-        jobs.append(Job('CREATE PLOTS', Interface.createPlots, inputs=[degrees], outputs=[degreePlot]))
+        jobs.append(Job('CREATE DEGREE PLOT', Interface.createDegreePlot, inputs=[degrees], outputs=[degreePlot], maxDegree=30))
+        jobs.append(Job('CREATE ISOLATED POINTS PLOT', Interface.createIsolatedPointsPlot, inputs=[degrees, pagerank], outputs=[isolatedPointsPlot], degreeThreshold=30))
 
         self.jobs = jobs
 
