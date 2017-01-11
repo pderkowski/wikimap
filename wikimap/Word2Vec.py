@@ -7,11 +7,12 @@ def buildVocabulary(dataIterator, outputPath):
     model.build_vocab(dataIterator, progress_per=100000, custom_version=True)
     model.save(outputPath)
 
-def train(dataIterator, vocabularyPath, outputPath):
+def train(dataIterator, vocabularyPath, outputPath, iterations=10):
     logger = logging.getLogger(__name__)
 
     logger.info('Loading vocabulary.')
     model = gensim.models.Word2Vec.load(vocabularyPath)
+    model.iter = iterations
     logger.info(model)
     model.train(dataIterator, custom_version=True)
     logger.info(model)

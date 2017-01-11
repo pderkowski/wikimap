@@ -22,7 +22,7 @@ class Build(object):
         category = Path['category']
         categoryLinks = Path['categoryLinks']
         pageProperties = Path['pageProperties']
-        normalizedLinks = Path['normalizedLinks']
+        normalizedLinksArray = Path['normalizedLinksArray']
 
         pagerank = Path['pagerank']
         tsne = Path['tsne']
@@ -55,18 +55,18 @@ class Build(object):
         jobs.append(Job('CREATE CATEGORY TABLE', Interface.createCategoryTable, inputs=[categorySql], outputs=[category]))
         jobs.append(Job('CREATE CATEGORY LINKS TABLE', Interface.createCategoryLinksTable, inputs=[categoryLinksSql], outputs=[categoryLinks]))
         jobs.append(Job('CREATE PAGE PROPERTIES TABLE', Interface.createPagePropertiesTable, inputs=[pagePropertiesSql], outputs=[pageProperties]))
-        jobs.append(Job('CREATE NORMALIZED LINKS TABLE', Interface.createNormalizedLinksTable, inputs=[page, links], outputs=[normalizedLinks]))
+        jobs.append(Job('CREATE NORMALIZED LINKS ARRAY', Interface.createNormalizedLinksArray, inputs=[page, links], outputs=[normalizedLinksArray]))
 
-        jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[normalizedLinks], outputs=[pagerank]))
-        jobs.append(Job('COMPUTE WORD VOCABULARY', Interface.computeVocabulary, inputs=[normalizedLinks], outputs=[vocabulary], artifacts=[vocabularyArtifacts]))
-        jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs=[normalizedLinks, vocabulary], outputs=[embeddings], artifacts=[embeddingsArtifacts]))
+        jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[normalizedLinksArray], outputs=[pagerank]))
+        jobs.append(Job('COMPUTE WORD VOCABULARY', Interface.computeVocabulary, inputs=[normalizedLinksArray], outputs=[vocabulary], artifacts=[vocabularyArtifacts]))
+        jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs=[normalizedLinksArray, vocabulary], outputs=[embeddings], artifacts=[embeddingsArtifacts], iterations=10))
         jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))
 
         jobs.append(Job('CREATE WIKIMAP DATAPOINTS TABLE', Interface.createWikimapPointsTable, inputs=[tsne, page, highDimensionalNeighbors, lowDimensionalNeighbors, pagerank], outputs=[wikimapPoints]))
         jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.createWikimapCategoriesTable, inputs=[categoryLinks, category, page, tsne, pageProperties], outputs=[wikimapCategories]))
-        jobs.append(Job('CREATE DEGREES TABLE', Interface.createDegreesTable, inputs=[tsne, normalizedLinks], outputs=[degrees]))
+        jobs.append(Job('CREATE DEGREES TABLE', Interface.createDegreesTable, inputs=[tsne, normalizedLinksArray], outputs=[degrees]))
         jobs.append(Job('CREATE ZOOM INDEX', Interface.createZoomIndex, inputs=[wikimapPoints, pagerank], outputs=[zoomIndex, metadata], bucketSize=100))
         jobs.append(Job('CREATE TERM INDEX', Interface.createTermIndex, inputs=[wikimapPoints, wikimapCategories], outputs=[termIndex]))
         jobs.append(Job('CREATE DEGREE PLOT', Interface.createDegreePlot, inputs=[degrees], outputs=[degreePlot], maxDegree=30))

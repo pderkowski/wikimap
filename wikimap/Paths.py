@@ -12,5 +12,6 @@ paths.add({
     'embeddingsArtifacts'   : ['embeddings.syn0_lockf.npy', 'embeddings.syn0.npy', 'embeddings.syn1neg.npy'],
     'degrees'               : 'degrees.db',
     'degreePlot'            : 'degree.svg',
-    'isolatedPointsPlot'    : 'isolatedPoints.svg'
+    'isolatedPointsPlot'    : 'isolatedPoints.svg',
+    'normalizedLinksArray'  : 'normalizedLinks.npy'
 })

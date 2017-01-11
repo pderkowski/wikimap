@@ -1,4 +1,5 @@
 from common import SQLTableDefs
+import Arrays
 import Tools
 import Pagerank
 import Word2Vec
@@ -12,7 +13,7 @@ from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from itertools import imap, izip, repeat
 from operator import itemgetter
-from Utils import StringifyIt, LogIt, DeferIt, GroupIt, JoinIt, ColumnIt, UnconsIt, FlipIt, SumIt, pipe
+from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, UnconsIt, FlipIt, TupleIt, StringifyIt2, pipe
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -44,25 +45,24 @@ def createCategoryLinksTable(categoryLinksSql, outputPath):
     table.create()
     table.populate(LogIt(1000000)(source.read()))
 
-def createNormalizedLinksTable(pageTable, linksTable, outputPath):
-    source = SQLTableDefs.Join(pageTable, linksTable)
-    table = SQLTableDefs.NormalizedLinksTable(outputPath)
-    table.create()
-    table.populate(source.selectNormalizedLinks())
+def createNormalizedLinksArray(pageTablePath, linksTablePath, outputPath):
+    joined = SQLTableDefs.Join(pageTablePath, linksTablePath)
+    array = Arrays.NormalizedLinksArray(outputPath)
+    array.populate(LogIt(1000000)(joined.selectNormalizedLinks()))
 
-def computePagerank(normalizedLinksPath, pagerankPath):
-    normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
+def computePagerank(normalizedLinksArrayPath, pagerankPath):
+    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
     pagerank.create()
-    pagerank.populate(Pagerank.pagerank(pipe(normLinks.selectAll())))
+    pagerank.populate(Pagerank.pagerank(TupleIt(normLinks)))
 
-def computeVocabulary(normalizedLinksPath, outputPath):
-    normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
-    Word2Vec.buildVocabulary(pipe(normLinks.selectAll, DeferIt, StringifyIt), outputPath)
+def computeVocabulary(normalizedLinksArrayPath, outputPath):
+    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
+    Word2Vec.buildVocabulary(pipe(normLinks, StringifyIt2), outputPath)
 
-def computeEmbeddings(normalizedLinksPath, vocabularyPath, outputPath):
-    normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
-    Word2Vec.train(pipe(normLinks.selectAll, DeferIt, StringifyIt), vocabularyPath, outputPath)
+def computeEmbeddings(normalizedLinksArrayPath, vocabularyPath, outputPath, iterations=10):
+    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath, shuffle=True)
+    Word2Vec.train(pipe(normLinks, StringifyIt2), vocabularyPath, outputPath, iterations=iterations)
 
 def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
@@ -139,17 +139,16 @@ def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
     termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
     termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
 
-def createDegreesTable(tsnePath, normalizedLinksPath, outputPath):
+def createDegreesTable(tsnePath, normalizedLinksArrayPath, outputPath):
     tsne = SQLTableDefs.TSNETable(tsnePath)
-    normLinks = SQLTableDefs.NormalizedLinksTable(normalizedLinksPath)
+    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
 
     ids = ColumnIt(0)(tsne.selectAll())
-    links = normLinks.selectAll()
 
     degrees = SQLTableDefs.DegreesTable(outputPath)
     degrees.create()
 
-    degrees.populate(Stats.countInOutDegrees(ids, links))
+    degrees.populate(Stats.countInOutDegrees(ids, TupleIt(normLinks)))
 
 def createDegreePlot(degreesPath, degreePlotPath, maxDegree=30):
     degrees = SQLTableDefs.DegreesTable(degreesPath)

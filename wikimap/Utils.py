@@ -136,6 +136,13 @@ class StringifyIt(object):
     def __iter__(self):
         return imap(lambda e: map(any2unicode, e), self.iterator)
 
+class StringifyIt2(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return imap(lambda e: [unicode(str(e[0]), encoding='utf8'), unicode(str(e[1]), encoding='utf8')], self.iterator)
+
 class ColumnIt(object):
     def __init__(self, *columns):
         self.columns = columns
@@ -173,6 +180,13 @@ class SumIt(object):
 
     def __iter__(self):
         return imap(lambda cols: sum(cols[c] for c in self.columns), self.iterator)
+
+class TupleIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return imap(tuple, self.iterator)
 
 def any2array(something):
     if isinstance(something, numpy.ndarray):

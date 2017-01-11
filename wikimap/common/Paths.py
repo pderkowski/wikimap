@@ -35,7 +35,6 @@ paths.add({
     'links'                     : 'links.db',
     'category'                  : 'category.db',
     'categoryLinks'             : 'categoryLinks.db',
-    'normalizedLinks'           : 'normalizedLinks.db',
     'pageProperties'            : 'pageProperties.db',
     'pagerank'                  : 'pagerank.db',
     'tsne'                      : 'tsne.db',

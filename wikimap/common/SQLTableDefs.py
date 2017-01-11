@@ -193,23 +193,6 @@ class PagePropertiesTable(TableProxy):
         self.execute(Query('CREATE INDEX page_idx ON pageprops(pp_page);', "creating index page_idx in pageprops table", logStart=True, logProgress=True))
         self.execute(Query('CREATE INDEX propname_idx ON pageprops(pp_propname);', "creating index propname_idx in pageprops table", logStart=True, logProgress=True))
 
-class NormalizedLinksTable(TableProxy):
-    def __init__(self, normalizedLinksPath):
-        super(NormalizedLinksTable, self).__init__(normalizedLinksPath)
-
-    def create(self):
-        self.execute(Query("""
-            CREATE TABLE norm_links (
-                nl_from             INTEGER    NOT NULL  DEFAULT '0',
-                nl_to               INTEGER    NOT NULL  DEFAULT '0'
-            );"""))
-
-    def populate(self, values):
-        self.executemany(Query("INSERT INTO norm_links VALUES (?,?)", "populating norm_links table", logStart=True), values)
-
-    def selectAll(self):
-        return self.select(Query("SELECT * FROM norm_links"))
-
 class PagerankTable(TableProxy):
     def __init__(self, pagerankPath):
         super(PagerankTable, self).__init__(pagerankPath)
