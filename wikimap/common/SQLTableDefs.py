@@ -1,4 +1,5 @@
 from SQLBase import TableProxy, Query
+from CDBStore import CDBStore, IntConverter, IntListConverter
 
 class HighDimensionalNeighborsTable(TableProxy):
     def __init__(self, tablePath):
@@ -290,6 +291,16 @@ class DegreesTable(TableProxy):
             WHERE
                 degree <= {}
             """.format(maxDegree)))
+
+class AggregatedLinksTable(object):
+    def __init__(self, path):
+        self._db = CDBStore(path, IntConverter(), IntListConverter())
+
+    def create(self, data):
+        self._db.create(data)
+
+    def get(self, key):
+        return self._db.get(key)
 
 class Join(TableProxy):
     def __init__(self, *tables):

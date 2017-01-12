@@ -13,5 +13,7 @@ paths.add({
     'degrees'               : 'degrees.db',
     'degreePlot'            : 'degree.svg',
     'isolatedPointsPlot'    : 'isolatedPoints.svg',
-    'normalizedLinksArray'  : 'normalizedLinks.npy'
+    'normalizedLinksArray'  : 'normalizedLinks.npy',
+    'aggregatedInlinks'     : 'aggregatedInlinks.cdb',
+    'aggregatedOutlinks'    : 'aggregatedOutlinks.cdb'
 })

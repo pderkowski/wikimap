@@ -13,7 +13,7 @@ from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from itertools import imap, izip, repeat
 from operator import itemgetter
-from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, UnconsIt, FlipIt, TupleIt, StringifyIt2, pipe
+from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, FlipIt, TupleIt, StringifyIt2, pipe
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -49,6 +49,22 @@ def createNormalizedLinksArray(pageTablePath, linksTablePath, outputPath):
     joined = SQLTableDefs.Join(pageTablePath, linksTablePath)
     array = Arrays.NormalizedLinksArray(outputPath)
     array.populate(LogIt(1000000)(joined.selectNormalizedLinks()))
+
+def createAggregatedLinksTables(normalizedLinksArrayPath, tsnePath, inlinkTablePath, outlinkTablePath):
+    tsne = SQLTableDefs.TSNETable(tsnePath)
+    ids = ColumnIt(0)(tsne.selectAll())
+
+    array = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
+    array.filterRows(ids)
+
+    outlinks = SQLTableDefs.AggregatedLinksTable(outlinkTablePath)
+    array.sortByColumn(0)
+    outlinks.create(pipe(array, LogIt(1000000), TupleIt, GroupIt))
+
+    inlinks = SQLTableDefs.AggregatedLinksTable(inlinkTablePath)
+    array.reverseColumns()
+    array.sortByColumn(0)
+    inlinks.create(pipe(array, LogIt(1000000), TupleIt, GroupIt))
 
 def computePagerank(normalizedLinksArrayPath, pagerankPath):
     normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
@@ -113,7 +129,7 @@ def createWikimapCategoriesTable(categoryLinksPath, categoryPath, pagesPath, tsn
     table = SQLTableDefs.WikimapCategoriesTable(outputPath)
     table.create()
 
-    table.populate(pipe(data.selectWikimapCategories(), GroupIt, UnconsIt))
+    table.populate(pipe(data.selectWikimapCategories(), GroupIt))
 
 def createZoomIndex(wikipointsPath, pagerankPath, indexPath, metadataPath, bucketSize=100):
     joined = SQLTableDefs.Join(wikipointsPath, pagerankPath)

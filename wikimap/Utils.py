@@ -111,7 +111,7 @@ class GroupIt(object):
     def __iter__(self):
         def join(arg):
             k, group = arg
-            return [k] + [p[1] for p in group]
+            return (k, [p[1] for p in group])
 
         return imap(join, groupby(self.iterator, itemgetter(0)))
 
@@ -154,13 +154,6 @@ class ColumnIt(object):
 
     def __iter__(self):
         return imap(itemgetter(*self.columns), self.iterator)
-
-class UnconsIt(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return imap(lambda lst: (lst[0], lst[1:]), self.iterator)
 
 class FlipIt(object):
     def __init__(self, iterator):

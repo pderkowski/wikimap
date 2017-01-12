@@ -23,6 +23,8 @@ class Build(object):
         categoryLinks = Path['categoryLinks']
         pageProperties = Path['pageProperties']
         normalizedLinksArray = Path['normalizedLinksArray']
+        aggregatedInlinks = Path['aggregatedInlinks']
+        aggregatedOutlinks = Path['aggregatedOutlinks']
 
         pagerank = Path['pagerank']
         tsne = Path['tsne']
@@ -64,6 +66,7 @@ class Build(object):
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))
 
+        jobs.append(Job('CREATE AGGREGATED LINKS TABLES', Interface.createAggregatedLinksTables, inputs=[normalizedLinksArray, tsne], outputs=[aggregatedInlinks, aggregatedOutlinks]))
         jobs.append(Job('CREATE WIKIMAP DATAPOINTS TABLE', Interface.createWikimapPointsTable, inputs=[tsne, page, highDimensionalNeighbors, lowDimensionalNeighbors, pagerank], outputs=[wikimapPoints]))
         jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.createWikimapCategoriesTable, inputs=[categoryLinks, category, page, tsne, pageProperties], outputs=[wikimapCategories]))
         jobs.append(Job('CREATE DEGREES TABLE', Interface.createDegreesTable, inputs=[tsne, normalizedLinksArray], outputs=[degrees]))

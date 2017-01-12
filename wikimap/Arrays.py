@@ -38,7 +38,47 @@ class NormalizedLinksArray(object):
         self._array = fromiter(iterator, np.int32, -1, 2)
         np.save(self._path, self._array)
 
+    def sortByColumn(self, column):
+        logger = logging.getLogger(__name__)
+
+        self._ensureLoaded()
+
+        logger.info('Sorting the normalized links array.')
+        self._array = self._array[self._array[:, column].argsort()]
+
+    def filterRows(self, ids):
+        logger = logging.getLogger(__name__)
+        self._ensureLoaded()
+
+        if self._log:
+            logger.info("Filtering the normalized links array.")
+
+        ids = frozenset(ids)
+        mask = np.fromiter((x[0] in ids and x[1] in ids for x in self._array), np.bool)
+        self._array = self._array[mask]
+        if self._log:
+            logger.info("Array shape: {}".format(self._array.shape))
+
+    def reverseColumns(self):
+        logger = logging.getLogger(__name__)
+
+        if self._log:
+            logger.info("Reversing the order of columns in the normalized links array.")
+
+        self._array = self._array[:,::-1]
+
     def __iter__(self):
+        logger = logging.getLogger(__name__)
+
+        self._ensureLoaded()
+        if self._shuffle:
+            if self._log:
+                logger.info("Shuffling the normalized links array.")
+            np.random.shuffle(self._array)
+
+        return iter(self._array)
+
+    def _ensureLoaded(self):
         logger = logging.getLogger(__name__)
 
         if self._array is None:
@@ -47,11 +87,4 @@ class NormalizedLinksArray(object):
             self._array = np.load(self._path)
 
             if self._log:
-                logger.info("Loaded array shape: {}".format(self._array.shape))
-
-        if self._shuffle:
-            if self._log:
-                logger.info("Shuffling the normalized links array.")
-            np.random.shuffle(self._array)
-
-        return iter(self._array)
+                logger.info("Array shape: {}".format(self._array.shape))
