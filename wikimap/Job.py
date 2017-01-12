@@ -1,6 +1,6 @@
 import time
 import os
-import Paths
+from common import Paths
 
 class CompletionGuard(object):
     def __init__(self, files):

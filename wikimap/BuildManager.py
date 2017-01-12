@@ -3,7 +3,7 @@ import Utils
 import logging
 import sys
 import errno
-import Paths
+from common import Paths
 
 def getImmediateSubdirectories(directory):
     return [name for name in os.listdir(directory) if os.path.isdir(os.path.join(directory, name))]
