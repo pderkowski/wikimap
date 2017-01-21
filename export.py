@@ -10,7 +10,7 @@ import wikimap.common.Paths as Paths
 import wikimap.Utils as Utils
 
 filesets = {
-    'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex']],
+    'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex'], Path['aggregatedInlinks'], Path['aggregatedOutlinks']],
     'plots' : [Path['degreePlot'], Path['isolatedPointsPlot']]
 }
 
