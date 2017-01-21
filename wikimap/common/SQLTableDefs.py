@@ -218,7 +218,7 @@ class PagerankTable(TableProxy):
             FROM
                 pagerank
             ORDER BY
-                pr_rank DESC
+                pr_order ASC
             LIMIT
                 {}""".format(idsNo), 'selecting ids by descending rank', logProgress=True)
 

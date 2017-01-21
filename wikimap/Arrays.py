@@ -53,8 +53,17 @@ class NormalizedLinksArray(object):
         if self._log:
             logger.info("Filtering the normalized links array.")
 
-        ids = frozenset(ids)
-        mask = np.fromiter((x[0] in ids and x[1] in ids for x in self._array), np.bool)
+        if self._log:
+            logger.info("Creating filtered set.")
+
+        keep = np.full(np.amax(self._array) + 1, False, dtype=bool)
+        for i in ids:
+            keep[i] = True
+
+        if self._log:
+            logger.info("Starting filtering.")
+
+        mask = np.fromiter((keep[x[0]] and keep[x[1]] for x in self._array), np.bool)
         self._array = self._array[mask]
         if self._log:
             logger.info("Array shape: {}".format(self._array.shape))

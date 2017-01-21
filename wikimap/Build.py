@@ -57,10 +57,12 @@ class Build(object):
         jobs.append(Job('CREATE CATEGORY TABLE', Interface.createCategoryTable, inputs=[categorySql], outputs=[category]))
         jobs.append(Job('CREATE CATEGORY LINKS TABLE', Interface.createCategoryLinksTable, inputs=[categoryLinksSql], outputs=[categoryLinks]))
         jobs.append(Job('CREATE PAGE PROPERTIES TABLE', Interface.createPagePropertiesTable, inputs=[pagePropertiesSql], outputs=[pageProperties]))
-        jobs.append(Job('CREATE NORMALIZED LINKS ARRAY', Interface.createNormalizedLinksArray, inputs=[page, links], outputs=[normalizedLinksArray]))
 
+        jobs.append(Job('CREATE NORMALIZED LINKS ARRAY', Interface.createNormalizedLinksArray, inputs=[page, links], outputs=[normalizedLinksArray]))
         jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[normalizedLinksArray], outputs=[pagerank]))
-        jobs.append(Job('COMPUTE WORD VOCABULARY', Interface.computeVocabulary, inputs=[normalizedLinksArray], outputs=[vocabulary], artifacts=[vocabularyArtifacts]))
+
+        jobs.append(Job('CREATE WORD VOCABULARY', Interface.createVocabulary, inputs=[normalizedLinksArray, pagerank], outputs=[vocabulary], artifacts=[vocabularyArtifacts], wordCount=1000000))
+
         jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs=[normalizedLinksArray, vocabulary], outputs=[embeddings], artifacts=[embeddingsArtifacts], iterations=10))
         jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))

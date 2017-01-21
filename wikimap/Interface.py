@@ -2,7 +2,7 @@ from common import SQLTableDefs
 import Arrays
 import Tools
 import Pagerank
-import Word2Vec
+from Word2Vec import Word2Vec
 import TSNE
 import NearestNeighbors
 import Stats
@@ -72,19 +72,31 @@ def computePagerank(normalizedLinksArrayPath, pagerankPath):
     pagerank.create()
     pagerank.populate(Pagerank.pagerank(TupleIt(normLinks)))
 
-def computeVocabulary(normalizedLinksArrayPath, outputPath):
+def createVocabulary(normalizedLinksArrayPath, pagerankPath, outputPath, wordCount=1000000):
     normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
-    Word2Vec.buildVocabulary(pipe(normLinks, StringifyIt2), outputPath)
+    if wordCount:
+        pagerank = SQLTableDefs.PagerankTable(pagerankPath)
+        ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
+        normLinks.filterRows(ids)
+
+    w2v = Word2Vec()
+    w2v.create(pipe(normLinks, StringifyIt2))
+    w2v.save(outputPath)
 
 def computeEmbeddings(normalizedLinksArrayPath, vocabularyPath, outputPath, iterations=10):
     normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath, shuffle=True)
-    Word2Vec.train(pipe(normLinks, StringifyIt2), vocabularyPath, outputPath, iterations=iterations)
+    w2v = Word2Vec(vocabularyPath)
+    ids = map(int, w2v.getVocab())
+    normLinks.filterRows(ids)
+    w2v.train(pipe(normLinks, StringifyIt2), iterations=iterations)
+    w2v.save(outputPath, trim=True)
 
 def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
 
     ids = pipe(pagerank.selectIdsByDescendingRank(pointCount), StringifyIt, ColumnIt(0), list)
-    mappings = TSNE.train(Word2Vec.getEmbeddings(embeddingsPath, ids))
+    w2v = Word2Vec(embeddingsPath)
+    mappings = TSNE.train(w2v.getEmbeddings(ids))
 
     tsne = SQLTableDefs.TSNETable(tsnePath)
     tsne.create()
@@ -95,7 +107,8 @@ def computeHighDimensionalNeighbors(embeddingsPath, tsnePath, pagePath, outputPa
 
     data = list(joined.select_id_title_tsneX_tsneY())
     ids, titles = list(ColumnIt(0)(data)), list(ColumnIt(1)(data))
-    embeddings = Word2Vec.getEmbeddings(embeddingsPath, imap(str, ids))
+    w2v = Word2Vec(embeddingsPath)
+    embeddings = w2v.getEmbeddings(imap(str, ids))
 
     table = SQLTableDefs.HighDimensionalNeighborsTable(outputPath)
     table.create()
