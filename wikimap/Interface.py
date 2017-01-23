@@ -5,15 +5,14 @@ import Pagerank
 from Word2Vec import Word2Vec
 import TSNE
 import NearestNeighbors
-import Stats
-import Plots
 import ZoomIndexer
 import shelve
+import Graph
 from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from itertools import imap, izip, repeat
 from operator import itemgetter
-from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, FlipIt, TupleIt, StringifyIt2, pipe
+from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, FlipIt, TupleIt, StringifyIt2, pipe, NotInIt, NotEqualIt
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -27,23 +26,21 @@ def createLinksTable(linksSql, outputPath):
     table.create()
     table.populate(LogIt(1000000)(source.read()))
 
-def createCategoryTable(categorySql, outputPath):
-    source = Tools.TableImporter(categorySql, Tools.getCategoryRecords, "category")
-    table = SQLTableDefs.CategoryTable(outputPath)
-    table.create()
-    table.populate(source.read())
-
 def createPagePropertiesTable(pagePropertiesSql, outputPath):
     source = Tools.TableImporter(pagePropertiesSql, Tools.getPagePropertiesRecords, "page_props")
     table = SQLTableDefs.PagePropertiesTable(outputPath)
     table.create()
     table.populate(LogIt(1000000)(source.read()))
 
-def createCategoryLinksTable(categoryLinksSql, outputPath):
-    source = Tools.TableImporter(categoryLinksSql, Tools.getCategoryLinksRecords, "categorylinks")
+def createCategoryLinksTable(categoryLinksSql, pageTablePath, pagePropertiesTablePath, outputPath):
+    joined = SQLTableDefs.Join(pageTablePath, pagePropertiesTablePath)
+    hiddenCategories = frozenset(ColumnIt(0)(joined.selectHiddenCategories()))
+
     table = SQLTableDefs.CategoryLinksTable(outputPath)
     table.create()
-    table.populate(LogIt(1000000)(source.read()))
+
+    source = Tools.TableImporter(categoryLinksSql, Tools.getCategoryLinksRecords, "categorylinks")
+    table.populate(pipe(source.read(), NotInIt(hiddenCategories, 1), LogIt(1000000)))
 
 def createNormalizedLinksArray(pageTablePath, linksTablePath, outputPath):
     joined = SQLTableDefs.Join(pageTablePath, linksTablePath)
@@ -136,13 +133,13 @@ def createWikimapPointsTable(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPat
 
     table.populate(data.selectWikimapPoints())
 
-def createWikimapCategoriesTable(categoryLinksPath, categoryPath, pagesPath, tsnePath, pagePropertiesPath, outputPath):
-    data = SQLTableDefs.Join(categoryLinksPath, pagesPath, tsnePath, categoryPath, pagePropertiesPath)
+def createWikimapCategoriesTable(categoryLinksPath, pagesPath, tsnePath, outputPath, depth=1):
+    data = SQLTableDefs.Join(categoryLinksPath, pagesPath, tsnePath)
 
     table = SQLTableDefs.WikimapCategoriesTable(outputPath)
     table.create()
 
-    table.populate(pipe(data.selectWikimapCategories(), GroupIt))
+    table.populate(pipe(Graph.aggregate(data.select_id_category(), data.selectCategoryLinks(), depth=depth), NotEqualIt([], 1), LogIt(100000)))
 
 def createZoomIndex(wikipointsPath, pagerankPath, indexPath, metadataPath, bucketSize=100):
     joined = SQLTableDefs.Join(wikipointsPath, pagerankPath)
@@ -167,30 +164,3 @@ def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
     termIndex = TermIndex(outputPath)
     termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
     termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
-
-def createDegreesTable(tsnePath, normalizedLinksArrayPath, outputPath):
-    tsne = SQLTableDefs.TSNETable(tsnePath)
-    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
-
-    ids = ColumnIt(0)(tsne.selectAll())
-
-    degrees = SQLTableDefs.DegreesTable(outputPath)
-    degrees.create()
-
-    degrees.populate(Stats.countInOutDegrees(ids, TupleIt(normLinks)))
-
-def createDegreePlot(degreesPath, degreePlotPath, maxDegree=30):
-    degrees = SQLTableDefs.DegreesTable(degreesPath)
-    plot = Plots.createDegreePlot(degrees.select_degree_count(maxDegree=maxDegree), maxDegree=maxDegree)
-    plot.savefig(degreePlotPath)
-
-def createIsolatedPointsPlot(degreesPath, pagerankPath, outputPath, degreeThreshold=30):
-    degrees = SQLTableDefs.DegreesTable(degreesPath)
-
-    isolatedIds = ColumnIt(0)(degrees.selectIdsByMaxDegree(degreeThreshold))
-
-    pagerank = SQLTableDefs.PagerankTable(pagerankPath)
-    isolatedOrders = ColumnIt(0)(pagerank.selectOrdersByIds(isolatedIds))
-
-    plot = Plots.createPointOrdersPlot(isolatedOrders)
-    plot.savefig(outputPath)

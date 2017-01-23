@@ -8,7 +8,7 @@ import ast
 import urllib
 from operator import itemgetter
 import numpy
-from itertools import imap, groupby
+from itertools import imap, groupby, ifilter
 
 def openOrExit(file_, mode='r'):
     logger = logging.getLogger(__name__)
@@ -180,6 +180,32 @@ class TupleIt(object):
 
     def __iter__(self):
         return imap(tuple, self.iterator)
+
+class NotInIt(object):
+    def __init__(self, container, column):
+        self.container = container
+        self.column = column
+        self.iterator = None
+
+    def __call__(self, iterator):
+        self.iterator = iterator
+        return self
+
+    def __iter__(self):
+        return ifilter(lambda record: record[self.column] not in self.container, self.iterator)
+
+class NotEqualIt(object):
+    def __init__(self, val, column):
+        self.val = val
+        self.column = column
+        self.iterator = None
+
+    def __call__(self, iterator):
+        self.iterator = iterator
+        return self
+
+    def __iter__(self):
+        return ifilter(lambda record: record[self.column] != self.val, self.iterator)
 
 def any2array(something):
     if isinstance(something, numpy.ndarray):
