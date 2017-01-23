@@ -240,6 +240,16 @@ class AggregatedLinksTable(object):
     def get(self, key):
         return self._db.get(key)
 
+class AggregatedLinksTable(object):
+    def __init__(self, path):
+        self._db = CDBStore(path, IntConverter(), IntListConverter())
+
+    def create(self, data):
+        self._db.create(data)
+
+    def get(self, key):
+        return self._db.get(key)
+
 class Join(TableProxy):
     def __init__(self, *tables):
         super(Join, self).__init__(*tables)
