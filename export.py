@@ -8,11 +8,20 @@ from wikimap.BuildManager import BuildManager
 from wikimap.common.Paths import paths as Path
 import wikimap.common.Paths as Paths
 import wikimap.Utils as Utils
+import tarfile
 
 filesets = {
     'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex'], Path['aggregatedInlinks'], Path['aggregatedOutlinks']],
     'plots' : [Path['degreePlot'], Path['isolatedPointsPlot']]
 }
+
+def pack(files, destDir):
+    logger = logging.getLogger(__name__)
+
+    with tarfile.open(os.path.join(destDir, "build.tar.gz"), "w:gz") as tar:
+        for f in files:
+            logger.info('Adding {} to archive.'.format(f))
+            tar.add(f, arcname=os.path.basename(f))
 
 def export(files, destDir):
     destDir = os.path.realpath(destDir)
@@ -25,7 +34,7 @@ def export(files, destDir):
         os.makedirs(destDir)
 
     Utils.clearDirectory(destDir)
-    Utils.copyFiles(files, destDir, verbose=True)
+    pack(files, destDir)
 
 def main():
     Utils.configLogging()
