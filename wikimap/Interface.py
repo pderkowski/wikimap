@@ -3,6 +3,7 @@ import Arrays
 import Tools
 import Pagerank
 from Word2Vec import Word2Vec
+from Node2Vec import Node2Vec
 import TSNE
 import NearestNeighbors
 import ZoomIndexer
@@ -71,10 +72,9 @@ def computePagerank(normalizedLinksArrayPath, pagerankPath):
 
 def createVocabulary(normalizedLinksArrayPath, pagerankPath, outputPath, wordCount=1000000):
     normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
-    if wordCount:
-        pagerank = SQLTableDefs.PagerankTable(pagerankPath)
-        ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
-        normLinks.filterRows(ids)
+    pagerank = SQLTableDefs.PagerankTable(pagerankPath)
+    ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
+    normLinks.filterRows(ids)
 
     w2v = Word2Vec()
     w2v.create(pipe(normLinks, StringifyIt2))
@@ -87,6 +87,16 @@ def computeEmbeddings(normalizedLinksArrayPath, vocabularyPath, outputPath, iter
     normLinks.filterRows(ids)
     w2v.train(pipe(normLinks, StringifyIt2), iterations=iterations)
     w2v.save(outputPath, trim=True)
+
+def computeEmbeddingsWithNode2Vec(normalizedLinksArrayPath, pagerankPath, outputPath, wordCount=1000000):
+    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
+    pagerank = SQLTableDefs.PagerankTable(pagerankPath)
+    ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
+    normLinks.filterRows(ids)
+    embeddingsTable = SQLTableDefs.EmbeddingsTable(outputPath)
+    edges = LogIt(1000000, start="Reading edges...")(normLinks)
+    embeddings = LogIt(10000)(Node2Vec(edges))
+    embeddingsTable.create(embeddings)
 
 def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)

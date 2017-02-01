@@ -1,5 +1,5 @@
 from SQLBase import TableProxy, Query
-from CDBStore import CDBStore, IntConverter, IntListConverter
+from CDBStore import CDBStore, IntConverter, ListConverter, FloatConverter
 
 class HighDimensionalNeighborsTable(TableProxy):
     def __init__(self, tablePath):
@@ -232,7 +232,7 @@ class TSNETable(TableProxy):
 
 class AggregatedLinksTable(object):
     def __init__(self, path):
-        self._db = CDBStore(path, IntConverter(), IntListConverter())
+        self._db = CDBStore(path, IntConverter(), ListConverter(IntConverter()))
 
     def create(self, data):
         self._db.create(data)
@@ -240,9 +240,9 @@ class AggregatedLinksTable(object):
     def get(self, key):
         return self._db.get(key)
 
-class AggregatedLinksTable(object):
+class EmbeddingsTable(object):
     def __init__(self, path):
-        self._db = CDBStore(path, IntConverter(), IntListConverter())
+        self._db = CDBStore(path, IntConverter(), ListConverter(FloatConverter()))
 
     def create(self, data):
         self._db.create(data)

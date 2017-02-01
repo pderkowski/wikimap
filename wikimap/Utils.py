@@ -89,9 +89,11 @@ class PrintIt(object):
         return imap(printAndReturn, self.iterator)
 
 class LogIt(object):
-    def __init__(self, frequency):
+    def __init__(self, frequency, start="", end=""):
         self.frequency = frequency
         self.iterator = None
+        self.start = start
+        self.end = end
 
     def __call__(self, iterator):
         self.iterator = iterator
@@ -99,10 +101,17 @@ class LogIt(object):
 
     def __iter__(self):
         logger = logging.getLogger(__name__)
+
+        if self.start:
+            logger.info(self.start)
+
         for (i, e) in enumerate(self.iterator):
             if self.frequency > 0 and i % self.frequency == 0:
                 logger.info('Processed {} records'.format(i))
             yield e
+
+        if self.end:
+            logger.info(self.end)
 
 class GroupIt(object):
     def __init__(self, iterator):

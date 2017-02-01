@@ -54,7 +54,8 @@ paths.add({
     'embeddingsArtifacts'       : ['embeddings.syn0.npy', 'embeddings.syn1neg.npy'],
     'normalizedLinksArray'      : 'normalizedLinks.npy',
     'aggregatedInlinks'         : 'aggregatedInlinks.cdb',
-    'aggregatedOutlinks'        : 'aggregatedOutlinks.cdb'
+    'aggregatedOutlinks'        : 'aggregatedOutlinks.cdb',
+    'embeddings2'               : 'embeddings.cdb'
 })
 
 def resolve(paths_, base=None):
