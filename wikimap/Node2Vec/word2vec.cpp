@@ -5,17 +5,17 @@
 //Code from https://github.com/nicholas-leonard/word2vec/blob/master/word2vec.c
 //Customized for SNAP and node2vec
 
-void LearnVocab(TVVec<TInt, int64>& WalksVV, TIntV& Vocab) {
+void LearnVocab(const TVVec<TInt, int64>& WalksVV, const TIntV& WalkLens, TIntV& Vocab) {
   for( int64 i = 0; i < Vocab.Len(); i++) { Vocab[i] = 0; }
   for( int64 i = 0; i < WalksVV.GetXDim(); i++) {
-    for( int j = 0; j < WalksVV.GetYDim(); j++) {
+    for(int j = 0; j < WalkLens[i]; j++) {
       Vocab[WalksVV(i,j)]++;
     }
   }
 }
 
 //Precompute unigram table using alias sampling method
-void InitUnigramTable(TIntV& Vocab, TIntV& KTable, TFltV& UTable) {
+void InitUnigramTable(const TIntV& Vocab, TIntV& KTable, TFltV& UTable) {
   double TrainWordsPow = 0;
   double Pwr = 0.75;
   TFltV ProbV(Vocab.Len());
@@ -53,14 +53,14 @@ void InitUnigramTable(TIntV& Vocab, TIntV& KTable, TFltV& UTable) {
   }
 }
 
-int64 RndUnigramInt(TIntV& KTable, TFltV& UTable, TRnd& Rnd) {
+int64 RndUnigramInt(const TIntV& KTable, const TFltV& UTable, TRnd& Rnd) {
   TInt X = KTable[static_cast<int64>(Rnd.GetUniDev()*KTable.Len())];
   double Y = Rnd.GetUniDev();
   return Y < UTable[X] ? X : KTable[X];
 }
 
 //Initialize negative embeddings
-void InitNegEmb(TIntV& Vocab, int& Dimensions, TVVec<TFlt, int64>& SynNeg) {
+void InitNegEmb(const TIntV& Vocab, int Dimensions, TVVec<TFlt, int64>& SynNeg) {
   SynNeg = TVVec<TFlt, int64>(Vocab.Len(),Dimensions);
   for (int64 i = 0; i < SynNeg.GetXDim(); i++) {
     for (int j = 0; j < SynNeg.GetYDim(); j++) {
@@ -70,7 +70,7 @@ void InitNegEmb(TIntV& Vocab, int& Dimensions, TVVec<TFlt, int64>& SynNeg) {
 }
 
 //Initialize positive embeddings
-void InitPosEmb(TIntV& Vocab, int& Dimensions, TRnd& Rnd, TVVec<TFlt, int64>& SynPos) {
+void InitPosEmb(const TIntV& Vocab, int Dimensions, TRnd& Rnd, TVVec<TFlt, int64>& SynPos) {
   SynPos = TVVec<TFlt, int64>(Vocab.Len(),Dimensions);
   for (int64 i = 0; i < SynPos.GetXDim(); i++) {
     for (int j = 0; j < SynPos.GetYDim(); j++) {
@@ -79,23 +79,13 @@ void InitPosEmb(TIntV& Vocab, int& Dimensions, TRnd& Rnd, TVVec<TFlt, int64>& Sy
   }
 }
 
-void TrainModel(TVVec<TInt, int64>& WalksVV, int& Dimensions, int& WinSize, int& Iter, bool& Verbose,
-   TIntV& KTable, TFltV& UTable, int64& WordCntAll, TFltV& ExpTable, double& Alpha,
-   int64 CurrWalk, TRnd& Rnd, TVVec<TFlt, int64>& SynNeg, TVVec<TFlt, int64>& SynPos)  {
+void TrainModel(const TIntV& WalkV, int Dimensions, int WinSize,
+   const TIntV& KTable, const TFltV& UTable, const TFltV& ExpTable, double Alpha,
+   TRnd& Rnd, TVVec<TFlt, int64>& SynNeg, TVVec<TFlt, int64>& SynPos)  {
   TFltV Neu1V(Dimensions);
   TFltV Neu1eV(Dimensions);
-  int64 AllWords = WalksVV.GetXDim()*WalksVV.GetYDim();
-  TIntV WalkV(WalksVV.GetYDim());
-  for (int j = 0; j < WalksVV.GetYDim(); j++) { WalkV[j] = WalksVV(CurrWalk,j); }
+
   for (int64 WordI=0; WordI<WalkV.Len(); WordI++) {
-    if ( WordCntAll%10000 == 0 ) {
-      if ( Verbose ) {
-        printf("\rLearning Progress: %.2lf%% ",(double)WordCntAll*100/(double)(Iter*AllWords));
-        fflush(stdout);
-      }
-      Alpha = StartAlpha * (1 - WordCntAll / static_cast<double>(Iter * AllWords + 1));
-      if ( Alpha < StartAlpha * 0.0001 ) { Alpha = StartAlpha * 0.0001; }
-    }
     int64 Word = WalkV[WordI];
     for (int i = 0; i < Dimensions; i++) {
       Neu1V[i] = 0;
@@ -127,11 +117,11 @@ void TrainModel(TVVec<TInt, int64>& WalksVV, int& Dimensions, int& WinSize, int&
         double Grad;                     //Gradient multiplied by learning rate
         if (Product > MaxExp) { Grad = (Label - 1) * Alpha; }
         else if (Product < -MaxExp) { Grad = Label * Alpha; }
-        else { 
+        else {
           double Exp = ExpTable[static_cast<int>(Product*ExpTablePrecision)+TableSize/2];
           Grad = (Label - 1 + 1 / (1 + Exp)) * Alpha;
         }
-        for (int i = 0; i < Dimensions; i++) { 
+        for (int i = 0; i < Dimensions; i++) {
           Neu1eV[i] += Grad * SynNeg(Target,i);
           SynNeg(Target,i) += Grad * SynPos(CurrWord,i);
         }
@@ -140,19 +130,18 @@ void TrainModel(TVVec<TInt, int64>& WalksVV, int& Dimensions, int& WinSize, int&
         SynPos(CurrWord,i) += Neu1eV[i];
       }
     }
-    WordCntAll++;
   }
 }
 
 
-void LearnEmbeddings(TVVec<TInt, int64>& WalksVV, int& Dimensions, int& WinSize,
- int& Iter, bool& Verbose, TIntFltVH& EmbeddingsHV) {
+void LearnEmbeddings(TVVec<TInt, int64>& WalksVV, const TIntV& WalkLens, int Dimensions, int WinSize,
+ int Iter, bool Verbose, TVec<TRnd>& Rnds, TIntFltVH& EmbeddingsHV) {
   TIntIntH RnmH;
   TIntIntH RnmBackH;
   int64 NNodes = 0;
   //renaming nodes into consecutive numbers
   for (int i = 0; i < WalksVV.GetXDim(); i++) {
-    for (int64 j = 0; j < WalksVV.GetYDim(); j++) {
+    for (int64 j = 0; j < WalkLens[i]; j++) {
       if ( RnmH.IsKey(WalksVV(i, j)) ) {
         WalksVV(i, j) = RnmH.GetDat(WalksVV(i, j));
       } else {
@@ -163,33 +152,68 @@ void LearnEmbeddings(TVVec<TInt, int64>& WalksVV, int& Dimensions, int& WinSize,
     }
   }
   TIntV Vocab(NNodes);
-  LearnVocab(WalksVV, Vocab);
+  LearnVocab(WalksVV, WalkLens, Vocab);
   TIntV KTable(NNodes);
   TFltV UTable(NNodes);
   TVVec<TFlt, int64> SynNeg;
   TVVec<TFlt, int64> SynPos;
-  TRnd Rnd(time(NULL));
-  InitPosEmb(Vocab, Dimensions, Rnd, SynPos);
+  InitPosEmb(Vocab, Dimensions, Rnds[0], SynPos);
   InitNegEmb(Vocab, Dimensions, SynNeg);
   InitUnigramTable(Vocab, KTable, UTable);
   TFltV ExpTable(TableSize);
-  double Alpha = StartAlpha;                              //learning rate
 #pragma omp parallel for schedule(dynamic)
   for (int i = 0; i < TableSize; i++ ) {
     double Value = -MaxExp + static_cast<double>(i) / static_cast<double>(ExpTablePrecision);
     ExpTable[i] = TMath::Power(TMath::E, Value);
   }
-  int64 WordCntAll = 0;
+  int64 WordCnt = 0;
+  int64 AllWords = 0;
+  for (int i = 0; i < WalkLens.Len(); ++i) {
+    AllWords += WalkLens[i];
+  }
+
+  const int64 MaxChunkSize = 50;
+
 // op RS 2016/09/26, collapse does not compile on Mac OS X
 //#pragma omp parallel for schedule(dynamic) collapse(2)
+  if (Verbose) { printf("Learning Progress: 0.00%%"); fflush(stdout); }
+
   for (int j = 0; j < Iter; j++) {
 #pragma omp parallel for schedule(dynamic)
-    for (int64 i = 0; i < WalksVV.GetXDim(); i++) {
-      TrainModel(WalksVV, Dimensions, WinSize, Iter, Verbose, KTable, UTable,
-       WordCntAll, ExpTable, Alpha, i, Rnd, SynNeg, SynPos); 
+    for (int64 i = 0; i < WalksVV.GetXDim(); i += MaxChunkSize) {
+      TRnd& ThreadRnd = Rnds[omp_get_thread_num()];
+
+      int64 LocalWordCnt;
+#pragma omp atomic read
+      LocalWordCnt = WordCnt;
+
+      if (Verbose && omp_get_thread_num() == 0) { // only master thread reports progress
+        printf("\rLearning Progress: %.2lf%% ",(double)LocalWordCnt*100/(double)(Iter*AllWords));
+        fflush(stdout);
+      }
+
+      // SynNeg and SynPos are intentionally not memory-locked (asynchronous SGD)
+      double Alpha = StartAlpha * (1 - LocalWordCnt / static_cast<double>(Iter * AllWords + 1));
+      Alpha = (Alpha < StartAlpha * 0.0001)? (StartAlpha * 0.0001) : Alpha;
+
+      int64 ChunkTotalLen = 0;
+
+      const int64 ChunkSize = (WalksVV.GetXDim() - i < MaxChunkSize)? (WalksVV.GetXDim() - i) : MaxChunkSize;
+      for (int64 l = i; l < i + ChunkSize; ++l) {
+        TIntV WalkV(WalkLens[l]);
+        for (int k = 0; k < WalkLens[l]; k++) { WalkV[k] = WalksVV(l,k); }
+
+        TrainModel(WalkV, Dimensions, WinSize, KTable, UTable,
+         ExpTable, Alpha, ThreadRnd, SynNeg, SynPos);
+
+        ChunkTotalLen += WalkLens[l];
+      }
+
+#pragma omp atomic
+      WordCnt += static_cast<int64>(ChunkTotalLen);
     }
   }
-  if (Verbose) { printf("\n"); fflush(stdout); }
+  if (Verbose) { printf("\rLearning Progress: 100.00%% \n"); fflush(stdout); }
   for (int64 i = 0; i < SynPos.GetXDim(); i++) {
     TFltV CurrV(SynPos.GetYDim());
     for (int j = 0; j < SynPos.GetYDim(); j++) { CurrV[j] = SynPos(i, j); }

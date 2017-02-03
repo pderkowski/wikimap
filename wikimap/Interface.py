@@ -95,7 +95,7 @@ def computeEmbeddingsWithNode2Vec(normalizedLinksArrayPath, pagerankPath, output
     normLinks.filterRows(ids)
     embeddingsTable = SQLTableDefs.EmbeddingsTable(outputPath)
     edges = LogIt(1000000, start="Reading edges...")(normLinks)
-    embeddings = LogIt(10000)(Node2Vec(edges))
+    embeddings = LogIt(100000)(Node2Vec(edges))
     embeddingsTable.create(embeddings)
 
 def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):

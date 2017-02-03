@@ -8,13 +8,13 @@
 
 void ParseArgs(int& argc, char* argv[], TStr& InFile, TStr& OutFile,
  int& Dimensions, int& WalkLen, int& NumWalks, int& WinSize, int& Iter,
- bool& Verbose, double& ParamP, double& ParamQ, bool& Directed, bool& Weighted) {
+ bool& Verbose, double& BacktrackProb) {
   Env = TEnv(argc, argv, TNotify::StdNotify);
   Env.PrepArgs(TStr::Fmt("\nAn algorithmic framework for representational learning on graphs."));
   InFile = Env.GetIfArgPrefixStr("-i:", "stdin",
-   "Input graph path");
+   "Input graph path. Default is stdin");
   OutFile = Env.GetIfArgPrefixStr("-o:", "stdout",
-   "Output graph path");
+   "Output graph path.");
   Dimensions = Env.GetIfArgPrefixInt("-d:", 128,
    "Number of dimensions. Default is 128");
   WalkLen = Env.GetIfArgPrefixInt("-l:", 80,
@@ -25,16 +25,12 @@ void ParseArgs(int& argc, char* argv[], TStr& InFile, TStr& OutFile,
    "Context size for optimization. Default is 10");
   Iter = Env.GetIfArgPrefixInt("-e:", 1,
    "Number of epochs in SGD. Default is 1");
-  ParamP = Env.GetIfArgPrefixFlt("-p:", 1,
-   "Return hyperparameter. Default is 1");
-  ParamQ = Env.GetIfArgPrefixFlt("-q:", 1,
-   "Inout hyperparameter. Default is 1");
+  BacktrackProb = Env.GetIfArgPrefixFlt("-b:", 0.5,
+   "Backtracking probability. Default is 0.5");
   Verbose = Env.IsArgStr("-v", "Verbose output.");
-  Directed = Env.IsArgStr("-dr", "Graph is directed.");
-  Weighted = Env.IsArgStr("-w", "Graph is weighted.");
 }
 
-void ReadGraph(TStr& InFile, bool& Directed, bool& Weighted, bool& Verbose, PWNet& InNet) {
+void ReadGraph(const TStr& InFile, bool Verbose, PNGraph& InGraph) {
   PSIn input;
   if (InFile == "stdin") {
     input = TStdIn::New();
@@ -52,12 +48,9 @@ void ReadGraph(TStr& InFile, bool& Directed, bool& Weighted, bool& Verbose, PWNe
       if(Tokens.Len()<2){ continue; }
       int64 SrcNId = Tokens[0].GetInt();
       int64 DstNId = Tokens[1].GetInt();
-      double Weight = 1.0;
-      if (Weighted) { Weight = Tokens[2].GetFlt(); }
-      if (!InNet->IsNode(SrcNId)){ InNet->AddNode(SrcNId); }
-      if (!InNet->IsNode(DstNId)){ InNet->AddNode(DstNId); }
-      InNet->AddEdge(SrcNId,DstNId,Weight);
-      if (!Directed){ InNet->AddEdge(DstNId,SrcNId,Weight); }
+      if (!InGraph->IsNode(SrcNId)){ InGraph->AddNode(SrcNId); }
+      if (!InGraph->IsNode(DstNId)){ InGraph->AddNode(DstNId); }
+      InGraph->AddEdge(SrcNId,DstNId);
       LineCnt++;
     }
     if (Verbose) { printf("Read %lld lines from %s\n", (long long)LineCnt, InFile.CStr()); }
@@ -69,7 +62,7 @@ void ReadGraph(TStr& InFile, bool& Directed, bool& Weighted, bool& Verbose, PWNe
   }
 }
 
-void WriteOutput(TStr& OutFile, TIntFltVH& EmbeddingsHV) {
+void WriteOutput(const TStr& OutFile, TIntFltVH& EmbeddingsHV) {
   PSOut output;
   if (OutFile == "stdout") {
     output = TStdOut::New();
@@ -97,16 +90,13 @@ void WriteOutput(TStr& OutFile, TIntFltVH& EmbeddingsHV) {
 int main(int argc, char* argv[]) {
   TStr InFile,OutFile;
   int Dimensions, WalkLen, NumWalks, WinSize, Iter;
-  double ParamP, ParamQ;
-  bool Directed, Weighted, Verbose;
-  ParseArgs(argc, argv, InFile, OutFile, Dimensions, WalkLen, NumWalks, WinSize,
-   Iter, Verbose, ParamP, ParamQ, Directed, Weighted);
-  PWNet InNet = PWNet::New();
+  double BacktrackProb;
+  bool Verbose;
+  ParseArgs(argc, argv, InFile, OutFile, Dimensions, WalkLen, NumWalks, WinSize, Iter, Verbose, BacktrackProb);
+  PNGraph InGraph = PNGraph::New();
   TIntFltVH EmbeddingsHV;
-  ReadGraph(InFile, Directed, Weighted, Verbose, InNet);
-  printf("Memory needed for probability table: %.2f GB\n", (double)PredictMemoryRequirements(InNet) / 1073741824);
-  node2vec(InNet, ParamP, ParamQ, Dimensions, WalkLen, NumWalks, WinSize, Iter,
-   Verbose, EmbeddingsHV);
+  ReadGraph(InFile, Verbose, InGraph);
+  node2vec(InGraph, BacktrackProb, Dimensions, WalkLen, NumWalks, WinSize, Iter, Verbose, EmbeddingsHV);
   WriteOutput(OutFile, EmbeddingsHV);
   return 0;
 }

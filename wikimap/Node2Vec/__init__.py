@@ -4,7 +4,7 @@ import tempfile
 import logging
 import sys
 
-def Node2Vec(edges, dims=128, walkLength=80, walksPerNode=10, contextSize=10, epochsCount=1, returnParam=1, inoutParam=1, verbose=True, directed=True, weighted=False):
+def Node2Vec(edges, dims=128, walkLength=80, walksPerNode=10, contextSize=10, epochsCount=1, backtrackProb = 0.5, verbose=True):
     logger = logging.getLogger(__name__)
     directory = os.path.dirname(os.path.realpath(__file__))
     binPath = os.path.join(directory, "node2vec")
@@ -18,14 +18,9 @@ def Node2Vec(edges, dims=128, walkLength=80, walksPerNode=10, contextSize=10, ep
         "-r:{}".format(str(walksPerNode)),
         "-k:{}".format(str(contextSize)),
         "-e:{}".format(str(epochsCount)),
-        "-p:{}".format(str(returnParam)),
-        "-q:{}".format(str(inoutParam))]
+        "-b:{}".format(str(backtrackProb))]
     if verbose:
         args.append("-v")
-    if directed:
-        args.append("-dr")
-    if weighted:
-        args.append("-w")
 
     process = Popen(args, stdin=PIPE, stdout=sys.stdout, stderr=sys.stderr, bufsize=-1)
 

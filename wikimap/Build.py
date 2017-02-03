@@ -57,7 +57,7 @@ class Build(object):
         jobs.append(Job('CREATE WORD VOCABULARY', Interface.createVocabulary, inputs=[normalizedLinksArray, pagerank], outputs=[vocabulary], artifacts=[vocabularyArtifacts], wordCount=1000000))
 
         jobs.append(Job('COMPUTE WORD EMBEDDINGS', Interface.computeEmbeddings, inputs=[normalizedLinksArray, vocabulary], outputs=[embeddings], artifacts=[embeddingsArtifacts], iterations=10))
-        jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.computeEmbeddingsWithNode2Vec, inputs=[normalizedLinksArray, pagerank], outputs=[embeddingsTable], wordCount=30000))
+        jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.computeEmbeddingsWithNode2Vec, inputs=[normalizedLinksArray, pagerank], outputs=[embeddingsTable], wordCount=1000000))
         jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))
