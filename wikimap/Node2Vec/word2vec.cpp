@@ -133,6 +133,15 @@ void TrainModel(const TIntV& WalkV, int Dimensions, int WinSize,
   }
 }
 
+void normalizeEmbeddings(TVVec<TFlt, int64>& SynPos) {
+#pragma omp parallel for schedule(static)
+  for (int64 i = 0; i < SynPos.GetXDim(); ++i) {
+    TFltV CurrV(SynPos.GetYDim());
+    for (int j = 0; j < SynPos.GetYDim(); j++) { CurrV[j] = SynPos(i, j); }
+    TLinAlg::Normalize(CurrV);
+    for (int j = 0; j < SynPos.GetYDim(); j++) { SynPos(i, j) = CurrV[j]; }
+  }
+}
 
 void LearnEmbeddings(TVVec<TInt, int64>& WalksVV, const TIntV& WalkLens, int Dimensions, int WinSize,
  int Iter, bool Verbose, TVec<TRnd>& Rnds, TIntFltVH& EmbeddingsHV) {
@@ -214,6 +223,10 @@ void LearnEmbeddings(TVVec<TInt, int64>& WalksVV, const TIntV& WalkLens, int Dim
     }
   }
   if (Verbose) { printf("\rLearning Progress: 100.00%% \n"); fflush(stdout); }
+
+  if (Verbose) { printf("Normalizing embeddings\n"); fflush(stdout); }
+  normalizeEmbeddings(SynPos);
+
   for (int64 i = 0; i < SynPos.GetXDim(); i++) {
     TFltV CurrV(SynPos.GetYDim());
     for (int j = 0; j < SynPos.GetYDim(); j++) { CurrV[j] = SynPos(i, j); }
