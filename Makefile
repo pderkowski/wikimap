@@ -34,6 +34,8 @@ PAGERANKTESTBIN = $(PAGERANKTESTDIR)/run_tests
 PAGERANKBIN = $(PAGERANKDIR)/pagerank
 SQLTOOLSLIB = $(SQLTOOLSDIR)/libsqltools.so
 
+ARRAYDIR = wikimap/Array
+
 PYTHONINCLUDE = env/include/python2.7
 
 $(PAGERANKTESTOBJECTS) : CXXFLAGS += -I$(PAGERANKDIR) -std=c++11
@@ -42,9 +44,7 @@ $(SQLTOOLSOBJECTS) : CXXFLAGS += -fPIC -I$(PYTHONINCLUDE) -std=c++11
 $(AGGREGATEOBJECTS) : CXXFLAGS += -I$(SNAPDIR)/snap-core -I$(SNAPDIR)/glib-core -std=c++11
 $(AGGREGATEBIN) : CXXFLAGS +=  -fopenmp -lrt
 $(NODE2VECBIN) : CXXFLAGS += -fopenmp -lrt -I$(SNAPDIR)/snap-core -I$(SNAPDIR)/glib-core
-
 CXX = g++
-CXXFLAGS =
 CXXFLAGS = -O3
 
 .DEFAULT_GOAL := build
@@ -54,9 +54,12 @@ CXXFLAGS = -O3
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-build: $(PAGERANKBIN) $(SQLTOOLSLIB) $(TSNEBIN) $(AGGREGATEBIN) node2vec
+build: $(PAGERANKBIN) $(SQLTOOLSLIB) $(TSNEBIN) $(AGGREGATEBIN) array node2vec
 
 node2vec: $(NODE2VECBIN)
+
+array:
+	cd $(ARRAYDIR) && make
 
 $(SNAPDIR)/snap-core/Snap.o:
 	cd $(SNAPDIR) && make -C snap-core
@@ -87,3 +90,4 @@ test: build $(PAGERANKTESTBIN)
 clean:
 	rm -f $(PAGERANKCOMMONOBJECTS) $(PAGERANKTESTBIN) $(PAGERANKBIN) $(SQLTOOLSLIB) $(SQLTOOLSOBJECTS) $(PAGERANKTESTOBJECTS) $(PAGERANKBINOBJECTS) $(AGGREGATEOBJECTS) $(AGGREGATEBIN) $(NODE2VECOBJECTS) $(NODE2VECBIN)
 	cd $(SNAPDIR) && make clean
+	cd $(ARRAYDIR) && make clean

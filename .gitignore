@@ -10,3 +10,4 @@ wikimap/Pagerank/pagerank
 wikimap/Pagerank/test/run_tests
 wikimap/Graph/aggregate
 wikimap/Node2Vec/node2vec
+wikimap/Array/testarray
