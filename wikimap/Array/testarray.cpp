@@ -209,7 +209,6 @@ void testForEach() {
     check("For each", zeroed);
 }
 
-
 int main() {
     testConstructing();
     testEquality();

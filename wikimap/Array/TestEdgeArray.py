@@ -19,8 +19,12 @@ class TestArray(object):
 
     storage = 'tmptestfile'
 
+    def __init__(self, *args, **kwargs):
+        self._args = args
+        self._kwargs = kwargs
+
     def __enter__(self):
-        ea = EdgeArray(TestArray.storage)
+        ea = EdgeArray(TestArray.storage, *self._args, **self._kwargs)
         ea.populate(TestArray.edges)
         return ea
 
@@ -61,6 +65,17 @@ def testInverseEdges():
         ea.inverseEdges()
         check("Inverse edges", list(ea) == [(e[1], e[0]) for e in TestArray.edges])
 
+def testShuffle():
+    with TestArray(shuffle=True) as ea:
+        round1 = list(ea)
+        round2 = list(ea)
+        check("Shuffle", round1 != round2)
+
+def testStringify():
+    with TestArray(stringify=True) as ea:
+        strings = list(ea)
+        check("Stringify", strings == [str(e[0])+' '+str(e[1])+'\n' for e in TestArray.edges])
+
 def main():
     print "Testing python bindings:"
     testBasics()
@@ -68,6 +83,8 @@ def main():
     testSortByEndNode()
     testFilterByNodes()
     testInverseEdges()
+    testShuffle()
+    testStringify()
 
 if __name__ == "__main__":
     main()

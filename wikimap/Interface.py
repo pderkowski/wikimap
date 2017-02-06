@@ -1,9 +1,8 @@
 from common import SQLTableDefs
-import Arrays
 import Tools
 import Pagerank
-from Word2Vec import Word2Vec
 from Node2Vec import Node2Vec
+from Array.EdgeArray import EdgeArray
 import TSNE
 import NearestNeighbors
 import ZoomIndexer
@@ -13,7 +12,7 @@ from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from itertools import imap, izip, repeat
 from operator import itemgetter
-from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, FlipIt, TupleIt, StringifyIt2, pipe, NotInIt, NotEqualIt
+from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotInIt, NotEqualIt
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -43,67 +42,49 @@ def createCategoryLinksTable(categoryLinksSql, pageTablePath, pagePropertiesTabl
     source = Tools.TableImporter(categoryLinksSql, Tools.getCategoryLinksRecords, "categorylinks")
     table.populate(pipe(source.read(), NotInIt(hiddenCategories, 1), LogIt(1000000)))
 
-def createNormalizedLinksArray(pageTablePath, linksTablePath, outputPath):
+def createEdgeArray(pageTablePath, linksTablePath, outputPath):
     joined = SQLTableDefs.Join(pageTablePath, linksTablePath)
-    array = Arrays.NormalizedLinksArray(outputPath)
-    array.populate(LogIt(1000000)(joined.selectNormalizedLinks()))
+    edges = EdgeArray(outputPath)
+    edges.populate(LogIt(1000000)(joined.selectNormalizedLinks()))
 
-def createAggregatedLinksTables(normalizedLinksArrayPath, tsnePath, inlinkTablePath, outlinkTablePath):
+def createAggregatedLinksTables(edgeArrayPath, tsnePath, inlinkTablePath, outlinkTablePath):
     tsne = SQLTableDefs.TSNETable(tsnePath)
     ids = ColumnIt(0)(tsne.selectAll())
 
-    array = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
-    array.filterRows(ids)
+    edges = EdgeArray(edgeArrayPath)
+    edges.filterByNodes(ids)
 
     outlinks = SQLTableDefs.AggregatedLinksTable(outlinkTablePath)
-    array.sortByColumn(0)
-    outlinks.create(pipe(array, LogIt(1000000), TupleIt, GroupIt))
+    edges.sortByStartNode()
+    outlinks.create(pipe(edges, LogIt(1000000), GroupIt))
 
     inlinks = SQLTableDefs.AggregatedLinksTable(inlinkTablePath)
-    array.reverseColumns()
-    array.sortByColumn(0)
-    inlinks.create(pipe(array, LogIt(1000000), TupleIt, GroupIt))
+    edges.inverseEdges()
+    edges.sortByStartNode()
+    inlinks.create(pipe(edges, LogIt(1000000), GroupIt))
 
-def computePagerank(normalizedLinksArrayPath, pagerankPath):
-    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
+def computePagerank(edgeArrayPath, pagerankPath):
+    edges = EdgeArray(edgeArrayPath, stringify=True)
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
     pagerank.create()
-    pagerank.populate(Pagerank.pagerank(TupleIt(normLinks)))
+    pagerank.populate(Pagerank.pagerank(edges, stringified=True))
 
-def createVocabulary(normalizedLinksArrayPath, pagerankPath, outputPath, wordCount=1000000):
-    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
+def computeEmbeddingsWithNode2Vec(edgeArrayPath, pagerankPath, outputPath, wordCount=1000000):
+    edges = EdgeArray(edgeArrayPath)
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
     ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
-    normLinks.filterRows(ids)
-
-    w2v = Word2Vec()
-    w2v.create(pipe(normLinks, StringifyIt2))
-    w2v.save(outputPath)
-
-def computeEmbeddings(normalizedLinksArrayPath, vocabularyPath, outputPath, iterations=10):
-    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath, shuffle=True)
-    w2v = Word2Vec(vocabularyPath)
-    ids = map(int, w2v.getVocab())
-    normLinks.filterRows(ids)
-    w2v.train(pipe(normLinks, StringifyIt2), iterations=iterations)
-    w2v.save(outputPath, trim=True)
-
-def computeEmbeddingsWithNode2Vec(normalizedLinksArrayPath, pagerankPath, outputPath, wordCount=1000000):
-    normLinks = Arrays.NormalizedLinksArray(normalizedLinksArrayPath)
-    pagerank = SQLTableDefs.PagerankTable(pagerankPath)
-    ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
-    normLinks.filterRows(ids)
+    edges.filterByNodes(ids)
     embeddingsTable = SQLTableDefs.EmbeddingsTable(outputPath)
-    edges = LogIt(1000000, start="Reading edges...")(normLinks)
+    edges = LogIt(1000000, start="Reading edges...")(edges)
     embeddings = LogIt(100000)(Node2Vec(edges))
     embeddingsTable.create(embeddings)
 
 def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
 
-    ids = pipe(pagerank.selectIdsByDescendingRank(pointCount), StringifyIt, ColumnIt(0), list)
-    w2v = Word2Vec(embeddingsPath)
-    mappings = TSNE.train(w2v.getEmbeddings(ids))
+    ids = pipe(pagerank.selectIdsByDescendingRank(pointCount), ColumnIt(0), list)
+    embeddings = SQLTableDefs.EmbeddingsTable(embeddingsPath)
+    mappings = TSNE.train(embeddings.get(id_) for id_ in ids)
 
     tsne = SQLTableDefs.TSNETable(tsnePath)
     tsne.create()
@@ -114,8 +95,8 @@ def computeHighDimensionalNeighbors(embeddingsPath, tsnePath, pagePath, outputPa
 
     data = list(joined.select_id_title_tsneX_tsneY())
     ids, titles = list(ColumnIt(0)(data)), list(ColumnIt(1)(data))
-    w2v = Word2Vec(embeddingsPath)
-    embeddings = w2v.getEmbeddings(imap(str, ids))
+    embeddingsTable = SQLTableDefs.EmbeddingsTable(embeddingsPath)
+    embeddings = imap(embeddingsTable.get, ids)
 
     table = SQLTableDefs.HighDimensionalNeighborsTable(outputPath)
     table.create()

@@ -19,7 +19,7 @@ public:
     typedef typename std::vector<T>::value_type value_type;
 
 public:
-    Array();
+    explicit Array(size_type size = 0);
 
     void append(const T& val);
 
@@ -56,8 +56,8 @@ private:
 };
 
 template<class T>
-Array<T>::Array()
-: data_()
+Array<T>::Array(size_type size)
+: data_(size)
 { }
 
 template<class T>

@@ -2,11 +2,12 @@ from edgearrayext import *
 import logging
 
 class EdgeArray(object):
-    def __init__(self, path, shuffle=False, log=True):
+    def __init__(self, path, shuffle=False, log=True, stringify=False):
         self._path = path
         self._array = EdgeArrayExt()
         self._shuffle = shuffle
         self._log = log
+        self._stringify = stringify
 
     def populate(self, iterator):
         logger = logging.getLogger(__name__)
@@ -66,7 +67,10 @@ class EdgeArray(object):
                 logger.info("EdgeArray: shuffling...")
             self._array.shuffle()
 
-        return iter(self._array)
+        if self._stringify:
+            return self._array.iterStrings()
+        else:
+            return iter(self._array)
 
     def _ensureLoaded(self):
         logger = logging.getLogger(__name__)

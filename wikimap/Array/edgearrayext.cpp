@@ -17,12 +17,21 @@ py::tuple EdgeToPyTuple(const Edge& edge) {
     return py::make_tuple(edge[0], edge[1]);
 }
 
+py::str EdgeToPyStr(const Edge& edge) {
+    std::string res(std::to_string(edge[0]));
+    res += " ";
+    res += std::to_string(edge[1]);
+    res += "\n";
+    return py::str(res);
+}
+
 class EdgeArrayExt {
 private:
     Array<Edge> array_;
 
 public:
     typedef decltype(boost::make_transform_iterator(array_.begin(), EdgeToPyTuple)) iterator;
+    typedef decltype(boost::make_transform_iterator(array_.begin(), EdgeToPyStr)) strIterator;
 
 public:
     explicit EdgeArrayExt();
@@ -41,6 +50,9 @@ public:
 
     iterator begin();
     iterator end();
+
+    strIterator strBegin();
+    strIterator strEnd();
 };
 
 EdgeArrayExt::EdgeArrayExt()
@@ -60,6 +72,14 @@ EdgeArrayExt::iterator EdgeArrayExt::begin() {
 
 EdgeArrayExt::iterator EdgeArrayExt::end() {
     return boost::make_transform_iterator(array_.end(), EdgeToPyTuple);
+}
+
+EdgeArrayExt::strIterator EdgeArrayExt::strBegin() {
+    return boost::make_transform_iterator(array_.begin(), EdgeToPyStr);
+}
+
+EdgeArrayExt::strIterator EdgeArrayExt::strEnd() {
+    return boost::make_transform_iterator(array_.end(), EdgeToPyStr);
 }
 
 void EdgeArrayExt::sortByColumn(int column) {
@@ -105,6 +125,7 @@ BOOST_PYTHON_MODULE(edgearrayext)
     py::class_<EdgeArrayExt>("EdgeArrayExt")
         .def("populate", &EdgeArrayExt::populate)
         .def("__iter__", py::iterator<EdgeArrayExt>())
+        .def("iterStrings", py::range(&EdgeArrayExt::strBegin, &EdgeArrayExt::strEnd))
         .def("sortByColumn", &EdgeArrayExt::sortByColumn)
         .def("filterByNodes", &EdgeArrayExt::filterByNodes)
         .def("inverseEdges", &EdgeArrayExt::inverseEdges)

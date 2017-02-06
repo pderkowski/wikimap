@@ -52,7 +52,7 @@ paths.add({
     'embeddings'                : 'embeddings',
     'vocabularyArtifacts'       : ['vocabulary.syn0.npy', 'vocabulary.syn1neg.npy'],
     'embeddingsArtifacts'       : ['embeddings.syn0.npy', 'embeddings.syn1neg.npy'],
-    'normalizedLinksArray'      : 'normalizedLinks.npy',
+    'edgeArray'                 : 'edgeArray',
     'aggregatedInlinks'         : 'aggregatedInlinks.cdb',
     'aggregatedOutlinks'        : 'aggregatedOutlinks.cdb',
     'embeddings2'               : 'embeddings.cdb'
