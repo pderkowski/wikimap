@@ -14,9 +14,6 @@ SQLTOOLSSOURCES = $(SQLTOOLSDIR)/sqltools.cpp $(SQLTOOLSDIR)/records.cpp $(SQLTO
 SQLTOOLSOBJECTS = $(patsubst %.cpp, %.o, $(SQLTOOLSSOURCES))
 
 TSNEDIR = external/bhtsne
-TSNEBIN = $(TSNEDIR)/bh_tsne
-TSNESOURCES = $(TSNEDIR)/sptree.cpp $(TSNEDIR)/tsne.cpp
-TSNEOBJECTS = $(patsubst %.cpp, %.o, $(TSNESOURCES))
 
 SNAPDIR = external/snap
 
@@ -49,17 +46,20 @@ CXXFLAGS = -O3
 
 .DEFAULT_GOAL := build
 
-.PHONY: test clean build node2vec
+.PHONY: test clean build node2vec tsne
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-build: $(PAGERANKBIN) $(SQLTOOLSLIB) $(TSNEBIN) $(AGGREGATEBIN) array node2vec
+build: $(PAGERANKBIN) $(SQLTOOLSLIB) $(AGGREGATEBIN) tsne array node2vec
 
 node2vec: $(NODE2VECBIN)
 
 array:
 	cd $(ARRAYDIR) && make
+
+tsne:
+	cd $(TSNEDIR) && make
 
 $(SNAPDIR)/snap-core/Snap.o:
 	cd $(SNAPDIR) && make -C snap-core
@@ -80,9 +80,6 @@ $(PAGERANKBIN): $(PAGERANKCOMMONOBJECTS) $(PAGERANKBINSOURCES)
 $(SQLTOOLSLIB): $(SQLTOOLSOBJECTS)
 	$(CXX) $(CXXFLAGS) -o $(SQLTOOLSLIB) $^ -shared -lboost_python
 
-$(TSNEBIN): $(TSNEOBJECTS)
-	$(CXX) $(CXXFLAGS) -o $(TSNEBIN) $^
-
 test: build $(PAGERANKTESTBIN)
 	./$(PAGERANKTESTBIN)
 	python -m unittest discover -s wikimap/ -v
@@ -91,3 +88,4 @@ clean:
 	rm -f $(PAGERANKCOMMONOBJECTS) $(PAGERANKTESTBIN) $(PAGERANKBIN) $(SQLTOOLSLIB) $(SQLTOOLSOBJECTS) $(PAGERANKTESTOBJECTS) $(PAGERANKBINOBJECTS) $(AGGREGATEOBJECTS) $(AGGREGATEBIN) $(NODE2VECOBJECTS) $(NODE2VECBIN)
 	cd $(SNAPDIR) && make clean
 	cd $(ARRAYDIR) && make clean
+	cd $(TSNEDIR) && make clean
