@@ -5,7 +5,7 @@ def aggregate(nodes, edges, depth=1):
     directory = os.path.dirname(os.path.realpath(__file__))
     aggregatePath = os.path.join(directory, 'aggregate')
 
-    process = Popen([aggregatePath, str(depth)], stdin=PIPE, stdout=PIPE, bufsize=-1)
+    process = Popen([aggregatePath, str(depth)], stdin=PIPE, stdout=PIPE, bufsize=100000)
 
     with process.stdin:
         for (what, at) in nodes:
