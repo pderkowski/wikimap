@@ -147,21 +147,6 @@ class LinksTable(TableProxy):
         self.execute(Query("CREATE INDEX from_id_idx ON links(pl_from);", "creating index from_id_idx in links table", logStart=True, logProgress=True))
         self.execute(Query("CREATE INDEX ns_title_idx ON links(pl_namespace, pl_title);", "creating index ns_title_idx in links table", logStart=True, logProgress=True))
 
-class CategoryTable(TableProxy):
-    def __init__(self, categoryTablePath):
-        super(CategoryTable, self).__init__(categoryTablePath)
-
-    def create(self):
-        self.execute(Query("""
-            CREATE TABLE category (
-                cat_id         INTEGER     NOT NULL                PRIMARY KEY,
-                cat_title      TEXT        NOT NULL    DEFAULT ''
-            );"""))
-
-    def populate(self, values):
-        self.executemany(Query("INSERT INTO category VALUES (?,?)", "populating category table", logStart=True), values)
-        self.execute(Query('CREATE UNIQUE INDEX title_idx ON category(cat_title);', "creating index title_idx in category table", logStart=True, logProgress=True))
-
 class CategoryLinksTable(TableProxy):
     def __init__(self, categoryLinksTablePath):
         super(CategoryLinksTable, self).__init__(categoryLinksTablePath)
@@ -175,8 +160,7 @@ class CategoryLinksTable(TableProxy):
 
     def populate(self, values):
         self.executemany(Query("INSERT INTO categorylinks VALUES (?,?)", "populating categorylinks table", logStart=True), values)
-        self.execute(Query('CREATE UNIQUE INDEX from_to_idx ON categorylinks(cl_from, cl_to);', "creating index from_to_idx in categorylinks table", logStart=True, logProgress=True))
-        self.execute(Query('CREATE INDEX to_idx ON categorylinks(cl_to);', "creating index to_idx in categorylinks table", logStart=True, logProgress=True))
+        self.execute(Query('CREATE INDEX from_idx ON categorylinks(cl_from);', "creating index from_idx in categorylinks table", logStart=True, logProgress=True))
 
 class PagePropertiesTable(TableProxy):
     def __init__(self, pagePropertiesPath):
@@ -218,7 +202,7 @@ class PagerankTable(TableProxy):
             FROM
                 pagerank
             ORDER BY
-                pr_rank DESC
+                pr_order ASC
             LIMIT
                 {}""".format(idsNo), 'selecting ids by descending rank', logProgress=True)
 
@@ -246,51 +230,15 @@ class TSNETable(TableProxy):
     def selectAll(self):
         return self.select(Query("SELECT * FROM tsne"))
 
-class DegreesTable(TableProxy):
+class AggregatedLinksTable(object):
     def __init__(self, path):
-        super(DegreesTable, self).__init__(path)
+        self._db = CDBStore(path, IntConverter(), IntListConverter())
 
-    def create(self):
-        self.execute(Query("""
-            CREATE TABLE degrees (
-                deg_id          INTEGER     NOT NULL    PRIMARY KEY,
-                deg_in          INTEGER     NOT NULL,
-                deg_out         INTEGER     NOT NULL
-            );"""))
+    def create(self, data):
+        self._db.create(data)
 
-    def populate(self, values):
-        self.executemany(Query("INSERT INTO degrees VALUES (?,?,?)", "populating degrees table", logStart=True), values)
-
-    def selectAll(self):
-        return self.select(Query("SELECT * FROM degrees"))
-
-    def select_degree_count(self, maxDegree=30):
-        return self.select(Query("""
-            SELECT
-                degree, count(*)
-            FROM
-                (SELECT
-                    deg_in + deg_out as "degree"
-                FROM
-                    degrees)
-            WHERE
-                degree <= {}
-            GROUP BY
-                degree
-            """.format(maxDegree)))
-
-    def selectIdsByMaxDegree(self, maxDegree):
-        return self.select(Query("""
-            SELECT
-                deg_id
-            FROM
-                (SELECT
-                    deg_id, deg_in + deg_out as "degree"
-                FROM
-                    degrees)
-            WHERE
-                degree <= {}
-            """.format(maxDegree)))
+    def get(self, key):
+        return self._db.get(key)
 
 class AggregatedLinksTable(object):
     def __init__(self, path):
@@ -355,28 +303,43 @@ class Join(TableProxy):
 
         return self.select(query)
 
-    def selectWikimapCategories(self):
+    def selectHiddenCategories(self):
         query = Query("""
             SELECT
-                cl_to,
-                cl_from
+                page_title
+            FROM
+                page,
+                pageprops
+            WHERE
+                page_id = pp_page
+            AND pp_propname = 'hiddencat'""", "selecting hidden categories", logStart=True, logProgress=True)
+        return self.select(query)
+
+    def select_id_category(self):
+        query = Query("""
+            SELECT
+                cl_from,
+                cl_to
             FROM
                 categorylinks,
-                tsne,
-                category
-            WHERE cl_to NOT IN
-                (SELECT
-                    page_title
-                FROM
-                    page,
-                    pageprops
-                WHERE
-                    page_id = pp_page
-                AND pp_propname = 'hiddencat')
-            AND cl_to = cat_title
-            AND tsne_id = cl_from
-            ORDER BY
-                cat_id""", "selecting data for wikicategories", logProgress=True)
+                tsne
+            WHERE
+                tsne_id = cl_from""", "selecting nodes for wikicategories")
+
+        return self.select(query)
+
+    # ONLY LINKS BETWEEN CATEGORIES, NOT BETWEEN A PAGE AND A CATEGORY
+    def selectCategoryLinks(self):
+        query = Query("""
+            SELECT
+                page_title,
+                cl_to
+            FROM
+                categorylinks,
+                page
+            WHERE
+                cl_from = page_id
+            AND page_namespace = 14""", "selecting links for wikicategories")
 
         return self.select(query)
 

@@ -24,9 +24,10 @@ class TermIndex(object):
             self._create()
 
     def add(self, data):
-        with self._index.writer(procs=multiprocessing.cpu_count(), limitmb=1024, multisegment=True) as writer:
-            for r in data:
-                writer.add_document(term=r[0], isCategory=r[1])
+        writer = self._index.writer(procs=multiprocessing.cpu_count(), limitmb=1024, multisegment=True)
+        for r in data:
+            writer.add_document(term=r[0], isCategory=r[1])
+        writer.commit(optimize=True)
 
     def search(self, term, limit):
         query = self._parser.parse(urllib.unquote(term))
