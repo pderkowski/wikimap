@@ -4,3 +4,6 @@
 [submodule "external/snap"]
 	path = external/snap
 	url = https://github.com/snap-stanford/snap.git
+[submodule "external/vptree"]
+	path = external/vptree
+	url = https://github.com/piotder/vptree.git
