@@ -22,7 +22,6 @@ class Build(object):
         edgeArray = Path['edgeArray']
         aggregatedInlinks = Path['aggregatedInlinks']
         aggregatedOutlinks = Path['aggregatedOutlinks']
-
         pagerank = Path['pagerank']
         tsne = Path['tsne']
         highDimensionalNeighbors = Path['highDimensionalNeighbors']
@@ -32,8 +31,7 @@ class Build(object):
         metadata = Path['metadata']
         zoomIndex = Path['zoomIndex']
         termIndex = Path['termIndex']
-
-        embeddingsTable = Path['embeddings2']
+        embeddings = Path['embeddings']
 
         jobs = []
         jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pageUrl), inputs=[], outputs=[pageSql]))
@@ -49,9 +47,9 @@ class Build(object):
         jobs.append(Job('CREATE EDGE ARRAY', Interface.createEdgeArray, inputs=[page, links], outputs=[edgeArray]))
         jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[edgeArray], outputs=[pagerank]))
 
-        jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.computeEmbeddingsWithNode2Vec, inputs=[edgeArray, pagerank], outputs=[embeddingsTable], wordCount=1000000))
-        jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddingsTable, pagerank], outputs=[tsne], pointCount=100000))
-        jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddingsTable, tsne, page], outputs=[highDimensionalNeighbors]))
+        jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.computeEmbeddingsWithNode2Vec, inputs=[edgeArray, pagerank], outputs=[embeddings], wordCount=1000000))
+        jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
+        jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))
 
         jobs.append(Job('CREATE AGGREGATED LINKS TABLES', Interface.createAggregatedLinksTables, inputs=[edgeArray, tsne], outputs=[aggregatedInlinks, aggregatedOutlinks]))

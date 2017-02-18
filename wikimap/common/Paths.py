@@ -48,14 +48,10 @@ paths.add({
     'linksSql'                  : 'pagelinks.sql.gz',
     'categoryLinksSql'          : 'categorylinks.sql.gz',
     'pagePropertiesSql'         : 'pageprops.sql.gz',
-    'vocabulary'                : 'vocabulary',
-    'embeddings'                : 'embeddings',
-    'vocabularyArtifacts'       : ['vocabulary.syn0.npy', 'vocabulary.syn1neg.npy'],
-    'embeddingsArtifacts'       : ['embeddings.syn0.npy', 'embeddings.syn1neg.npy'],
     'edgeArray'                 : 'edgeArray',
     'aggregatedInlinks'         : 'aggregatedInlinks.cdb',
     'aggregatedOutlinks'        : 'aggregatedOutlinks.cdb',
-    'embeddings2'               : 'embeddings.cdb'
+    'embeddings'                : 'embeddings.cdb'
 })
 
 def resolve(paths_, base=None):

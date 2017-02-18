@@ -12,7 +12,7 @@ from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from itertools import imap, izip, repeat
 from operator import itemgetter
-from Utils import StringifyIt, LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotInIt, NotEqualIt
+from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotInIt, NotEqualIt
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -155,3 +155,4 @@ def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
     termIndex = TermIndex(outputPath)
     termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
     termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
+
