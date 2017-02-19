@@ -1,9 +1,8 @@
-from common import SQLTableDefs
 from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from Node2Vec import Node2Vec
-from Tables import EdgeArray
-from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotEqualIt
+from Tables import EdgeArray, SQLTableDefs, TableImporter
+from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotEqualIt, NotInIt
 import Pagerank
 import TSNE
 import NearestNeighbors
@@ -13,11 +12,52 @@ import shelve
 from itertools import imap, izip, repeat
 from operator import itemgetter
 
+def createPageTable(pagePath, outputPath):
+    source = TableImporter.PageTable(pagePath)
+    table = SQLTableDefs.PageTable(outputPath)
+    table.create()
+    table.populate(LogIt(1000000)(source.read()))
+
+def createLinksTable(linksPath, outputPath):
+    source = TableImporter.LinksTable(linksPath)
+    table = SQLTableDefs.LinksTable(outputPath)
+    table.create()
+    table.populate(LogIt(1000000)(source.read()))
+
+def createPagePropertiesTable(pagePropertiesPath, outputPath):
+    source = TableImporter.PagePropertiesTable(pagePropertiesPath)
+    table = SQLTableDefs.PagePropertiesTable(outputPath)
+    table.create()
+    table.populate(LogIt(1000000)(source.read()))
+
+def createCategoryLinksTable(categoryLinksPath, pageTablePath, pagePropertiesTablePath, outputPath):
+    joined = SQLTableDefs.Join(pageTablePath, pagePropertiesTablePath)
+    hiddenCategories = frozenset(ColumnIt(0)(joined.selectHiddenCategories()))
+
+    table = SQLTableDefs.CategoryLinksTable(outputPath)
+    table.create()
+
+    source = TableImporter.CategoryLinksTable(categoryLinksPath)
+    table.populate(pipe(source.read(), NotInIt(hiddenCategories, 1), LogIt(1000000)))
+
+def createEdgeArray(pagesPath, linksPath, outputPath):
+    joined = SQLTableDefs.Join(pagesPath, linksPath)
+    edges = EdgeArray.EdgeArray(outputPath)
+    edges.populate(LogIt(1000000)(joined.selectNormalizedLinks()))
+
+def createWikimapPointsTable(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath, outputPath):
+    data = SQLTableDefs.Join(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath)
+
+    table = SQLTableDefs.WikimapPointsTable(outputPath)
+    table.create()
+
+    table.populate(data.selectWikimapPoints())
+
 def createAggregatedLinksTables(edgeArrayPath, tsnePath, inlinkTablePath, outlinkTablePath):
     tsne = SQLTableDefs.TSNETable(tsnePath)
     ids = ColumnIt(0)(tsne.selectAll())
 
-    edges = EdgeArray(edgeArrayPath)
+    edges = EdgeArray.EdgeArray(edgeArrayPath)
     edges.filterByNodes(ids)
 
     outlinks = SQLTableDefs.AggregatedLinksTable(outlinkTablePath)
@@ -30,13 +70,13 @@ def createAggregatedLinksTables(edgeArrayPath, tsnePath, inlinkTablePath, outlin
     inlinks.create(pipe(edges, LogIt(1000000), GroupIt))
 
 def computePagerank(edgeArrayPath, pagerankPath):
-    edges = EdgeArray(edgeArrayPath, stringify=True)
+    edges = EdgeArray.EdgeArray(edgeArrayPath, stringify=True)
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
     pagerank.create()
     pagerank.populate(Pagerank.pagerank(edges, stringified=True))
 
 def computeEmbeddingsWithNode2Vec(edgeArrayPath, pagerankPath, outputPath, wordCount=1000000):
-    edges = EdgeArray(edgeArrayPath)
+    edges = EdgeArray.EdgeArray(edgeArrayPath)
     pagerank = SQLTableDefs.PagerankTable(pagerankPath)
     ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
     edges.filterByNodes(ids)
@@ -63,11 +103,10 @@ def computeHighDimensionalNeighbors(embeddingsPath, tsnePath, pagePath, outputPa
     ids, titles = list(ColumnIt(0)(data)), list(ColumnIt(1)(data))
     embeddingsTable = SQLTableDefs.EmbeddingsTable(embeddingsPath)
     embeddings = imap(embeddingsTable.get, ids)
+    distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighborsNo)
 
     table = SQLTableDefs.HighDimensionalNeighborsTable(outputPath)
     table.create()
-
-    distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighborsNo)
     table.populate(izip(ids, imap(lambda a: [titles[i] for i in a], indices), imap(list, distances)))
 
 def computeLowDimensionalNeighbors(tsnePath, pagePath, outputPath, neighborsNo=10):
@@ -81,14 +120,6 @@ def computeLowDimensionalNeighbors(tsnePath, pagePath, outputPath, neighborsNo=1
 
     distances, indices = NearestNeighbors.computeNearestNeighbors(points, neighborsNo)
     table.populate(izip(ids, imap(lambda a: [titles[i] for i in a], indices), imap(list, distances)))
-
-def createWikimapPointsTable(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath, outputPath):
-    data = SQLTableDefs.Join(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath)
-
-    table = SQLTableDefs.WikimapPointsTable(outputPath)
-    table.create()
-
-    table.populate(data.selectWikimapPoints())
 
 def createWikimapCategoriesTable(categoryLinksPath, pagesPath, tsnePath, outputPath, depth=1):
     data = SQLTableDefs.Join(categoryLinksPath, pagesPath, tsnePath)

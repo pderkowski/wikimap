@@ -1,4 +1,6 @@
 from ..common.SQLBase import TableProxy, Query
+from ..common.CDBStore import CDBStore, IntConverter, FloatConverter, ListConverter
+from ..common.SQLTableDefs import WikimapPointsTable, WikimapCategoriesTable
 
 class PageTable(TableProxy):
     def __init__(self, pageTablePath):
@@ -64,6 +66,108 @@ class PagePropertiesTable(TableProxy):
         self.executemany(Query("INSERT INTO pageprops VALUES (?,?)", "populating pageprops table", logStart=True), values)
         self.execute(Query('CREATE INDEX page_idx ON pageprops(pp_page);', "creating index page_idx in pageprops table", logStart=True, logProgress=True))
         self.execute(Query('CREATE INDEX propname_idx ON pageprops(pp_propname);', "creating index propname_idx in pageprops table", logStart=True, logProgress=True))
+
+class HighDimensionalNeighborsTable(TableProxy):
+    def __init__(self, tablePath):
+        super(HighDimensionalNeighborsTable, self).__init__(tablePath, useCustomTypes=True)
+
+    def create(self):
+        self.execute(Query(u"""
+            CREATE TABLE hdnn (
+                hdnn_id                 INTEGER     NOT NULL    PRIMARY KEY,
+                hdnn_neighbors_ids      LIST        NOT NULL,
+                hdnn_neighbors_dists    LIST        NOT NULL
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query(u"INSERT INTO hdnn VALUES (?,?,?)", "populating hdnn table", logStart=True), values)
+
+class LowDimensionalNeighborsTable(TableProxy):
+    def __init__(self, tablePath):
+        super(LowDimensionalNeighborsTable, self).__init__(tablePath, useCustomTypes=True)
+
+    def create(self):
+        self.execute(Query(u"""
+            CREATE TABLE ldnn (
+                ldnn_id                 INTEGER     NOT NULL    PRIMARY KEY,
+                ldnn_neighbors_ids      LIST        NOT NULL,
+                ldnn_neighbors_dists    LIST        NOT NULL
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query(u"INSERT INTO ldnn VALUES (?,?,?)", "populating ldnn table", logStart=True), values)
+
+class PagerankTable(TableProxy):
+    def __init__(self, pagerankPath):
+        super(PagerankTable, self).__init__(pagerankPath)
+
+    def create(self):
+        self.execute(Query("""
+            CREATE TABLE pagerank (
+                pr_id               INTEGER     NOT NULL   PRIMARY KEY,
+                pr_rank             REAL        NOT NULL,
+                pr_order            INTEGER     NOT NULL
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query("INSERT INTO pagerank VALUES (?,?,?)", "populating pagerank table", logStart=True), values)
+        self.execute(Query('CREATE INDEX rank_idx ON pagerank(pr_rank);', "creating index rank_idx in pagerank table", logStart=True, logProgress=True))
+        self.execute(Query('CREATE UNIQUE INDEX order_idx ON pagerank(pr_order);', "creating index order_idx in pagerank table", logStart=True, logProgress=True))
+
+    def selectIdsByDescendingRank(self, idsNo):
+        query = Query("""
+            SELECT
+                pr_id
+            FROM
+                pagerank
+            ORDER BY
+                pr_order ASC
+            LIMIT
+                {}""".format(idsNo), 'selecting ids by descending rank', logProgress=True)
+
+        return self.select(query)
+
+    def selectOrdersByIds(self, ids):
+        ids = '(' + ','.join(map(str, ids)) + ')'
+        return self.select(Query("SELECT pr_order FROM pagerank WHERE pr_id IN {}".format(ids)))
+
+class TSNETable(TableProxy):
+    def __init__(self, tsnePath):
+        super(TSNETable, self).__init__(tsnePath)
+
+    def create(self):
+        self.execute(Query("""
+            CREATE TABLE tsne (
+                tsne_id         INTEGER     NOT NULL    PRIMARY KEY,
+                tsne_x          REAL        NOT NULL,
+                tsne_y          REAL        NOT NULL
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query("INSERT INTO tsne VALUES (?,?,?)", "populating tsne table", logStart=True), values)
+
+    def selectAll(self):
+        return self.select(Query("SELECT * FROM tsne"))
+
+class AggregatedLinksTable(object):
+    def __init__(self, path):
+        self._db = CDBStore(path, IntConverter(), ListConverter(IntConverter()))
+
+    def create(self, data):
+        self._db.create(data)
+
+    def get(self, key):
+        return self._db.get(key)
+
+class EmbeddingsTable(object):
+    def __init__(self, path):
+        self._db = CDBStore(path, IntConverter(), ListConverter(FloatConverter()))
+
+    def create(self, data):
+        self._db.create(data)
+
+    def get(self, key):
+        return self._db.get(key)
 
 class Join(TableProxy):
     def __init__(self, *tables):
