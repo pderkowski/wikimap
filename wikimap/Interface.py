@@ -3,8 +3,7 @@ from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
 from Node2Vec import Node2Vec
 from Tables import EdgeArray
-from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotInIt, NotEqualIt
-import Tools
+from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotEqualIt
 import Pagerank
 import TSNE
 import NearestNeighbors
@@ -13,34 +12,6 @@ import Graph
 import shelve
 from itertools import imap, izip, repeat
 from operator import itemgetter
-
-def createPageTable(pageSql, outputPath):
-    source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
-    table = SQLTableDefs.PageTable(outputPath)
-    table.create()
-    table.populate(LogIt(1000000)(source.read()))
-
-def createLinksTable(linksSql, outputPath):
-    source = Tools.TableImporter(linksSql, Tools.getLinksRecords, "pagelinks")
-    table = SQLTableDefs.LinksTable(outputPath)
-    table.create()
-    table.populate(LogIt(1000000)(source.read()))
-
-def createPagePropertiesTable(pagePropertiesSql, outputPath):
-    source = Tools.TableImporter(pagePropertiesSql, Tools.getPagePropertiesRecords, "page_props")
-    table = SQLTableDefs.PagePropertiesTable(outputPath)
-    table.create()
-    table.populate(LogIt(1000000)(source.read()))
-
-def createCategoryLinksTable(categoryLinksSql, pageTablePath, pagePropertiesTablePath, outputPath):
-    joined = SQLTableDefs.Join(pageTablePath, pagePropertiesTablePath)
-    hiddenCategories = frozenset(ColumnIt(0)(joined.selectHiddenCategories()))
-
-    table = SQLTableDefs.CategoryLinksTable(outputPath)
-    table.create()
-
-    source = Tools.TableImporter(categoryLinksSql, Tools.getCategoryLinksRecords, "categorylinks")
-    table.populate(pipe(source.read(), NotInIt(hiddenCategories, 1), LogIt(1000000)))
 
 def createAggregatedLinksTables(edgeArrayPath, tsnePath, inlinkTablePath, outlinkTablePath):
     tsne = SQLTableDefs.TSNETable(tsnePath)

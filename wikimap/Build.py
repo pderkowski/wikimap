@@ -40,10 +40,10 @@ class Build(object):
         jobs.append(Job('DOWNLOAD CATEGORY LINKS TABLE', Utils.download(categoryLinksUrl), inputs=[], outputs=[categoryLinksSql]))
         jobs.append(Job('DOWNLOAD PAGE PROPERTIES TABLE', Utils.download(pagePropertiesUrl), inputs=[], outputs=[pagePropertiesSql]))
 
-        jobs.append(Job('CREATE PAGE TABLE', Interface.createPageTable, inputs=[pageSql], outputs=[page]))
-        jobs.append(Job('CREATE LINKS TABLE', Interface.createLinksTable, inputs=[linksSql], outputs=[links]))
-        jobs.append(Job('CREATE PAGE PROPERTIES TABLE', Interface.createPagePropertiesTable, inputs=[pagePropertiesSql], outputs=[pageProperties]))
-        jobs.append(Job('CREATE CATEGORY LINKS TABLE', Interface.createCategoryLinksTable, inputs=[categoryLinksSql, page, pageProperties], outputs=[categoryLinks]))
+        jobs.append(Job('CREATE PAGE TABLE', Tables.createPageTable, inputs=[pageSql], outputs=[page]))
+        jobs.append(Job('CREATE LINKS TABLE', Tables.createLinksTable, inputs=[linksSql], outputs=[links]))
+        jobs.append(Job('CREATE PAGE PROPERTIES TABLE', Tables.createPagePropertiesTable, inputs=[pagePropertiesSql], outputs=[pageProperties]))
+        jobs.append(Job('CREATE CATEGORY LINKS TABLE', Tables.createCategoryLinksTable, inputs=[categoryLinksSql, page, pageProperties], outputs=[categoryLinks]))
 
         jobs.append(Job('CREATE EDGE ARRAY', Tables.createEdgeArray, inputs=[page, links], outputs=[edgeArray]))
         jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[edgeArray], outputs=[pagerank]))

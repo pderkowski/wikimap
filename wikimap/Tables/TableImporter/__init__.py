@@ -14,3 +14,15 @@ class TableImporter(object):
                 if line.startswith(pattern):
                     for r in self._parser(line.rstrip()[len(pattern):-1]): # line ends with ;
                         yield r
+
+def PageTable(path):
+    return TableImporter(path, getPageRecords, "page")
+
+def LinksTable(path):
+    return TableImporter(path, getLinksRecords, "pagelinks")
+
+def PagePropertiesTable(path):
+    return TableImporter(path, getPagePropertiesRecords, "page_props")
+
+def CategoryLinksTable(path):
+    return TableImporter(path, getCategoryLinksRecords, "categorylinks")
