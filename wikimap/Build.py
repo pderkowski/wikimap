@@ -1,7 +1,7 @@
 from Job import Job
 import Interface
 import Utils
-from common.Paths import paths as Path
+from Paths import paths as Path
 
 class Build(object):
     def __init__(self):

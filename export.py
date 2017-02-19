@@ -5,14 +5,13 @@ import logging
 import os
 import sys
 from wikimap.BuildManager import BuildManager
-from wikimap.common.Paths import paths as Path
-import wikimap.common.Paths as Paths
+from wikimap.Paths import paths as Path
+from wikimap.common import resolvePaths
 import wikimap.Utils as Utils
 import tarfile
 
 filesets = {
-    'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex'], Path['aggregatedInlinks'], Path['aggregatedOutlinks']],
-    'plots' : [Path['degreePlot'], Path['isolatedPointsPlot']]
+    'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex'], Path['aggregatedInlinks'], Path['aggregatedOutlinks']]
 }
 
 def pack(files, destDir):
@@ -55,7 +54,7 @@ def main():
     manager = BuildManager(os.environ["BUILDPATH"])
     Path.base = manager.lastBuild
 
-    export(Paths.resolve(filesets[args.fileset]), os.environ["EXPORTPATH"])
+    export(resolvePaths(filesets[args.fileset]), os.environ["EXPORTPATH"])
 
 if __name__ == '__main__':
     main()
