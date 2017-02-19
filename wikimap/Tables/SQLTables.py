@@ -1,6 +1,4 @@
 from ..common.SQLBase import TableProxy, Query
-from ..common.CDBStore import CDBStore, IntConverter, FloatConverter, ListConverter
-from ..common.SQLTableDefs import WikimapPointsTable, WikimapCategoriesTable
 
 class PageTable(TableProxy):
     def __init__(self, pageTablePath):
@@ -148,26 +146,6 @@ class TSNETable(TableProxy):
 
     def selectAll(self):
         return self.select(Query("SELECT * FROM tsne"))
-
-class AggregatedLinksTable(object):
-    def __init__(self, path):
-        self._db = CDBStore(path, IntConverter(), ListConverter(IntConverter()))
-
-    def create(self, data):
-        self._db.create(data)
-
-    def get(self, key):
-        return self._db.get(key)
-
-class EmbeddingsTable(object):
-    def __init__(self, path):
-        self._db = CDBStore(path, IntConverter(), ListConverter(FloatConverter()))
-
-    def create(self, data):
-        self._db.create(data)
-
-    def get(self, key):
-        return self._db.get(key)
 
 class Join(TableProxy):
     def __init__(self, *tables):
