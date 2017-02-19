@@ -7,6 +7,3 @@
 [submodule "external/vptree"]
 	path = external/vptree
 	url = https://github.com/piotder/vptree.git
-[submodule "external/benchmarks"]
-	path = external/benchmarks
-	url = https://github.com/piotder/word-embeddings-benchmarks.git
