@@ -1,18 +1,18 @@
 from common import SQLTableDefs
+from common.Zoom import ZoomIndex
+from common.Terms import TermIndex
+from Node2Vec import Node2Vec
+from Tables import EdgeArray
+from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotInIt, NotEqualIt
 import Tools
 import Pagerank
-from Node2Vec import Node2Vec
-from Array.EdgeArray import EdgeArray
 import TSNE
 import NearestNeighbors
 import ZoomIndexer
-import shelve
 import Graph
-from common.Zoom import ZoomIndex
-from common.Terms import TermIndex
+import shelve
 from itertools import imap, izip, repeat
 from operator import itemgetter
-from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotInIt, NotEqualIt
 
 def createPageTable(pageSql, outputPath):
     source = Tools.TableImporter(pageSql, Tools.getPageRecords, "page")
@@ -41,11 +41,6 @@ def createCategoryLinksTable(categoryLinksSql, pageTablePath, pagePropertiesTabl
 
     source = Tools.TableImporter(categoryLinksSql, Tools.getCategoryLinksRecords, "categorylinks")
     table.populate(pipe(source.read(), NotInIt(hiddenCategories, 1), LogIt(1000000)))
-
-def createEdgeArray(pageTablePath, linksTablePath, outputPath):
-    joined = SQLTableDefs.Join(pageTablePath, linksTablePath)
-    edges = EdgeArray(outputPath)
-    edges.populate(LogIt(1000000)(joined.selectNormalizedLinks()))
 
 def createAggregatedLinksTables(edgeArrayPath, tsnePath, inlinkTablePath, outlinkTablePath):
     tsne = SQLTableDefs.TSNETable(tsnePath)
@@ -156,3 +151,5 @@ def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
     termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
     termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
 
+# def evaluateEmbeddings(embeddingsPath, outputPath):
+#     embeddingsTable = SQLTableDefs.EmbeddingsTable(embeddingsPath)

@@ -7,7 +7,7 @@ CXXFLAGS = -O3 -std=c++11 -fopenmp
 TESTBIN = testarray
 EDGEARRAYLIB = edgearrayext.so
 
-PYTHONINCLUDE = ../../env/include/python2.7
+PYTHONINCLUDE = ../../../env/include/python2.7
 
 lib: CXXFLAGS += -fPIC -I$(PYTHONINCLUDE)
 

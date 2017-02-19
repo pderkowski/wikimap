@@ -2,6 +2,7 @@ from Job import Job
 import Interface
 import Utils
 from Paths import paths as Path
+import Tables
 
 class Build(object):
     def __init__(self):
@@ -44,7 +45,7 @@ class Build(object):
         jobs.append(Job('CREATE PAGE PROPERTIES TABLE', Interface.createPagePropertiesTable, inputs=[pagePropertiesSql], outputs=[pageProperties]))
         jobs.append(Job('CREATE CATEGORY LINKS TABLE', Interface.createCategoryLinksTable, inputs=[categoryLinksSql, page, pageProperties], outputs=[categoryLinks]))
 
-        jobs.append(Job('CREATE EDGE ARRAY', Interface.createEdgeArray, inputs=[page, links], outputs=[edgeArray]))
+        jobs.append(Job('CREATE EDGE ARRAY', Tables.createEdgeArray, inputs=[page, links], outputs=[edgeArray]))
         jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[edgeArray], outputs=[pagerank]))
 
         jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.computeEmbeddingsWithNode2Vec, inputs=[edgeArray, pagerank], outputs=[embeddings], wordCount=1000000))

@@ -31,7 +31,7 @@ PAGERANKTESTBIN = $(PAGERANKTESTDIR)/run_tests
 PAGERANKBIN = $(PAGERANKDIR)/pagerank
 SQLTOOLSLIB = $(SQLTOOLSDIR)/libsqltools.so
 
-ARRAYDIR = wikimap/Array
+ARRAYDIR = wikimap/Tables/EdgeArray
 
 PYTHONINCLUDE = env/include/python2.7
 
