@@ -16,6 +16,10 @@ class PageTable(TableProxy):
         self.executemany(Query("INSERT INTO page VALUES (?,?,?)", "populating page table", logStart=True), values)
         self.execute(Query("CREATE UNIQUE INDEX ns_title_idx ON page(page_namespace, page_title)", "creating index ns_title_idx in page table", logStart=True, logProgress=True))
 
+    def select_id_title(self, ids):
+        ids = '(' + ','.join(map(str, ids)) + ')'
+        return self.select(Query("SELECT page_id, page_title FROM page WHERE page_id IN {}".format(ids)))
+
 class LinksTable(TableProxy):
     def __init__(self, linksTablePath):
         super(LinksTable, self).__init__(linksTablePath)
@@ -124,10 +128,6 @@ class PagerankTable(TableProxy):
                 {}""".format(idsNo), 'selecting ids by descending rank', logProgress=True)
 
         return self.select(query)
-
-    def selectOrdersByIds(self, ids):
-        ids = '(' + ','.join(map(str, ids)) + ')'
-        return self.select(Query("SELECT pr_order FROM pagerank WHERE pr_id IN {}".format(ids)))
 
 class TSNETable(TableProxy):
     def __init__(self, tsnePath):

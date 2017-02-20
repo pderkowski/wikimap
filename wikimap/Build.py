@@ -32,6 +32,7 @@ class Build(object):
         zoomIndex = Path['zoomIndex']
         termIndex = Path['termIndex']
         embeddings = Path['embeddings']
+        embeddingIndex = Path['embeddingIndex']
 
         jobs = []
         jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pageUrl), inputs=[], outputs=[pageSql]))
@@ -48,6 +49,8 @@ class Build(object):
         jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[edgeArray], outputs=[pagerank]))
 
         jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.computeEmbeddingsWithNode2Vec, inputs=[edgeArray, pagerank], outputs=[embeddings], wordCount=1000000))
+        jobs.append(Job('CREATE EMBEDDING INDEX', Interface.createEmbeddingIndex, inputs=[embeddings, page], outputs=[embeddingIndex]))
+
         jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
         jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))

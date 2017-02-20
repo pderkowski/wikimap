@@ -22,5 +22,6 @@ paths.add({
     'edgeArray'                 : 'edgeArray',
     'aggregatedInlinks'         : 'aggregatedInlinks.cdb',
     'aggregatedOutlinks'        : 'aggregatedOutlinks.cdb',
-    'embeddings'                : 'embeddings.cdb'
+    'embeddings'                : 'embeddings.cdb',
+    'embeddingIndex'            : 'embedding.idx'
 })

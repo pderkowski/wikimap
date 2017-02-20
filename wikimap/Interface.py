@@ -153,5 +153,15 @@ def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
     termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
     termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
 
+def createEmbeddingIndex(embeddingsPath, pagePath, outputPath):
+    embeddingsTable = Tables.EmbeddingsTable(embeddingsPath)
+    pageTable = Tables.PageTable(pagePath)
+
+    ids = embeddingsTable.keys()
+    data = pipe(pageTable.select_id_title(ids), FlipIt)
+
+    index = Tables.EmbeddingIndex(outputPath)
+    index.create(data)
+
 # def evaluateEmbeddings(embeddingsPath, outputPath):
 #     embeddingsTable = Tables.EmbeddingsTable(embeddingsPath)

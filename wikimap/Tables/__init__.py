@@ -3,5 +3,5 @@ from SQLTables import PageTable, LinksTable, CategoryLinksTable, PagePropertiesT
     TSNETable, Join
 from ..common.SQLTables import WikimapPointsTable, WikimapCategoriesTable
 from EdgeArray import EdgeArray as EdgeTable
-from OtherTables import EmbeddingsTable, AggregatedLinksTable
+from OtherTables import EmbeddingsTable, AggregatedLinksTable, EmbeddingIndex
 import TableImporter as Import
