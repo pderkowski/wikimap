@@ -43,6 +43,7 @@ public:
 
     void sortByColumn(int column);
     void filterByNodes(py::object iterable);
+    void filterColumnByNodes(py::object iterable, int column);
     void inverseEdges();
     void shuffle();
 
@@ -98,6 +99,16 @@ void EdgeArrayExt::filterByNodes(py::object iterable) {
     });
 }
 
+void EdgeArrayExt::filterColumnByNodes(py::object iterable, int column) {
+    auto begin = py::stl_input_iterator<int>(iterable);
+    auto end = py::stl_input_iterator<int>();
+
+    std::unordered_set<int> allowed(begin, end);
+    array_.filter([&allowed, column] (const Edge& e) {
+        return allowed.find(e[column]) != allowed.end();
+    });
+}
+
 void EdgeArrayExt::inverseEdges() {
     array_.for_each([] (Edge& e) {
         std::swap(e[0], e[1]);
@@ -128,6 +139,7 @@ BOOST_PYTHON_MODULE(edgearrayext)
         .def("iterStrings", py::range(&EdgeArrayExt::strBegin, &EdgeArrayExt::strEnd))
         .def("sortByColumn", &EdgeArrayExt::sortByColumn)
         .def("filterByNodes", &EdgeArrayExt::filterByNodes)
+        .def("filterColumnByNodes", &EdgeArrayExt::filterColumnByNodes)
         .def("inverseEdges", &EdgeArrayExt::inverseEdges)
         .def("shuffle", &EdgeArrayExt::shuffle)
         .def("size", &EdgeArrayExt::size)

@@ -26,3 +26,6 @@ def PagePropertiesTable(path):
 
 def CategoryLinksTable(path):
     return TableImporter(path, getCategoryLinksRecords, "categorylinks")
+
+def RedirectsTable(path):
+    return TableImporter(path, getRedirectsRecords, "redirect")

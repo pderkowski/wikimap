@@ -60,6 +60,16 @@ def testFilterByNodes():
         ea.filterByNodes(range(1, 7))
         check("Filter by nodes", list(ea) == [(3, 1), (3, 3), (1, 2), (2, 1), (4, 6), (3, 4)])
 
+def testFilterByStartNodes():
+    with TestArray() as ea:
+        ea.filterByStartNodes(range(2, 5))
+        check("Filter by start nodes", list(ea) == [(3, 1), (3, 3), (2, 1), (4, 6), (3, 4)])
+
+def testFilterByEndNodes():
+    with TestArray() as ea:
+        ea.filterByEndNodes(range(2, 5))
+        check("Filter by end nodes", list(ea) == [(0, 2), (0, 2), (3, 3), (1, 2), (3, 4)])
+
 def testInverseEdges():
     with TestArray() as ea:
         ea.inverseEdges()
@@ -82,6 +92,8 @@ def main():
     testSortByStartNode()
     testSortByEndNode()
     testFilterByNodes()
+    testFilterByStartNodes()
+    testFilterByEndNodes()
     testInverseEdges()
     testShuffle()
     testStringify()

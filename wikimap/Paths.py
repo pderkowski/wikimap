@@ -6,6 +6,7 @@ paths.add({
     'links'                     : 'links.db',
     'categoryLinks'             : 'categoryLinks.db',
     'pageProperties'            : 'pageProperties.db',
+    'redirects'                 : 'redirects.db',
     'pagerank'                  : 'pagerank.db',
     'tsne'                      : 'tsne.db',
     'highDimensionalNeighbors'  : 'hdnn.db',
@@ -19,9 +20,12 @@ paths.add({
     'linksSql'                  : 'pagelinks.sql.gz',
     'categoryLinksSql'          : 'categorylinks.sql.gz',
     'pagePropertiesSql'         : 'pageprops.sql.gz',
-    'edgeArray'                 : 'edgeArray',
+    'redirectsSql'              : 'redirects.sql.gz',
+    'linkEdges'                 : 'linkEdges.bin',
+    'redirectEdges'             : 'redirectEdges.bin',
     'aggregatedInlinks'         : 'aggregatedInlinks.cdb',
     'aggregatedOutlinks'        : 'aggregatedOutlinks.cdb',
     'embeddings'                : 'embeddings.cdb',
-    'embeddingIndex'            : 'embedding.idx'
+    'embeddingIndex'            : 'embedding.idx',
+    'embeddingReport'           : 'embeddingReport.txt'
 })

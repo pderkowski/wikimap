@@ -8,8 +8,9 @@ import TSNE
 import NearestNeighbors
 import ZoomIndexer
 import Graph
+import Evaluation
 import shelve
-from itertools import imap, izip, repeat
+from itertools import imap, izip, repeat, chain
 from operator import itemgetter
 
 def createPageTable(pagePath, outputPath):
@@ -40,10 +41,21 @@ def createCategoryLinksTable(categoryLinksPath, pageTablePath, pagePropertiesTab
     source = Tables.Import.CategoryLinksTable(categoryLinksPath)
     table.populate(pipe(source.read(), NotInIt(hiddenCategories, 1), LogIt(1000000)))
 
-def createEdgeArray(pagesPath, linksPath, outputPath):
+def createRedirectsTable(redirectsPath, outputPath):
+    source = Tables.Import.RedirectsTable(redirectsPath)
+    table = Tables.RedirectsTable(outputPath)
+    table.create()
+    table.populate(LogIt(1000000)(source.read()))
+
+def createLinkEdgesTable(linksPath, pagesPath, outputPath):
     joined = Tables.Join(pagesPath, linksPath)
     edges = Tables.EdgeTable(outputPath)
-    edges.populate(LogIt(1000000)(joined.selectNormalizedLinks()))
+    edges.populate(LogIt(1000000)(joined.selectLinkEdges()))
+
+def createRedirectEdgesTable(redirectsPath, pagePath, outputPath):
+    joined = Tables.Join(redirectsPath, pagePath)
+    edges = Tables.EdgeTable(outputPath)
+    edges.populate(LogIt(1000000)(joined.selectRedirectEdges()))
 
 def createWikimapPointsTable(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath, outputPath):
     data = Tables.Join(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath)
@@ -153,15 +165,24 @@ def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
     termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
     termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
 
-def createEmbeddingIndex(embeddingsPath, pagePath, outputPath):
+def createEmbeddingIndex(embeddingsPath, pagePath, redirectsPath, outputPath):
     embeddingsTable = Tables.EmbeddingsTable(embeddingsPath)
     pageTable = Tables.PageTable(pagePath)
+    redirects = Tables.EdgeTable(redirectsPath)
 
-    ids = embeddingsTable.keys()
-    data = pipe(pageTable.select_id_title(ids), FlipIt)
+    embeddedNodes = embeddingsTable.keys()
+    directPages = pipe(pageTable.select_id_title(embeddedNodes), FlipIt)
 
-    index = Tables.EmbeddingIndex(outputPath)
-    index.create(data)
+    redirects.filterByEndNodes(embeddedNodes)
+    startNodes = [s for (s, _) in redirects]
+    node2title = dict(pageTable.select_id_title(startNodes))
+    validNodes = node2title.keys()
+    redirects.filterByStartNodes(validNodes)
+    redirectedPages = imap(lambda (s, e): (node2title[s], e), redirects)
 
-# def evaluateEmbeddings(embeddingsPath, outputPath):
-#     embeddingsTable = Tables.EmbeddingsTable(embeddingsPath)
+    embeddingIndex = Tables.EmbeddingIndex(outputPath)
+    embeddingIndex.create(chain(redirectedPages, directPages))
+
+def evaluateEmbeddings(embeddingsPath, embeddingIndexPath, outputPath):
+    embeddingsTable = Tables.IndexedEmbeddingsTable(embeddingsPath, embeddingIndexPath)
+    Evaluation.check(embeddingsTable)

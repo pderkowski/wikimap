@@ -49,6 +49,34 @@ class EdgeArray(object):
         if self._log:
             logger.info("EdgeArray: new size: {}".format(self._array.size()))
 
+    def filterByStartNodes(self, nodes):
+        self._ensureLoaded()
+
+        nodes = list(nodes)
+
+        logger = logging.getLogger(__name__)
+        if self._log:
+            logger.info("EdgeArray: filtering by start nodes (allowing {} nodes)...".format(len(nodes)))
+
+        self._array.filterColumnByNodes(nodes, 0)
+
+        if self._log:
+            logger.info("EdgeArray: new size: {}".format(self._array.size()))
+
+    def filterByEndNodes(self, nodes):
+        self._ensureLoaded()
+
+        nodes = list(nodes)
+
+        logger = logging.getLogger(__name__)
+        if self._log:
+            logger.info("EdgeArray: filtering by end nodes (allowing {} nodes)...".format(len(nodes)))
+
+        self._array.filterColumnByNodes(nodes, 1)
+
+        if self._log:
+            logger.info("EdgeArray: new size: {}".format(self._array.size()))
+
     def inverseEdges(self):
         self._ensureLoaded()
 

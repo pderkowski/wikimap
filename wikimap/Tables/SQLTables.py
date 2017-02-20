@@ -69,6 +69,21 @@ class PagePropertiesTable(TableProxy):
         self.execute(Query('CREATE INDEX page_idx ON pageprops(pp_page);', "creating index page_idx in pageprops table", logStart=True, logProgress=True))
         self.execute(Query('CREATE INDEX propname_idx ON pageprops(pp_propname);', "creating index propname_idx in pageprops table", logStart=True, logProgress=True))
 
+class RedirectsTable(TableProxy):
+    def __init__(self, path):
+        super(RedirectsTable, self).__init__(path)
+
+    def create(self):
+        self.execute(Query("""
+            CREATE TABLE redirects (
+                rd_from         INTEGER     NOT NULL  DEFAULT '0'   PRIMARY KEY,
+                rd_namespace    INTEGER     NOT NULL  DEFAULT '0',
+                rd_title        TEXT        NOT NULL  DEFAULT ''
+            );"""))
+
+    def populate(self, values):
+        self.executemany(Query("INSERT INTO redirects VALUES (?,?,?)", "populating redirects table", logStart=True), values)
+
 class HighDimensionalNeighborsTable(TableProxy):
     def __init__(self, tablePath):
         super(HighDimensionalNeighborsTable, self).__init__(tablePath, useCustomTypes=True)
@@ -151,24 +166,32 @@ class Join(TableProxy):
     def __init__(self, *tables):
         super(Join, self).__init__(*tables)
 
-    def selectNormalizedLinks(self):
+    def selectLinkEdges(self):
         query = Query("""
             SELECT
-                *
+                pl_from, page_id
             FROM
-                (SELECT
-                    pl_from, page_id
-                FROM
-                    links,
-                    page
-                WHERE
-                    pl_namespace = page_namespace
-                AND pl_title = page_title
-                ORDER BY
-                    pl_namespace ASC,
-                    pl_title ASC)
+                links,
+                page
+            WHERE
+                pl_namespace = page_namespace
+            AND pl_title = page_title
             ORDER BY
-                pl_from ASC""", "selecting normalized links", logProgress=True)
+                pl_namespace ASC,
+                pl_title ASC""", "selecting link edges", logProgress=True)
+
+        return self.select(query)
+
+    def selectRedirectEdges(self):
+        query = Query("""
+            SELECT
+                rd_from, page_id
+            FROM
+                redirects,
+                page
+            WHERE
+                rd_namespace = page_namespace
+            AND rd_title = page_title""", "selecting redirect edges", logProgress=True)
 
         return self.select(query)
 

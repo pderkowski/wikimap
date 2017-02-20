@@ -103,6 +103,7 @@ py::list getCategoryLinksRecords(const std::string& s) {
 }
 
 const auto& getPagePropertiesRecords = getCategoryLinksRecords;
+const auto& getRedirectsRecords = getPageRecords;
 
 BOOST_PYTHON_MODULE(libsqltools)
 {
@@ -111,4 +112,5 @@ BOOST_PYTHON_MODULE(libsqltools)
     py::def("getCategoryRecords", getCategoryRecords);
     py::def("getCategoryLinksRecords", getCategoryLinksRecords);
     py::def("getPagePropertiesRecords", getPagePropertiesRecords);
+    py::def("getRedirectsRecords", getRedirectsRecords);
 }
