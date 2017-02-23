@@ -1,74 +1,42 @@
 from Job import Job
+from Paths import *
+import Paths
 import Interface
 import Utils
-from Paths import paths as Path
 
 class Build(object):
     def __init__(self):
-        pageUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page.sql.gz'
-        linksUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz'
-        categoryLinksUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-categorylinks.sql.gz'
-        pagePropertiesUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page_props.sql.gz'
-        redirectsUrl = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-redirect.sql.gz'
-
-        pageSql = Path['pageSql']
-        linksSql = Path['linksSql']
-        categoryLinksSql = Path['categoryLinksSql']
-        pagePropertiesSql = Path['pagePropertiesSql']
-        redirectsSql = Path['redirectsSql']
-
-        page = Path['page']
-        links = Path['links']
-        categoryLinks = Path['categoryLinks']
-        pageProperties = Path['pageProperties']
-        redirects = Path['redirects']
-        linkEdges = Path['linkEdges']
-        redirectEdges = Path['redirectEdges']
-        aggregatedInlinks = Path['aggregatedInlinks']
-        aggregatedOutlinks = Path['aggregatedOutlinks']
-        pagerank = Path['pagerank']
-        tsne = Path['tsne']
-        highDimensionalNeighbors = Path['highDimensionalNeighbors']
-        lowDimensionalNeighbors = Path['lowDimensionalNeighbors']
-        wikimapPoints = Path['wikimapPoints']
-        wikimapCategories = Path['wikimapCategories']
-        metadata = Path['metadata']
-        zoomIndex = Path['zoomIndex']
-        termIndex = Path['termIndex']
-        embeddings = Path['embeddings']
-        embeddingIndex = Path['embeddingIndex']
-        embeddingReport = Path['embeddingReport']
+        pages_url = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page.sql.gz'
+        links_url = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz'
+        category_links_url = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-categorylinks.sql.gz'
+        page_properties_url = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page_props.sql.gz'
+        redirects_url = 'https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-redirect.sql.gz'
 
         jobs = []
-        jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pageUrl), inputs=[], outputs=[pageSql]))
-        jobs.append(Job('DOWNLOAD LINKS TABLE', Utils.download(linksUrl), inputs=[], outputs=[linksSql]))
-        jobs.append(Job('DOWNLOAD CATEGORY LINKS TABLE', Utils.download(categoryLinksUrl), inputs=[], outputs=[categoryLinksSql]))
-        jobs.append(Job('DOWNLOAD PAGE PROPERTIES TABLE', Utils.download(pagePropertiesUrl), inputs=[], outputs=[pagePropertiesSql]))
-        jobs.append(Job('DOWNLOAD REDIRECTS TABLE', Utils.download(redirectsUrl), inputs=[], outputs=[redirectsSql]))
-
-        jobs.append(Job('CREATE PAGE TABLE', Interface.createPageTable, inputs=[pageSql], outputs=[page]))
-        jobs.append(Job('CREATE LINKS TABLE', Interface.createLinksTable, inputs=[linksSql], outputs=[links]))
-        jobs.append(Job('CREATE PAGE PROPERTIES TABLE', Interface.createPagePropertiesTable, inputs=[pagePropertiesSql], outputs=[pageProperties]))
-        jobs.append(Job('CREATE CATEGORY LINKS TABLE', Interface.createCategoryLinksTable, inputs=[categoryLinksSql, page, pageProperties], outputs=[categoryLinks]))
-        jobs.append(Job('CREATE REDIRECTS TABLE', Interface.createRedirectsTable, inputs=[redirectsSql], outputs=[redirects]))
-
-        jobs.append(Job('CREATE LINK EDGES TABLE', Interface.createLinkEdgesTable, inputs=[links, page], outputs=[linkEdges]))
-        jobs.append(Job('CREATE REDIRECT EDGES TABLE', Interface.createRedirectEdgesTable, inputs=[redirects, page], outputs=[redirectEdges]))
-
-        jobs.append(Job('COMPUTE PAGERANK', Interface.computePagerank, inputs=[linkEdges], outputs=[pagerank]))
-        jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.computeEmbeddingsWithNode2Vec, inputs=[linkEdges, pagerank], outputs=[embeddings], wordCount=1000000))
-        jobs.append(Job('CREATE EMBEDDING INDEX', Interface.createEmbeddingIndex, inputs=[embeddings, page, redirectEdges], outputs=[embeddingIndex]))
-        jobs.append(Job('EVALUATE EMBEDDINGS', Interface.evaluateEmbeddings, inputs=[embeddings, embeddingIndex], outputs=[embeddingReport]))
-
-        jobs.append(Job('COMPUTE TSNE', Interface.computeTSNE, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
-        jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.computeHighDimensionalNeighbors, inputs=[embeddings, tsne, page], outputs=[highDimensionalNeighbors]))
-        jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.computeLowDimensionalNeighbors, inputs=[tsne, page], outputs=[lowDimensionalNeighbors]))
-
-        jobs.append(Job('CREATE AGGREGATED LINKS TABLES', Interface.createAggregatedLinksTables, inputs=[linkEdges, tsne], outputs=[aggregatedInlinks, aggregatedOutlinks]))
-        jobs.append(Job('CREATE WIKIMAP DATAPOINTS TABLE', Interface.createWikimapPointsTable, inputs=[tsne, page, highDimensionalNeighbors, lowDimensionalNeighbors, pagerank], outputs=[wikimapPoints]))
-        jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.createWikimapCategoriesTable, inputs=[categoryLinks, page, tsne], outputs=[wikimapCategories], depth=1))
-        jobs.append(Job('CREATE ZOOM INDEX', Interface.createZoomIndex, inputs=[wikimapPoints, pagerank], outputs=[zoomIndex, metadata], bucketSize=100))
-        jobs.append(Job('CREATE TERM INDEX', Interface.createTermIndex, inputs=[wikimapPoints, wikimapCategories], outputs=[termIndex]))
+        jobs.append(Job('DOWNLOAD PAGE TABLE', Utils.download(pages_url), inputs=[], outputs=[pages_dump]))
+        jobs.append(Job('DOWNLOAD LINKS TABLE', Utils.download(links_url), inputs=[], outputs=[links_dump]))
+        jobs.append(Job('DOWNLOAD CATEGORY LINKS TABLE', Utils.download(category_links_url), inputs=[], outputs=[category_links_dump]))
+        jobs.append(Job('DOWNLOAD PAGE PROPERTIES TABLE', Utils.download(page_properties_url), inputs=[], outputs=[page_properties_dump]))
+        jobs.append(Job('DOWNLOAD REDIRECTS TABLE', Utils.download(redirects_url), inputs=[], outputs=[redirects_dump]))
+        jobs.append(Job('IMPORT PAGE TABLE', Interface.import_pages, inputs=[pages_dump], outputs=[pages]))
+        jobs.append(Job('IMPORT LINKS TABLE', Interface.import_links, inputs=[links_dump], outputs=[links]))
+        jobs.append(Job('IMPORT PAGE PROPERTIES TABLE', Interface.import_page_properties, inputs=[page_properties_dump], outputs=[page_properties]))
+        jobs.append(Job('IMPORT CATEGORY LINKS TABLE', Interface.import_category_links, inputs=[category_links_dump, pages, page_properties], outputs=[category_links]))
+        jobs.append(Job('IMPORT REDIRECTS TABLE', Interface.import_redirects, inputs=[redirects_dump], outputs=[redirects]))
+        jobs.append(Job('CREATE LINK EDGES TABLE', Interface.create_link_edges, inputs=[links, pages], outputs=[link_edges]))
+        jobs.append(Job('COMPUTE PAGERANK', Interface.compute_pagerank, inputs=[link_edges], outputs=[pagerank]))
+        jobs.append(Job('CREATE ARTICLE MAPPING', Interface.create_article_mapping, inputs=[link_edges, pages, category_links, pagerank, redirects], outputs=[article_mapping]))
+        jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.compute_embeddings_with_node2vec, inputs=[link_edges, pagerank], outputs=[embeddings], wordCount=1000000))
+        jobs.append(Job('CREATE TITLE INDEX', Interface.create_title_index, inputs=[embeddings, pages, article_mapping], outputs=[title_index]))
+        jobs.append(Job('EVALUATE EMBEDDINGS', Interface.evaluate_embeddings, inputs=[embeddings, title_index], outputs=[embedding_report]))
+        jobs.append(Job('COMPUTE TSNE', Interface.compute_tsne, inputs=[embeddings, pagerank], outputs=[tsne], pointCount=100000))
+        jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.compute_high_dimensional_neighbors, inputs=[embeddings, tsne, pages], outputs=[high_dimensional_neighbors]))
+        jobs.append(Job('COMPUTE LOW DIMENSIONAL NEIGHBORS', Interface.compute_low_dimensional_neighbors, inputs=[tsne, pages], outputs=[low_dimensional_neighbors]))
+        jobs.append(Job('CREATE AGGREGATED LINKS TABLES', Interface.create_aggregated_links, inputs=[link_edges, tsne], outputs=[aggregated_inlinks, aggregated_outlinks]))
+        jobs.append(Job('CREATE WIKIMAP DATAPOINTS TABLE', Interface.create_wikimap_points, inputs=[tsne, pages, high_dimensional_neighbors, low_dimensional_neighbors, pagerank], outputs=[wikimap_points]))
+        jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.create_wikimap_categories, inputs=[category_links, pages, tsne], outputs=[wikimap_categories], depth=1))
+        jobs.append(Job('CREATE ZOOM INDEX', Interface.create_zoom_index, inputs=[wikimap_points, pagerank], outputs=[zoom_index, metadata], bucketSize=100))
+        jobs.append(Job('CREATE TERM INDEX', Interface.create_term_index, inputs=[wikimap_points, wikimap_categories], outputs=[term_index]))
 
         self.jobs = jobs
 
@@ -78,5 +46,5 @@ class Build(object):
     def __getitem__(self, n):
         return self.jobs[n]
 
-    def setBasePath(self, path):
-        Path.base = path
+    def set_build_dir(self, path):
+        Paths.global_base = path

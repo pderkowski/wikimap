@@ -20,6 +20,9 @@ class PageTable(TableProxy):
         ids = '(' + ','.join(map(str, ids)) + ')'
         return self.select(Query("SELECT page_id, page_title FROM page WHERE page_id IN {}".format(ids)))
 
+    def select_article_ids(self):
+        return self.select(Query("SELECT page_id FROM page WHERE page_namespace = 0"))
+
 class LinksTable(TableProxy):
     def __init__(self, linksTablePath):
         super(LinksTable, self).__init__(linksTablePath)
@@ -143,6 +146,10 @@ class PagerankTable(TableProxy):
                 {}""".format(idsNo), 'selecting ids by descending rank', logProgress=True)
 
         return self.select(query)
+
+    def select_id_rank(self, ids):
+        ids = '(' + ','.join(map(str, ids)) + ')'
+        return self.select(Query("""SELECT pr_id, pr_rank FROM pagerank WHERE pr_id IN {}""".format(ids), logProgress=True))
 
 class TSNETable(TableProxy):
     def __init__(self, tsnePath):
@@ -291,6 +298,20 @@ class Join(TableProxy):
                 wp_id = pr_id
             ORDER BY
                 pr_rank DESC
+            """, logProgress=True)
+
+        return self.select(query)
+
+    def selectDisambiguationPages(self):
+        query = Query("""
+            SELECT
+                page_id
+            FROM
+                page,
+                categorylinks
+            WHERE
+                page_id = cl_from
+            AND cl_to = 'Disambiguation_pages'
             """, logProgress=True)
 
         return self.select(query)

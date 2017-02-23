@@ -1,7 +1,4 @@
-from common.Zoom import ZoomIndex
-from common.Terms import TermIndex
 from Node2Vec import Node2Vec
-from Utils import LogIt, GroupIt, ColumnIt, FlipIt, pipe, NotEqualIt, NotInIt
 import Tables
 import Pagerank
 import TSNE
@@ -9,180 +6,95 @@ import NearestNeighbors
 import ZoomIndexer
 import Graph
 import Evaluation
-import shelve
-from itertools import imap, izip, repeat, chain
-from operator import itemgetter
+import Data
 
-def createPageTable(pagePath, outputPath):
-    source = Tables.Import.PageTable(pagePath)
-    table = Tables.PageTable(outputPath)
-    table.create()
-    table.populate(LogIt(1000000)(source.read()))
+def import_pages(pages_dump_path, output_path):
+    pages = Data.import_pages(pages_dump_path)
+    Data.set_pages(pages, output_path)
 
-def createLinksTable(linksPath, outputPath):
-    source = Tables.Import.LinksTable(linksPath)
-    table = Tables.LinksTable(outputPath)
-    table.create()
-    table.populate(LogIt(1000000)(source.read()))
+def import_links(links_dump_path, output_path):
+    links = Data.import_links(links_dump_path)
+    Data.set_links(links, output_path)
 
-def createPagePropertiesTable(pagePropertiesPath, outputPath):
-    source = Tables.Import.PagePropertiesTable(pagePropertiesPath)
-    table = Tables.PagePropertiesTable(outputPath)
-    table.create()
-    table.populate(LogIt(1000000)(source.read()))
+def import_page_properties(page_properties_dump_path, output_path):
+    page_properties = Data.import_page_properties(page_properties_dump_path)
+    Data.set_page_properties(page_properties, output_path)
 
-def createCategoryLinksTable(categoryLinksPath, pageTablePath, pagePropertiesTablePath, outputPath):
-    joined = Tables.Join(pageTablePath, pagePropertiesTablePath)
-    hiddenCategories = frozenset(ColumnIt(0)(joined.selectHiddenCategories()))
+def import_category_links(category_links_dump_path, pages_path, page_properties_path, output_path):
+    hidden_categories = Data.get_hidden_categories(pages_path, page_properties_path)
+    category_links = Data.import_category_links(category_links_dump_path)
+    Data.set_category_links(hidden_categories, category_links, output_path)
 
-    table = Tables.CategoryLinksTable(outputPath)
-    table.create()
+def import_redirects(redirects_dump_path, output_path):
+    redirects = Data.import_redirects(redirects_dump_path)
+    Data.set_redirects(redirects, output_path)
 
-    source = Tables.Import.CategoryLinksTable(categoryLinksPath)
-    table.populate(pipe(source.read(), NotInIt(hiddenCategories, 1), LogIt(1000000)))
+def create_link_edges(links_path, pages_path, output_path):
+    link_edges = Data.get_link_edges(links_path, pages_path)
+    Data.set_edges(link_edges, output_path)
 
-def createRedirectsTable(redirectsPath, outputPath):
-    source = Tables.Import.RedirectsTable(redirectsPath)
-    table = Tables.RedirectsTable(outputPath)
-    table.create()
-    table.populate(LogIt(1000000)(source.read()))
+def create_wikimap_points(tsne_path, pages_path, hdn_path, ldn_path, pagerank_path, output_path):
+    points = Data.get_wikimap_points(tsne_path, pages_path, hdn_path, ldn_path, pagerank_path)
+    Data.set_wikimap_points(points, output_path)
 
-def createLinkEdgesTable(linksPath, pagesPath, outputPath):
-    joined = Tables.Join(pagesPath, linksPath)
-    edges = Tables.EdgeTable(outputPath)
-    edges.populate(LogIt(1000000)(joined.selectLinkEdges()))
+def create_aggregated_links(edges_path, tsne_path, inlink_path, outlink_path):
+    ids = Data.get_ids_of_tsne_points(tsne_path)
+    outlinks = Data.get_outlinks_of_points(edges_path, ids)
+    inlinks = Data.get_inlinks_of_points(edges_path, ids)
+    Data.set_outlinks(outlinks, outlink_path)
+    Data.set_inlinks(inlinks, inlink_path)
 
-def createRedirectEdgesTable(redirectsPath, pagePath, outputPath):
-    joined = Tables.Join(redirectsPath, pagePath)
-    edges = Tables.EdgeTable(outputPath)
-    edges.populate(LogIt(1000000)(joined.selectRedirectEdges()))
+def compute_pagerank(edges_path, output_path):
+    edges = Data.get_edges_as_strings(edges_path)
+    pagerank = Pagerank.pagerank(edges, stringified=True)
+    Data.set_pagerank(pagerank, output_path)
 
-def createWikimapPointsTable(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath, outputPath):
-    data = Tables.Join(tsnePath, pagePath, hdnnPath, ldnnPath, pagerankPath)
+def compute_embeddings_with_node2vec(edges_path, pagerank_path, output_path, node_count=1000000):
+    edges = Data.get_edges_between_highest_ranked_nodes(edges_path, pagerank_path, node_count=node_count)
+    embeddings = Node2Vec(edges)
+    Data.set_embeddings(embeddings, output_path)
 
-    table = Tables.WikimapPointsTable(outputPath)
-    table.create()
+def compute_tsne(embeddings_path, pagerank_path, output_path, point_count=100000):
+    ids, embeddings = Data.get_ids_embeddings_of_highest_ranked_points(embeddings_path, pagerank_path, point_count=point_count)
+    mappings = TSNE.train(embeddings)
+    Data.set_tsne_points(ids, mappings, output_path)
 
-    table.populate(data.selectWikimapPoints())
+def compute_high_dimensional_neighbors(embeddings_path, tsne_path, pages_path, output_path, neighbors_count=10):
+    ids, titles, embeddings = Data.get_ids_titles_embeddings_of_tsne_points(embeddings_path, tsne_path, pages_path)
+    distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighbors_count)
+    Data.set_high_dimensional_neighbors(ids, titles, indices, distances, output_path)
 
-def createAggregatedLinksTables(edgeArrayPath, tsnePath, inlinkTablePath, outlinkTablePath):
-    tsne = Tables.TSNETable(tsnePath)
-    ids = ColumnIt(0)(tsne.selectAll())
+def compute_low_dimensional_neighbors(tsne_path, pages_path, output_path, neighbors_count=10):
+    ids, titles, tsne_points = Data.get_ids_titles_tsne_points(tsne_path, pages_path)
+    distances, indices = NearestNeighbors.computeNearestNeighbors(tsne_points, neighbors_count)
+    Data.set_low_dimensional_neighbors(ids, titles, indices, distances, output_path)
 
-    edges = Tables.EdgeTable(edgeArrayPath)
-    edges.filterByNodes(ids)
+def create_wikimap_categories(category_links_path, pages_path, tsne_path, output_path, depth=1):
+    ids_category_names = Data.get_ids_category_names_of_tsne_points(category_links_path, tsne_path)
+    edges = Data.get_edges_between_categories(category_links_path, pages_path)
+    categories = Graph.aggregate(ids_category_names, edges, depth=depth)
+    Data.set_categories(categories, output_path)
 
-    outlinks = Tables.AggregatedLinksTable(outlinkTablePath)
-    edges.sortByStartNode()
-    outlinks.create(pipe(edges, LogIt(1000000), GroupIt))
+def create_zoom_index(wikipoints_path, pagerank_path, zoom_index_path, metadata_path, bucket_size=100):
+    coords, ids = Data.get_coords_ids_of_points(wikipoints_path, pagerank_path)
+    indexer = ZoomIndexer.Indexer(coords, ids, bucket_size)
+    Data.set_zoom_index(indexer, zoom_index_path, wikipoints_path, metadata_path)
 
-    inlinks = Tables.AggregatedLinksTable(inlinkTablePath)
-    edges.inverseEdges()
-    edges.sortByStartNode()
-    inlinks.create(pipe(edges, LogIt(1000000), GroupIt))
+def create_term_index(wikipoints_path, wikicategories_path, output_path):
+    point_titles, category_titles = Data.get_terms(wikipoints_path, wikicategories_path)
+    Data.set_term_index(point_titles, category_titles, output_path)
 
-def computePagerank(edgeArrayPath, pagerankPath):
-    edges = Tables.EdgeTable(edgeArrayPath, stringify=True)
-    pagerank = Tables.PagerankTable(pagerankPath)
-    pagerank.create()
-    pagerank.populate(Pagerank.pagerank(edges, stringified=True))
+def create_article_mapping(link_edges_path, pages_path, category_links_path, pagerank_path, redirects_path, output_path):
+    article_ids = Data.get_article_ids(pages_path)
+    disambiguations = Data.get_disambiguations(link_edges_path, pages_path, category_links_path, pagerank_path)
+    redirects = Data.get_redirects(redirects_path, pages_path)
+    Data.set_article_mapping(article_ids, disambiguations, redirects, output_path)
 
-def computeEmbeddingsWithNode2Vec(edgeArrayPath, pagerankPath, outputPath, wordCount=1000000):
-    edges = Tables.EdgeTable(edgeArrayPath)
-    pagerank = Tables.PagerankTable(pagerankPath)
-    ids = list(ColumnIt(0)(pagerank.selectIdsByDescendingRank(wordCount)))
-    edges.filterByNodes(ids)
-    embeddingsTable = Tables.EmbeddingsTable(outputPath)
-    edges = LogIt(1000000, start="Reading edges...")(edges)
-    embeddings = LogIt(100000)(Node2Vec(edges))
-    embeddingsTable.create(embeddings)
+def create_title_index(embeddings_path, pages_path, article_mapping_path, output_path):
+    article_mapping = Data.get_article_mapping(article_mapping_path)
+    ids, titles = Data.get_ids_titles_of_embeddings(embeddings_path, pages_path)
+    Data.set_title_index(ids, titles, article_mapping, output_path)
 
-def computeTSNE(embeddingsPath, pagerankPath, tsnePath, pointCount=10000):
-    pagerank = Tables.PagerankTable(pagerankPath)
-
-    ids = pipe(pagerank.selectIdsByDescendingRank(pointCount), ColumnIt(0), list)
-    embeddings = Tables.EmbeddingsTable(embeddingsPath)
-    mappings = TSNE.train(embeddings.get(id_) for id_ in ids)
-
-    tsne = Tables.TSNETable(tsnePath)
-    tsne.create()
-    tsne.populate(izip(ids, mappings[:, 0], mappings[:, 1]))
-
-def computeHighDimensionalNeighbors(embeddingsPath, tsnePath, pagePath, outputPath, neighborsNo=10):
-    joined = Tables.Join(tsnePath, pagePath)
-
-    data = list(joined.select_id_title_tsneX_tsneY())
-    ids, titles = list(ColumnIt(0)(data)), list(ColumnIt(1)(data))
-    embeddingsTable = Tables.EmbeddingsTable(embeddingsPath)
-    embeddings = imap(embeddingsTable.get, ids)
-    distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighborsNo)
-
-    table = Tables.HighDimensionalNeighborsTable(outputPath)
-    table.create()
-    table.populate(izip(ids, imap(lambda a: [titles[i] for i in a], indices), imap(list, distances)))
-
-def computeLowDimensionalNeighbors(tsnePath, pagePath, outputPath, neighborsNo=10):
-    joined = Tables.Join(tsnePath, pagePath)
-
-    data = list(joined.select_id_title_tsneX_tsneY())
-    ids, titles, points = list(ColumnIt(0)(data)), list(ColumnIt(1)(data)), ColumnIt(2, 3)(data)
-
-    table = Tables.LowDimensionalNeighborsTable(outputPath)
-    table.create()
-
-    distances, indices = NearestNeighbors.computeNearestNeighbors(points, neighborsNo)
-    table.populate(izip(ids, imap(lambda a: [titles[i] for i in a], indices), imap(list, distances)))
-
-def createWikimapCategoriesTable(categoryLinksPath, pagesPath, tsnePath, outputPath, depth=1):
-    data = Tables.Join(categoryLinksPath, pagesPath, tsnePath)
-
-    table = Tables.WikimapCategoriesTable(outputPath)
-    table.create()
-
-    table.populate(pipe(Graph.aggregate(data.select_id_category(), data.selectCategoryLinks(), depth=depth), NotEqualIt([], 1), LogIt(100000)))
-
-def createZoomIndex(wikipointsPath, pagerankPath, indexPath, metadataPath, bucketSize=100):
-    joined = Tables.Join(wikipointsPath, pagerankPath)
-
-    data = list(joined.select_id_x_y_byRank())
-    indexer = ZoomIndexer.Indexer(ColumnIt(1, 2)(data), ColumnIt(0)(data), bucketSize)
-
-    zoom = ZoomIndex(indexPath)
-    zoom.build(indexer.index2data())
-
-    wikipoints = Tables.WikimapPointsTable(wikipointsPath)
-    wikipoints.updateIndex(FlipIt(indexer.data2index()))
-
-    metadata = shelve.open(metadataPath)
-    metadata['bounds'] = indexer.getBounds()
-    metadata.close()
-
-def createTermIndex(wikipointsPath, wikicategoriesPath, outputPath):
-    wikipoints = Tables.WikimapPointsTable(wikipointsPath)
-    categories = Tables.WikimapCategoriesTable(wikicategoriesPath)
-
-    termIndex = TermIndex(outputPath)
-    termIndex.add(izip(imap(itemgetter(0), wikipoints.selectTitles()), repeat(False)))
-    termIndex.add(izip(imap(itemgetter(0), categories.selectTitles()), repeat(True)))
-
-def createEmbeddingIndex(embeddingsPath, pagePath, redirectsPath, outputPath):
-    embeddingsTable = Tables.EmbeddingsTable(embeddingsPath)
-    pageTable = Tables.PageTable(pagePath)
-    redirects = Tables.EdgeTable(redirectsPath)
-
-    embeddedNodes = embeddingsTable.keys()
-    directPages = pipe(pageTable.select_id_title(embeddedNodes), FlipIt)
-
-    redirects.filterByEndNodes(embeddedNodes)
-    startNodes = [s for (s, _) in redirects]
-    node2title = dict(pageTable.select_id_title(startNodes))
-    validNodes = node2title.keys()
-    redirects.filterByStartNodes(validNodes)
-    redirectedPages = imap(lambda (s, e): (node2title[s], e), redirects)
-
-    embeddingIndex = Tables.EmbeddingIndex(outputPath)
-    embeddingIndex.create(chain(redirectedPages, directPages))
-
-def evaluateEmbeddings(embeddingsPath, embeddingIndexPath, outputPath):
-    embeddingsTable = Tables.IndexedEmbeddingsTable(embeddingsPath, embeddingIndexPath)
-    Evaluation.check(embeddingsTable)
+def evaluate_embeddings(embeddings_path, title_index, outputPath):
+    indexed_embeddings_table = Tables.IndexedEmbeddingsTable(embeddings_path, title_index)
+    Evaluation.check(indexed_embeddings_table)

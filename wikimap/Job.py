@@ -1,6 +1,6 @@
 import time
 import os
-from common import resolvePaths
+import Paths
 
 class CompletionGuard(object):
     def __init__(self, files):
@@ -60,13 +60,13 @@ class Job(object):
             self.duration = time.time() - t0
 
     def inputs(self, base=None):
-        return resolvePaths(self._inputs, base=base)
+        return Paths.resolve(self._inputs, base=base)
 
     def outputs(self, base=None):
-        return resolvePaths(self._outputs, base=base)
+        return Paths.resolve(self._outputs, base=base)
 
     def artifacts(self, base=None):
-        return resolvePaths(self._artifacts, base=base)
+        return Paths.resolve(self._artifacts, base=base)
 
     def skip(self):
         self.outcome = Job.SKIPPED

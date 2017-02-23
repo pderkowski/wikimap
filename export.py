@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
+from wikimap.BuildManager import BuildManager
+from wikimap.Paths import *
+from wikimap import Utils
+from wikimap import Paths
 import argparse
 import logging
 import os
 import sys
-from wikimap.BuildManager import BuildManager
-from wikimap.Paths import paths as Path
-from wikimap.common import resolvePaths
-import wikimap.Utils as Utils
 import tarfile
 
 filesets = {
-    'ui'    : [Path['wikimapPoints'], Path['wikimapCategories'], Path['zoomIndex'], Path['metadata'], Path['termIndex'], Path['aggregatedInlinks'], Path['aggregatedOutlinks']]
+    'ui'    : [wikimap_points, wikimap_categories, zoom_index, metadata, term_index, aggregated_inlinks, aggregated_outlinks]
 }
 
 def pack(files, destDir):
@@ -52,9 +52,9 @@ def main():
         sys.exit(1)
 
     manager = BuildManager(os.environ["BUILDPATH"])
-    Path.base = manager.lastBuild
+    Paths.base = manager.lastBuild
 
-    export(resolvePaths(filesets[args.fileset]), os.environ["EXPORTPATH"])
+    export(Paths.resolve(filesets[args.fileset]), os.environ["EXPORTPATH"])
 
 if __name__ == '__main__':
     main()

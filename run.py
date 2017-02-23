@@ -49,7 +49,7 @@ def main():
         sys.exit(1)
     else:
         manager = BuildManager(os.environ["BUILDPATH"])
-        build.setBasePath(manager.newBuild)
+        build.set_build_dir(manager.newBuild)
         manager.run(build)
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ from edgearrayext import *
 import logging
 
 class EdgeArray(object):
-    def __init__(self, path, shuffle=False, log=True, stringify=False):
+    def __init__(self, path=None, shuffle=False, log=True, stringify=False):
         self._path = path
         self._array = EdgeArrayExt()
         self._shuffle = shuffle
@@ -15,7 +15,8 @@ class EdgeArray(object):
             logger.info("EdgeArray: populating...")
 
         self._array.populate(iter(iterator))
-        self._array.save(self._path)
+        if self._path:
+            self._array.save(self._path)
 
     def sortByStartNode(self):
         self._ensureLoaded()
@@ -100,10 +101,16 @@ class EdgeArray(object):
         else:
             return iter(self._array)
 
+    def getStartNodes(self):
+        return [s for (s, _) in self]
+
+    def getEndNodes(self):
+        return [e for (_, e) in self]
+
     def _ensureLoaded(self):
         logger = logging.getLogger(__name__)
 
-        if self._array.size() == 0:
+        if self._array.size() == 0 and self._path:
             if self._log:
                 logger.info("EdgeArray: loading...")
             self._array.load(self._path)
