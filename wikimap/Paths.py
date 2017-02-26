@@ -86,10 +86,6 @@ def metadata(base=None):
     base = base or global_base
     return set_base('metadata.db', base=base)
 
-def article_mapping(base=None):
-    base = base or global_base
-    return set_base('article_mapping.bin', base=base)
-
 def zoom_index(base=None):
     base = base or global_base
     return set_base('zoom_index.idx', base=base)
@@ -121,3 +117,15 @@ def title_index(base=None):
 def embedding_report(base=None):
     base = base or global_base
     return set_base('embedding_report.txt', base=base)
+
+def evaluation_datasets_dir(base=None):
+    base = base or global_base
+    return set_base('evaluation_datasets', base=base)
+
+def wordsim353_all(base=None):
+    base = base or global_base
+    return os.path.join(evaluation_datasets_dir(base), 'EN-WS-353-ALL.txt')
+
+def evaluation_datasets(base=None):
+    base = base or global_base
+    return [wordsim353_all(base)]

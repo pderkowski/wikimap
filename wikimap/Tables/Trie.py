@@ -3,16 +3,15 @@ import logging
 from ..common.Utils import TrivialConverter
 
 class Trie(object):
-    def __init__(self, path, keyConverter=TrivialConverter(), valueConverter=TrivialConverter()):
+    def __init__(self, path, valueConverter=TrivialConverter()):
         self._path = path
-        self._keyC = keyConverter
         self._valC = valueConverter
         self._trie = None
 
     def create(self, data):
         logger = logging.getLogger(__name__)
         logger.info("Creating trie...")
-        self._trie = marisa_trie.BytesTrie((self._keyC.encode(key), self._valC.encode(value)) for key, value in data)
+        self._trie = marisa_trie.BytesTrie((key, self._valC.encode(value)) for key, value in data)
         logger.info("Created trie with {} records".format(len(self._trie)))
         logger.info("Saving to {}".format(self._path))
         self._trie.save(self._path)
@@ -24,17 +23,13 @@ class Trie(object):
 
     def prefixes(self, key):
         self._ensureLoaded()
-        keyCode = self._keyC.encode(key)
-        codes = self._trie.prefixes(keyCode)
-        return map(self._keyC.decode, codes)
+        return self._trie.prefixes(key)
 
     def __getitem__(self, key):
         self._ensureLoaded()
         prefixes = self.prefixes(key)
-        codes = map(self._keyC.encode, prefixes)
-        return self._valC.decode(self._trie[codes[-1]][0])
+        return self._valC.decode(self._trie[prefixes[-1]][0])
 
     def __contains__(self, key):
         self._ensureLoaded()
-        keyCode = self._keyC.encode(key)
-        return keyCode in self._trie
+        return key in self._trie

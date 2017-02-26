@@ -25,13 +25,12 @@ class Job(object):
     SKIPPED = 'SKIPPED'
     INTERRUPT = 'INTERRUPT'
 
-    def __init__(self, name, task, inputs=[], outputs=[], artifacts=[], noskip=False, **kwargs):
+    def __init__(self, name, task, inputs=[], outputs=[], noskip=False, **kwargs):
         self._task = task
 
         self.name = name
         self._inputs = inputs
         self._outputs = outputs
-        self._artifacts = artifacts
 
         self.noskip = noskip
         self.config = kwargs
@@ -42,12 +41,8 @@ class Job(object):
     def run(self):
         t0 = time.time()
         try:
-            outputPaths = self.outputs()
-            guardedPaths = self.outputs() + self.artifacts()
-            with CompletionGuard(guardedPaths) as guard:
-                inputPaths = self.inputs()
-                args = inputPaths + outputPaths
-                self._task(*args, **self.config)
+            with CompletionGuard(self.outputs()) as guard:
+                self._task(**self.config)
                 self.outcome = Job.SUCCESS
                 guard.complete()
         except KeyboardInterrupt:
@@ -64,9 +59,6 @@ class Job(object):
 
     def outputs(self, base=None):
         return Paths.resolve(self._outputs, base=base)
-
-    def artifacts(self, base=None):
-        return Paths.resolve(self._artifacts, base=base)
 
     def skip(self):
         self.outcome = Job.SKIPPED

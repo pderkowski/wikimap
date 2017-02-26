@@ -33,8 +33,7 @@ class BuildManager(object):
             if job.noskip \
             or self._inputsChanged(job, changedFiles) \
             or self._configChanged(job) \
-            or not self._outputsComputed(job) \
-            or not self._artifactsComputed(job):
+            or not self._outputsComputed(job):
                 logger.info('STARTING JOB: {}'.format(job.name))
 
                 changedFiles.update(job.outputs())
@@ -69,9 +68,6 @@ class BuildManager(object):
     def _outputsComputed(self, job):
         return self.lastBuild and all(os.path.exists(o) for o in job.outputs(base=self.lastBuild))
 
-    def _artifactsComputed(self, job):
-        return self.lastBuild and all(os.path.exists(a) for a in job.artifacts(base=self.lastBuild))
-
     def _inputsChanged(self, job, changedFiles):
         return any(input_ in changedFiles for input_ in job.inputs())
 
@@ -81,15 +77,18 @@ class BuildManager(object):
         return lastTargetConfig != currentTargetConfig
 
     def _makeLinks(self, job):
-        old = job.outputs(base=self.lastBuild) + job.artifacts(base=self.lastBuild)
-        new = job.outputs() + job.artifacts()
+        old = job.outputs(base=self.lastBuild)
+        new = job.outputs()
 
         for src, dst in zip(old, new):
             try:
                 Utils.linkDirectory(src, dst)
             except OSError as exc: # python >2.5
                 if exc.errno == errno.ENOTDIR:
-                    os.link(src, dst)
+                    if not os.path.exists(os.path.dirname(dst)):
+                        os.makedirs(os.path.dirname(dst))
+                    if not os.path.exists(dst):
+                        os.link(src, dst)
                 else: raise
 
     def _createDirs(self):

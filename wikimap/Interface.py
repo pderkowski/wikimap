@@ -1,100 +1,111 @@
 from Node2Vec import Node2Vec
-import Tables
 import Pagerank
 import TSNE
 import NearestNeighbors
 import ZoomIndexer
 import Graph
-import Evaluation
 import Data
 
-def import_pages(pages_dump_path, output_path):
-    pages = Data.import_pages(pages_dump_path)
-    Data.set_pages(pages, output_path)
+def download_pages_dump(url):
+    Data.download_pages_dump(url)
 
-def import_links(links_dump_path, output_path):
-    links = Data.import_links(links_dump_path)
-    Data.set_links(links, output_path)
+def download_links_dump(url):
+    Data.download_links_dump(url)
 
-def import_page_properties(page_properties_dump_path, output_path):
-    page_properties = Data.import_page_properties(page_properties_dump_path)
-    Data.set_page_properties(page_properties, output_path)
+def download_category_links_dump(url):
+    Data.download_category_links_dump(url)
 
-def import_category_links(category_links_dump_path, pages_path, page_properties_path, output_path):
-    hidden_categories = Data.get_hidden_categories(pages_path, page_properties_path)
-    category_links = Data.import_category_links(category_links_dump_path)
-    Data.set_category_links(hidden_categories, category_links, output_path)
+def download_page_properties_dump(url):
+    Data.download_page_properties_dump(url)
 
-def import_redirects(redirects_dump_path, output_path):
-    redirects = Data.import_redirects(redirects_dump_path)
-    Data.set_redirects(redirects, output_path)
+def download_redirects_dump(url):
+    Data.download_redirects_dump(url)
 
-def create_link_edges(links_path, pages_path, output_path):
-    link_edges = Data.get_link_edges(links_path, pages_path)
-    Data.set_edges(link_edges, output_path)
+def download_evaluation_datasets(url):
+    Data.download_evaluation_datasets(url)
 
-def create_wikimap_points(tsne_path, pages_path, hdn_path, ldn_path, pagerank_path, output_path):
-    points = Data.get_wikimap_points(tsne_path, pages_path, hdn_path, ldn_path, pagerank_path)
-    Data.set_wikimap_points(points, output_path)
+def import_pages():
+    pages = Data.import_pages()
+    Data.set_pages(pages)
 
-def create_aggregated_links(edges_path, tsne_path, inlink_path, outlink_path):
-    ids = Data.get_ids_of_tsne_points(tsne_path)
-    outlinks = Data.get_outlinks_of_points(edges_path, ids)
-    inlinks = Data.get_inlinks_of_points(edges_path, ids)
-    Data.set_outlinks(outlinks, outlink_path)
-    Data.set_inlinks(inlinks, inlink_path)
+def import_links():
+    links = Data.import_links()
+    Data.set_links(links)
 
-def compute_pagerank(edges_path, output_path):
-    edges = Data.get_edges_as_strings(edges_path)
+def import_page_properties():
+    page_properties = Data.import_page_properties()
+    Data.set_page_properties(page_properties)
+
+def import_category_links():
+    hidden_categories = Data.get_hidden_categories()
+    category_links = Data.import_category_links()
+    Data.set_category_links(category_links, hidden_categories)
+
+def import_redirects():
+    redirects = Data.import_redirects()
+    Data.set_redirects(redirects)
+
+def create_link_edges():
+    link_edges = Data.get_link_edges()
+    Data.set_link_edges(link_edges)
+
+def compute_pagerank():
+    edges = Data.get_link_edges_as_strings()
     pagerank = Pagerank.pagerank(edges, stringified=True)
-    Data.set_pagerank(pagerank, output_path)
+    Data.set_pagerank(pagerank)
 
-def compute_embeddings_with_node2vec(edges_path, pagerank_path, output_path, node_count=1000000):
-    edges = Data.get_edges_between_highest_ranked_nodes(edges_path, pagerank_path, node_count=node_count)
+def compute_embeddings_with_node2vec(node_count):
+    edges = Data.get_link_edges_between_highest_ranked_nodes(node_count)
     embeddings = Node2Vec(edges)
-    Data.set_embeddings(embeddings, output_path)
+    Data.set_embeddings(embeddings)
 
-def compute_tsne(embeddings_path, pagerank_path, output_path, point_count=100000):
-    ids, embeddings = Data.get_ids_embeddings_of_highest_ranked_points(embeddings_path, pagerank_path, point_count=point_count)
+def create_title_index():
+    titles, ids = Data.get_titles_ids_including_redirects()
+    Data.set_title_index(titles, ids)
+
+def evaluate_embeddings():
+    wordsim353 = Data.get_wordsim353_dataset()
+    wordsim353.check_vocabulary(Data.get_title_index())
+    score, matched_pairs = wordsim353.evaluate(Data.get_indexed_embeddings())
+    print score
+
+def compute_tsne(point_count):
+    ids, embeddings = Data.get_ids_embeddings_of_highest_ranked_points(point_count)
     mappings = TSNE.train(embeddings)
-    Data.set_tsne_points(ids, mappings, output_path)
+    Data.set_tsne_points(ids, mappings)
 
-def compute_high_dimensional_neighbors(embeddings_path, tsne_path, pages_path, output_path, neighbors_count=10):
-    ids, titles, embeddings = Data.get_ids_titles_embeddings_of_tsne_points(embeddings_path, tsne_path, pages_path)
+def compute_high_dimensional_neighbors(neighbors_count):
+    ids, titles, embeddings = Data.get_ids_titles_embeddings_of_tsne_points()
     distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighbors_count)
-    Data.set_high_dimensional_neighbors(ids, titles, indices, distances, output_path)
+    Data.set_high_dimensional_neighbors(ids, titles, indices, distances)
 
-def compute_low_dimensional_neighbors(tsne_path, pages_path, output_path, neighbors_count=10):
-    ids, titles, tsne_points = Data.get_ids_titles_tsne_points(tsne_path, pages_path)
+def compute_low_dimensional_neighbors(neighbors_count):
+    ids, titles, tsne_points = Data.get_ids_titles_tsne_points()
     distances, indices = NearestNeighbors.computeNearestNeighbors(tsne_points, neighbors_count)
-    Data.set_low_dimensional_neighbors(ids, titles, indices, distances, output_path)
+    Data.set_low_dimensional_neighbors(ids, titles, indices, distances)
 
-def create_wikimap_categories(category_links_path, pages_path, tsne_path, output_path, depth=1):
-    ids_category_names = Data.get_ids_category_names_of_tsne_points(category_links_path, tsne_path)
-    edges = Data.get_edges_between_categories(category_links_path, pages_path)
+def create_aggregated_links():
+    ids = Data.get_ids_of_tsne_points()
+    outlinks = Data.get_outlinks_of_points(ids)
+    inlinks = Data.get_inlinks_of_points(ids)
+    Data.set_outlinks(outlinks)
+    Data.set_inlinks(inlinks)
+
+def create_wikimap_points():
+    points = Data.get_wikimap_points()
+    Data.set_wikimap_points(points)
+
+def create_wikimap_categories(depth):
+    ids_category_names = Data.get_ids_category_names_of_tsne_points()
+    edges = Data.get_edges_between_categories()
     categories = Graph.aggregate(ids_category_names, edges, depth=depth)
-    Data.set_categories(categories, output_path)
+    Data.set_wikimap_categories(categories)
 
-def create_zoom_index(wikipoints_path, pagerank_path, zoom_index_path, metadata_path, bucket_size=100):
-    coords, ids = Data.get_coords_ids_of_points(wikipoints_path, pagerank_path)
+def create_zoom_index(bucket_size):
+    coords, ids = Data.get_coords_ids_of_points()
     indexer = ZoomIndexer.Indexer(coords, ids, bucket_size)
-    Data.set_zoom_index(indexer, zoom_index_path, wikipoints_path, metadata_path)
+    Data.set_zoom_index(indexer)
 
-def create_term_index(wikipoints_path, wikicategories_path, output_path):
-    point_titles, category_titles = Data.get_terms(wikipoints_path, wikicategories_path)
-    Data.set_term_index(point_titles, category_titles, output_path)
-
-def create_article_mapping(link_edges_path, pages_path, category_links_path, pagerank_path, redirects_path, output_path):
-    article_ids = Data.get_article_ids(pages_path)
-    disambiguations = Data.get_disambiguations(link_edges_path, pages_path, category_links_path, pagerank_path)
-    redirects = Data.get_redirects(redirects_path, pages_path)
-    Data.set_article_mapping(article_ids, disambiguations, redirects, output_path)
-
-def create_title_index(embeddings_path, pages_path, article_mapping_path, output_path):
-    article_mapping = Data.get_article_mapping(article_mapping_path)
-    ids, titles = Data.get_ids_titles_of_embeddings(embeddings_path, pages_path)
-    Data.set_title_index(ids, titles, article_mapping, output_path)
-
-def evaluate_embeddings(embeddings_path, title_index, outputPath):
-    indexed_embeddings_table = Tables.IndexedEmbeddingsTable(embeddings_path, title_index)
-    Evaluation.check(indexed_embeddings_table)
+def create_term_index():
+    point_titles, category_titles = Data.get_terms()
+    Data.set_term_index(point_titles, category_titles)

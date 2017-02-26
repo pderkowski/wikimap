@@ -16,11 +16,21 @@ class PageTable(TableProxy):
         self.executemany(Query("INSERT INTO page VALUES (?,?,?)", "populating page table", logStart=True), values)
         self.execute(Query("CREATE UNIQUE INDEX ns_title_idx ON page(page_namespace, page_title)", "creating index ns_title_idx in page table", logStart=True, logProgress=True))
 
-    def select_id_title(self, ids):
-        ids = '(' + ','.join(map(str, ids)) + ')'
-        return self.select(Query("SELECT page_id, page_title FROM page WHERE page_id IN {}".format(ids)))
+    def select_id_title_of_articles(self, ids=None):
+        if ids:
+            ids = '(' + ','.join(map(str, ids)) + ')'
+            return self.select(Query("""
+                SELECT page_id, page_title
+                FROM page
+                WHERE page_id IN {}
+                AND page_namespace=0""".format(ids)))
+        else:
+            return self.select(Query("""
+                SELECT page_id, page_title
+                FROM page
+                WHERE page_namespace=0"""))
 
-    def select_article_ids(self):
+    def select_id_of_articles(self):
         return self.select(Query("SELECT page_id FROM page WHERE page_namespace = 0"))
 
 class LinksTable(TableProxy):
@@ -197,7 +207,8 @@ class Join(TableProxy):
                 redirects,
                 page
             WHERE
-                rd_namespace = page_namespace
+                rd_namespace = 0
+            AND page_namespace = 0
             AND rd_title = page_title""", "selecting redirect edges", logProgress=True)
 
         return self.select(query)

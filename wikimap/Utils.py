@@ -6,9 +6,9 @@ import errno
 import subprocess
 import ast
 import urllib
-from operator import itemgetter
 import numpy
-from itertools import imap, groupby, ifilter
+import tarfile
+import tempfile
 
 def openOrExit(file_, mode='r'):
     logger = logging.getLogger(__name__)
@@ -59,8 +59,17 @@ def saveToFile(path, dict_):
     with open(path, 'w') as f:
         f.write(str(dict_))
 
-def download(url):
-    return lambda output: urllib.urlretrieve(url, output, reporthook=ProgressBar(url).report)
+def download(url, output_path):
+    urllib.urlretrieve(url, output_path, reporthook=ProgressBar(url).report)
+
+def download_and_extract(url, output_path):
+    logger = logging.getLogger(__name__)
+
+    with tempfile.NamedTemporaryFile() as temp:
+        urllib.urlretrieve(url, temp.name, reporthook=ProgressBar(url).report)
+        logger.info('Extracting to {}...'.format(output_path))
+        with tarfile.open(temp.name) as tar:
+            tar.extractall(output_path)
 
 def any2unicode(sth, encoding='utf8', errors='strict'):
     if isinstance(sth, unicode):
@@ -69,152 +78,6 @@ def any2unicode(sth, encoding='utf8', errors='strict'):
         return unicode(sth, encoding, errors=errors)
     else:
         return unicode(str(sth), encoding, errors=errors)
-
-def pipe(arg, *funcs):
-    for f in funcs:
-        arg = f(arg)
-        if arg is None:
-            print f
-    return arg
-
-class PrintIt(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        def printAndReturn(sth):
-            print repr(sth)
-            return sth
-
-        return imap(printAndReturn, self.iterator)
-
-class LogIt(object):
-    def __init__(self, frequency, start="", end=""):
-        self.frequency = frequency
-        self.iterator = None
-        self.start = start
-        self.end = end
-
-    def __call__(self, iterator):
-        self.iterator = iterator
-        return self
-
-    def __iter__(self):
-        logger = logging.getLogger(__name__)
-
-        if self.start:
-            logger.info(self.start)
-
-        for (i, e) in enumerate(self.iterator):
-            if self.frequency > 0 and i % self.frequency == 0:
-                logger.info('Processed {} records'.format(i))
-            yield e
-
-        if self.end:
-            logger.info(self.end)
-
-class GroupIt(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        def join(arg):
-            k, group = arg
-            return (k, [p[1] for p in group])
-
-        return imap(join, groupby(self.iterator, itemgetter(0)))
-
-class JoinIt(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return imap(lambda e: u' '.join(e)+u'\n', self.iterator)
-
-class DeferIt(object):
-    def __init__(self, iteratorFactory):
-        self.iteratorFactory = iteratorFactory
-
-    def __iter__(self):
-        return iter(self.iteratorFactory())
-
-class StringifyIt(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return imap(lambda e: map(any2unicode, e), self.iterator)
-
-class StringifyIt2(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return imap(lambda e: [unicode(str(e[0]), encoding='utf8'), unicode(str(e[1]), encoding='utf8')], self.iterator)
-
-class ColumnIt(object):
-    def __init__(self, *columns):
-        self.columns = columns
-        self.iterator = None
-
-    def __call__(self, iterator):
-        self.iterator = iterator
-        return self
-
-    def __iter__(self):
-        return imap(itemgetter(*self.columns), self.iterator)
-
-class FlipIt(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return imap(lambda cols: cols[::-1], self.iterator)
-
-class SumIt(object):
-    def __init__(self, *columns):
-        self.columns = columns
-        self.iterator = None
-
-    def __call__(self, iterator):
-        self.iterator = iterator
-        return self
-
-    def __iter__(self):
-        return imap(lambda cols: sum(cols[c] for c in self.columns), self.iterator)
-
-class TupleIt(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return imap(tuple, self.iterator)
-
-class NotInIt(object):
-    def __init__(self, container, column):
-        self.container = container
-        self.column = column
-        self.iterator = None
-
-    def __call__(self, iterator):
-        self.iterator = iterator
-        return self
-
-    def __iter__(self):
-        return ifilter(lambda record: record[self.column] not in self.container, self.iterator)
-
-class NotEqualIt(object):
-    def __init__(self, val, column):
-        self.val = val
-        self.column = column
-        self.iterator = None
-
-    def __call__(self, iterator):
-        self.iterator = iterator
-        return self
-
-    def __iter__(self):
-        return ifilter(lambda record: record[self.column] != self.val, self.iterator)
 
 def any2array(something):
     if isinstance(something, numpy.ndarray):
@@ -282,3 +145,6 @@ def copyFiles(files, destDir, verbose=False):
                 if exc.errno == errno.ENOTDIR:
                     shutil.copyfile(f, dest)
                 else: raise
+
+def basename(path):
+    return os.path.basename(path)

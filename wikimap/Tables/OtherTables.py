@@ -25,33 +25,26 @@ class EmbeddingsTable(object):
     def keys(self):
         return self._db.keys()
 
-class NormalizingConverter(object):
-    def encode(self, word):
-        return word.lower().replace(u' ', u'_')
+class IndexedEmbeddingsTable(object):
+    def __init__(self, embeddingsPath, indexPath):
+        self._db = CDBStore(embeddingsPath, IntConverter(), ListConverter(FloatConverter()))
+        self._index = TitleIndex(indexPath)
 
-    def decode(self, code):
-        return code.replace(u'_', u' ')
+    def __getitem__(self, title):
+        return self._db.get(self._index[title])
 
-class EmbeddingIndex(object):
+    def __contains__(self, title):
+        return title in self._index
+
+class TitleIndex(object):
     def __init__(self, path):
-        self._trie = Trie(path, NormalizingConverter(), IntConverter())
+        self._trie = Trie(path, IntConverter())
 
     def create(self, data):
         self._trie.create(data)
 
-    def get(self, key):
-        return self._trie[key]
+    def __getitem__(self, title):
+        return self._trie[title]
 
-    def has(self, key):
-        return key in self._trie
-
-class IndexedEmbeddingsTable(object):
-    def __init__(self, embeddingsPath, indexPath):
-        self._db = CDBStore(embeddingsPath, IntConverter(), ListConverter(FloatConverter()))
-        self._index = EmbeddingIndex(indexPath)
-
-    def get(self, key):
-        return self._db.get(self._index.get(key))
-
-    def has(self, key):
-        return self._index.has(key)
+    def __contains__(self, title):
+        return title in self._trie
