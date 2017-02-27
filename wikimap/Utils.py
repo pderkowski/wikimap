@@ -28,7 +28,7 @@ def formatDuration(secs):
     return "{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds)
 
 def configLogging():
-    logging.basicConfig(format='\33[2K\r%(asctime)s:%(name)s:%(lineno)s:%(levelname)s:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+    logging.basicConfig(format='\33[2K\r%(asctime)s:%(filename)s:%(lineno)d:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 def getParentDirectory(file_):
     return os.path.join(os.path.dirname(os.path.abspath(file_)), '..')

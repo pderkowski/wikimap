@@ -2,6 +2,9 @@ import os
 
 global_base = None
 
+def exists(path, base=None):
+    return os.path.exists(path(base))
+
 def resolve(paths, base=None):
     resolved = []
     for p in paths:
@@ -114,18 +117,26 @@ def title_index(base=None):
     base = base or global_base
     return set_base('title_index.idx', base=base)
 
-def embedding_report(base=None):
+def evaluation_report(base=None):
     base = base or global_base
-    return set_base('embedding_report.txt', base=base)
+    return set_base('evaluation_report.csv', base=base)
 
 def evaluation_datasets_dir(base=None):
     base = base or global_base
     return set_base('evaluation_datasets', base=base)
 
-def wordsim353_all(base=None):
+def ws_353_all(base=None):
     base = base or global_base
-    return os.path.join(evaluation_datasets_dir(base), 'EN-WS-353-ALL.txt')
+    return os.path.join(evaluation_datasets_dir(base), 'WS-353-ALL.txt')
+
+def evaluation_word_mapping(base=None):
+    base = base or global_base
+    return os.path.join(evaluation_datasets_dir(base), 'word_mapping.txt')
 
 def evaluation_datasets(base=None):
     base = base or global_base
-    return [wordsim353_all(base)]
+    return [ws_353_all(base)]
+
+def evaluation_files(base=None):
+    base = base or global_base
+    return evaluation_datasets(base) + [evaluation_word_mapping(base)]

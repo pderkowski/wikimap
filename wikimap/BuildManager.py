@@ -152,9 +152,9 @@ class BuildManager(object):
 
         summaryStr = '\n\n'
 
-        summaryStr += '-'*80+'\n'
-        summaryStr += '{:35} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
-        summaryStr += '-'*80+'\n'
+        summaryStr += '-'*65+'\n'
+        summaryStr += '| {:35} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
+        summaryStr += '-'*65+'\n'
 
         OKGREEN = '\033[92m'
         OKBLUE = '\033[94m'
@@ -172,8 +172,8 @@ class BuildManager(object):
             else:
                 COLOR = WARNING
 
-            summaryStr += '{:35} | {}[{}]{} | {} |'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
+            summaryStr += '| {:35} | {}[{}]{} | {} |'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
 
-        summaryStr += '-'*80+'\n'
+        summaryStr += '-'*65+'\n'
 
         logger.info(summaryStr)

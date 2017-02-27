@@ -60,14 +60,16 @@ def compute_embeddings_with_node2vec(node_count):
     Data.set_embeddings(embeddings)
 
 def create_title_index():
-    titles, ids = Data.get_titles_ids_including_redirects()
+    titles, ids = Data.get_titles_ids_including_redirects_excluding_disambiguations()
     Data.set_title_index(titles, ids)
 
 def evaluate_embeddings():
-    wordsim353 = Data.get_wordsim353_dataset()
-    wordsim353.check_vocabulary(Data.get_title_index())
-    score, matched_pairs = wordsim353.evaluate(Data.get_indexed_embeddings())
-    print score
+    indexed_embeddings = Data.get_indexed_embeddings()
+    evaluation_results = []
+    for dataset in Data.get_evaluation_datasets(word_mapping=Data.get_word_mapping()):
+        score, matched_examples, skipped_examples = dataset.evaluate(indexed_embeddings)
+        evaluation_results.append((dataset.name, score, matched_examples, skipped_examples))
+    Data.set_evaluation_results(evaluation_results)
 
 def compute_tsne(point_count):
     ids, embeddings = Data.get_ids_embeddings_of_highest_ranked_points(point_count)

@@ -23,7 +23,7 @@ class Build(object):
             url=page_properties_url))
         jobs.append(Job('DOWNLOAD REDIRECTS TABLE', Interface.download_redirects_dump, inputs=[], outputs=[redirects_dump],
             url=redirects_url))
-        jobs.append(Job('DOWNLOAD EVALUATION DATASETS', Interface.download_evaluation_datasets, inputs=[], outputs=[evaluation_datasets],
+        jobs.append(Job('DOWNLOAD EVALUATION DATASETS', Interface.download_evaluation_datasets, inputs=[], outputs=[evaluation_files],
             url=evaluation_datasets_url))
         jobs.append(Job('IMPORT PAGE TABLE', Interface.import_pages, inputs=[pages_dump], outputs=[pages]))
         jobs.append(Job('IMPORT LINKS TABLE', Interface.import_links, inputs=[links_dump], outputs=[links]))
@@ -35,7 +35,7 @@ class Build(object):
         jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.compute_embeddings_with_node2vec, inputs=[link_edges, pagerank], outputs=[embeddings],
             node_count=1000000))
         jobs.append(Job('CREATE TITLE INDEX', Interface.create_title_index, inputs=[link_edges, pages, category_links, pagerank, redirects, embeddings], outputs=[title_index]))
-        jobs.append(Job('EVALUATE EMBEDDINGS', Interface.evaluate_embeddings, inputs=[evaluation_datasets, embeddings, title_index], outputs=[embedding_report]))
+        jobs.append(Job('EVALUATE EMBEDDINGS', Interface.evaluate_embeddings, inputs=[evaluation_files, embeddings, title_index], outputs=[evaluation_report]))
         jobs.append(Job('COMPUTE TSNE', Interface.compute_tsne, inputs=[embeddings, pagerank], outputs=[tsne],
             point_count=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.compute_high_dimensional_neighbors, inputs=[embeddings, tsne, pages], outputs=[high_dimensional_neighbors],

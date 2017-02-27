@@ -126,6 +126,19 @@ class TupleIt(object):
     def __iter__(self):
         return imap(tuple, self.iterator)
 
+class InIt(object):
+    def __init__(self, container, column):
+        self.container = container
+        self.column = column
+        self.iterator = None
+
+    def __call__(self, iterator):
+        self.iterator = iterator
+        return self
+
+    def __iter__(self):
+        return ifilter(lambda record: record[self.column] in self.container, self.iterator)
+
 class NotInIt(object):
     def __init__(self, container, column):
         self.container = container

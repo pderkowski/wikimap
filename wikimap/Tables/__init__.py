@@ -3,6 +3,6 @@ from SQLTables import PageTable, LinksTable, CategoryLinksTable, PagePropertiesT
     TSNETable, Join, RedirectsTable
 from ..common.SQLTables import WikimapPointsTable, WikimapCategoriesTable
 from EdgeArray import EdgeArray as EdgeTable
-from EvaluationDataset import EvaluationDataset
+from EvaluationDataset import EvaluationDataset, WordMapping, EvaluationReport
 from OtherTables import EmbeddingsTable, AggregatedLinksTable, IndexedEmbeddingsTable, TitleIndex
 import TableImporter as Import

@@ -5,7 +5,7 @@ import Paths
 import DataHelpers as Helpers
 from common.Zoom import ZoomIndex
 from common.Terms import TermIndex
-from DataHelpers import pipe, ColumnIt, LogIt, NotEqualIt, GroupIt, NotInIt, FlipIt
+from DataHelpers import pipe, ColumnIt, LogIt, NotEqualIt, GroupIt, NotInIt, FlipIt, InIt
 from itertools import imap, izip, repeat
 
 def download_pages_dump(url):
@@ -61,6 +61,10 @@ def get_ids_of_embeddings():
     embeddings_table = Tables.EmbeddingsTable(Paths.embeddings())
     return embeddings_table.keys()
 
+def get_ids_of_disambiguations():
+    joined_table = Tables.Join(Paths.pages(), Paths.category_links())
+    return ColumnIt(0)(joined_table.selectDisambiguationPages())
+
 def get_redirects():
     joined_table = Tables.Join(Paths.redirects(), Paths.pages())
     return joined_table.selectRedirectEdges()
@@ -72,16 +76,21 @@ def get_link_edges_between_highest_ranked_nodes(node_count):
     edges_table.filterByNodes(ids)
     return LogIt(1000000, start="Reading edges...")(edges_table)
 
-def get_titles_ids_including_redirects():
-    ids_of_articles = get_ids_of_embeddings()
+def get_id_2_redirected_id():
+    ids_of_articles = get_ids_of_articles()
     redirects = get_redirects()
-    id2id = dict((i, i) for i in ids_of_articles)
+    id_2_id = dict((i, i) for i in ids_of_articles)
     for (i, redirect) in redirects:
-        id2id[i] = redirect
-    ids, titles = get_ids_titles()
-    ids_of_embeddings = set(get_ids_of_embeddings())
-    title2id = dict((t, id2id[i]) for (t, i) in izip(titles, ids) if i in ids_of_embeddings)
-    return ColumnIt(0)(title2id.iteritems()), ColumnIt(1)(title2id.iteritems())
+        id_2_id[i] = redirect
+    return id_2_id
+
+def get_titles_ids_including_redirects_excluding_disambiguations():
+    id_2_redirected_id = get_id_2_redirected_id()
+    title_2_id = dict((t, id_2_redirected_id[i]) for (i, t) in pipe(\
+        izip(*get_ids_titles()),\
+        InIt(set(get_ids_of_embeddings()), 0),\
+        NotInIt(set(get_ids_of_disambiguations()), 0)))
+    return ColumnIt(0)(title_2_id.iteritems()), ColumnIt(1)(title_2_id.iteritems())
 
 def get_ids_titles():
     pages_table = Tables.PageTable(Paths.pages())
@@ -148,14 +157,20 @@ def get_terms():
     categories_table = Tables.WikimapCategoriesTable(Paths.wikimap_categories())
     return ColumnIt(0)(wikipoints_table.selectTitles()), ColumnIt(0)(categories_table.selectTitles())
 
-def get_wordsim353_dataset():
-    return Tables.EvaluationDataset(Paths.wordsim353_all())
+def get_evaluation_datasets(word_mapping):
+    return [Tables.EvaluationDataset('WS-353-ALL', Paths.ws_353_all(), word_mapping)]
 
 def get_title_index():
     return Tables.TitleIndex(Paths.title_index())
 
 def get_indexed_embeddings():
     return Tables.IndexedEmbeddingsTable(Paths.embeddings(), Paths.title_index())
+
+def get_word_mapping():
+    if Paths.exists(Paths.evaluation_word_mapping):
+        return Tables.WordMapping(Paths.evaluation_word_mapping())
+    else:
+        return dict()
 
 def set_pages(pages):
     pages_table = Tables.PageTable(Paths.pages())
@@ -245,3 +260,7 @@ def set_term_index(wikipoint_titles, category_titles):
     term_index = TermIndex(Paths.term_index())
     term_index.add(izip(wikipoint_titles, repeat(False)))
     term_index.add(izip(category_titles, repeat(True)))
+
+def set_evaluation_results(results):
+    evaluation_report = Tables.EvaluationReport(Paths.evaluation_report())
+    evaluation_report.create(results)
