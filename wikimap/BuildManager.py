@@ -152,9 +152,9 @@ class BuildManager(object):
 
         summaryStr = '\n\n'
 
-        summaryStr += '-'*65+'\n'
-        summaryStr += '| {:35} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
-        summaryStr += '-'*65+'\n'
+        summaryStr += '-'*70+'\n'
+        summaryStr += '|  # | {:35} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
+        summaryStr += '-'*70+'\n'
 
         OKGREEN = '\033[92m'
         OKBLUE = '\033[94m'
@@ -162,7 +162,7 @@ class BuildManager(object):
         ENDCOLOR = '\033[0m'
         WARNING = '\033[93m'
 
-        for outcome, title, duration in summary:
+        for i, (outcome, title, duration) in enumerate(summary):
             if outcome == 'SUCCESS':
                 COLOR = OKGREEN
             elif outcome == 'FAILURE':
@@ -172,8 +172,8 @@ class BuildManager(object):
             else:
                 COLOR = WARNING
 
-            summaryStr += '| {:35} | {}[{}]{} | {} |'.format(title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
+            summaryStr += '| {:2} | {:35} | {}[{}]{} | {} |'.format(i, title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
 
-        summaryStr += '-'*65+'\n'
+        summaryStr += '-'*70+'\n'
 
         logger.info(summaryStr)

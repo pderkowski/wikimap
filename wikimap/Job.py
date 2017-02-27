@@ -1,6 +1,7 @@
 import time
 import os
 import Paths
+import logging
 
 class CompletionGuard(object):
     def __init__(self, files):
@@ -18,6 +19,26 @@ class CompletionGuard(object):
 
     def complete(self):
         self._completed = True
+
+class DependencyChecker(object):
+    def __init__(self, job_name, dependencies):
+        self._job_name = job_name
+        self._dependencies = dependencies
+
+    def __enter__(self):
+        Paths.expected_paths.set(self._dependencies)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        Paths.expected_paths.clear()
+
+    def check(self):
+        logger = logging.getLogger(__name__)
+        unexpected, missing = Paths.expected_paths.report()
+        for path in unexpected:
+            logger.warning("Unspecified dependency for job '{}': {}".format(self._job_name, path))
+        for path in missing:
+            logger.warning("Unnecessary dependency for job '{}': {}".format(self._job_name, path))
 
 class Job(object):
     SUCCESS = 'SUCCESS'
@@ -41,10 +62,12 @@ class Job(object):
     def run(self):
         t0 = time.time()
         try:
-            with CompletionGuard(self.outputs()) as guard:
-                self._task(**self.config)
-                self.outcome = Job.SUCCESS
-                guard.complete()
+            with DependencyChecker(self.name, self.inputs() + self.outputs()) as dependencies:
+                with CompletionGuard(self.outputs()) as guard:
+                    self._task(**self.config)
+                    self.outcome = Job.SUCCESS
+                    guard.complete()
+                dependencies.check()
         except KeyboardInterrupt:
             self.outcome = Job.INTERRUPT
             raise

@@ -2,6 +2,30 @@ import os
 
 global_base = None
 
+class ExpectedPaths(object):
+    def __init__(self):
+        self._expected = None
+        self._got = None
+
+    def set(self, paths):
+        self._expected = set(paths)
+        self._got = set()
+
+    def clear(self):
+        self._expected = None
+        self._got = None
+
+    def report(self):
+        unexpected = self._got - self._expected
+        missing = self._expected - self._got
+        return (unexpected, missing)
+
+    def check(self, path):
+        if self._expected is not None:
+            self._got.add(path)
+
+expected_paths = ExpectedPaths()
+
 def exists(path, base=None):
     return os.path.exists(path(base))
 
@@ -16,127 +40,67 @@ def resolve(paths, base=None):
 
     return resolved
 
-def set_base(path, base):
-    if base:
-        path = os.path.join(base, path)
-    return path
+class Path(object):
+    def __init__(self, path_string, parent=None):
+        self._path_string = path_string
+        self._parent = parent
 
-def pages_dump(base=None):
-    base = base or global_base
-    return set_base('page.sql.gz', base=base)
+    def __call__(self, base=None):
+        base = base or global_base
+        if self._parent:
+            based_parent = self._parent._set_base(base)
+            based = os.path.join(based_parent, self._path_string)
+        else:
+            based = self._set_base(base)
+        expected_paths.check(based)
+        return based
 
-def links_dump(base=None):
-    base = base or global_base
-    return set_base('pagelinks.sql.gz', base=base)
+    def _set_base(self, base):
+        if base:
+            path = os.path.join(base, self._path_string)
+        return path
 
-def category_links_dump(base=None):
-    base = base or global_base
-    return set_base('categorylinks.sql.gz', base=base)
+class PathGroup(object):
+    def __init__(self, paths):
+        self._paths = paths
 
-def page_properties_dump(base=None):
-    base = base or global_base
-    return set_base('page_props.sql.gz', base=base)
+    def __call__(self, base=None):
+        base = base or global_base
+        paths = []
+        for p in self._paths:
+            if isinstance(p, PathGroup):
+                paths.extend(p(base))
+            else:
+                paths.append(p(base))
+        return paths
 
-def redirects_dump(base=None):
-    base = base or global_base
-    return set_base('redirect.sql.gz', base=base)
-
-def pages(base=None):
-    base = base or global_base
-    return set_base('pages.db', base=base)
-
-def links(base=None):
-    base = base or global_base
-    return set_base('links.db', base=base)
-
-def category_links(base=None):
-    base = base or global_base
-    return set_base('category_links.db', base=base)
-
-def page_properties(base=None):
-    base = base or global_base
-    return set_base('page_properties.db', base=base)
-
-def redirects(base=None):
-    base = base or global_base
-    return set_base('redirects.db', base=base)
-
-def pagerank(base=None):
-    base = base or global_base
-    return set_base('pagerank.db', base=base)
-
-def tsne(base=None):
-    base = base or global_base
-    return set_base('tsne.db', base=base)
-
-def high_dimensional_neighbors(base=None):
-    base = base or global_base
-    return set_base('hdnn.db', base=base)
-
-def low_dimensional_neighbors(base=None):
-    base = base or global_base
-    return set_base('ldnn.db', base=base)
-
-def wikimap_points(base=None):
-    base = base or global_base
-    return set_base('wikimap_points.db', base=base)
-
-def wikimap_categories(base=None):
-    base = base or global_base
-    return set_base('wikimap_categories.db', base=base)
-
-def metadata(base=None):
-    base = base or global_base
-    return set_base('metadata.db', base=base)
-
-def zoom_index(base=None):
-    base = base or global_base
-    return set_base('zoom_index.idx', base=base)
-
-def term_index(base=None):
-    base = base or global_base
-    return set_base('term_index.idx', base=base)
-
-def link_edges(base=None):
-    base = base or global_base
-    return set_base('link_edges.bin', base=base)
-
-def embeddings(base=None):
-    base = base or global_base
-    return set_base('embeddings.cdb', base=base)
-
-def aggregated_inlinks(base=None):
-    base = base or global_base
-    return set_base('aggregated_inlinks.cdb', base=base)
-
-def aggregated_outlinks(base=None):
-    base = base or global_base
-    return set_base('aggregated_outlinks.cdb', base=base)
-
-def title_index(base=None):
-    base = base or global_base
-    return set_base('title_index.idx', base=base)
-
-def evaluation_report(base=None):
-    base = base or global_base
-    return set_base('evaluation_report.csv', base=base)
-
-def evaluation_datasets_dir(base=None):
-    base = base or global_base
-    return set_base('evaluation_datasets', base=base)
-
-def ws_353_all(base=None):
-    base = base or global_base
-    return os.path.join(evaluation_datasets_dir(base), 'WS-353-ALL.txt')
-
-def evaluation_word_mapping(base=None):
-    base = base or global_base
-    return os.path.join(evaluation_datasets_dir(base), 'word_mapping.txt')
-
-def evaluation_datasets(base=None):
-    base = base or global_base
-    return [ws_353_all(base)]
-
-def evaluation_files(base=None):
-    base = base or global_base
-    return evaluation_datasets(base) + [evaluation_word_mapping(base)]
+pages_dump = Path('page.sql.gz')
+links_dump = Path('pagelinks.sql.gz')
+category_links_dump = Path('categorylinks.sql.gz')
+page_properties_dump = Path('page_props.sql.gz')
+redirects_dump = Path('redirect.sql.gz')
+pages = Path('pages.db')
+links = Path('links.db')
+category_links = Path('category_links.db')
+page_properties = Path('page_properties.db')
+redirects = Path('redirects.db')
+pagerank = Path('pagerank.db')
+tsne = Path('tsne.db')
+high_dimensional_neighbors = Path('hdnn.db')
+low_dimensional_neighbors = Path('ldnn.db')
+wikimap_points = Path('wikimap_points.db')
+wikimap_categories = Path('wikimap_categories.db')
+metadata = Path('metadata.db')
+zoom_index = Path('zoom_index.idx')
+term_index = Path('term_index.idx')
+link_edges = Path('link_edges.bin')
+embeddings = Path('embeddings.cdb')
+aggregated_inlinks = Path('aggregated_inlinks.cdb')
+aggregated_outlinks = Path('aggregated_outlinks.cdb')
+title_index = Path('title_index.idx')
+evaluation_report = Path('evaluation_report.csv')
+evaluation_datasets_dir = Path('evaluation_datasets')
+ws_353_all = Path('WS-353-ALL.txt', parent=evaluation_datasets_dir)
+evaluation_word_mapping = Path('word_mapping.txt', parent=evaluation_datasets_dir)
+evaluation_datasets = PathGroup([ws_353_all])
+evaluation_files = PathGroup([evaluation_datasets, evaluation_word_mapping])
