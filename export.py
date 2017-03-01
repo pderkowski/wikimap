@@ -52,7 +52,7 @@ def main():
         sys.exit(1)
 
     manager = BuildManager(os.environ["BUILDPATH"])
-    Paths.base = manager.lastBuild
+    Paths.global_base = manager.lastBuild
 
     export(Paths.resolve(filesets[args.fileset]), os.environ["EXPORTPATH"])
 
