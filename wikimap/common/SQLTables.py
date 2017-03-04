@@ -11,6 +11,7 @@ class WikimapPointsTable(TableProxy):
                 wp_title                TEXT        NOT NULL,
                 wp_x                    REAL        NOT NULL,
                 wp_y                    REAL        NOT NULL,
+                wp_rank                 REAL        NOT NULL,
                 wp_index                TEXT        NOT NULL    DEFAULT '',
                 wp_high_dim_neighs      LIST        NOT NULL,
                 wp_high_dim_dists       LIST        NOT NULL,
@@ -25,11 +26,12 @@ class WikimapPointsTable(TableProxy):
                 wp_title,
                 wp_x,
                 wp_y,
+                wp_rank,
                 wp_high_dim_neighs,
                 wp_high_dim_dists,
                 wp_low_dim_neighs,
                 wp_low_dim_dists)
-            VALUES (?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?)
         """, "populating wikipoints table", logStart=True), values)
 
         self.execute(Query(u"CREATE UNIQUE INDEX title_idx ON wikipoints(wp_title);", "creating index title_idx in wikipoints table", logStart=True, logProgress=True))

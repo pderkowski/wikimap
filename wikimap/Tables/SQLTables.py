@@ -220,6 +220,7 @@ class Join(TableProxy):
                 page_title,
                 tsne_x,
                 tsne_y,
+                pr_rank,
                 hdnn_neighbors_ids,
                 hdnn_neighbors_dists,
                 ldnn_neighbors_ids,
