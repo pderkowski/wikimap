@@ -4,9 +4,8 @@ import Utils
 import Paths
 import DataHelpers as Helpers
 from common.Zoom import ZoomIndex
-from common.Terms import TermIndex
 from DataHelpers import pipe, ColumnIt, LogIt, NotEqualIt, GroupIt, NotInIt, FlipIt, InIt
-from itertools import imap, izip, repeat
+from itertools import imap, izip
 
 def download_pages_dump(url):
     Utils.download(url, Paths.pages_dump())
@@ -152,11 +151,6 @@ def get_coords_ids_of_points():
     data = list(joined_table.select_id_x_y_byRank())
     return ColumnIt(1, 2)(data), ColumnIt(0)(data)
 
-def get_terms():
-    wikipoints_table = Tables.WikimapPointsTable(Paths.wikimap_points())
-    categories_table = Tables.WikimapCategoriesTable(Paths.wikimap_categories())
-    return ColumnIt(0)(wikipoints_table.selectTitles()), ColumnIt(0)(categories_table.selectTitles())
-
 def get_evaluation_datasets(word_mapping):
     datasets = [Tables.EvaluationDataset('WS-353-ALL', Paths.ws_353_all(), word_mapping),
         Tables.EvaluationDataset('WS-353-REL', Paths.ws_353_rel(), word_mapping),
@@ -262,11 +256,6 @@ def set_zoom_index(indexer):
     metadata_table = shelve.open(Paths.metadata())
     metadata_table['bounds'] = indexer.getBounds()
     metadata_table.close()
-
-def set_term_index(wikipoint_titles, category_titles):
-    term_index = TermIndex(Paths.term_index())
-    term_index.add(izip(wikipoint_titles, repeat(False)))
-    term_index.add(izip(category_titles, repeat(True)))
 
 def set_evaluation_results(results):
     evaluation_report = Tables.EvaluationReport(Paths.evaluation_report())

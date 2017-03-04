@@ -11,7 +11,7 @@ import sys
 import tarfile
 
 filesets = {
-    'ui'    : [wikimap_points, wikimap_categories, zoom_index, metadata, term_index, aggregated_inlinks, aggregated_outlinks]
+    'ui'    : [wikimap_points, wikimap_categories, zoom_index, metadata, aggregated_inlinks, aggregated_outlinks]
 }
 
 def pack(files, destDir):

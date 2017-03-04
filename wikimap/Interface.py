@@ -109,7 +109,3 @@ def create_zoom_index(bucket_size):
     coords, ids = Data.get_coords_ids_of_points()
     indexer = ZoomIndexer.Indexer(coords, ids, bucket_size)
     Data.set_zoom_index(indexer)
-
-def create_term_index():
-    point_titles, category_titles = Data.get_terms()
-    Data.set_term_index(point_titles, category_titles)

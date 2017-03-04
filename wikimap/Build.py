@@ -49,7 +49,6 @@ class Build(object):
             depth=1))
         jobs.append(Job('CREATE ZOOM INDEX', Interface.create_zoom_index, inputs=[wikimap_points, pagerank], outputs=[zoom_index, wikimap_points, metadata],
             bucket_size=100))
-        jobs.append(Job('CREATE TERM INDEX', Interface.create_term_index, inputs=[wikimap_points, wikimap_categories], outputs=[term_index]))
 
         self.jobs = jobs
 
