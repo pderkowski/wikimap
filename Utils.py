@@ -1,6 +1,7 @@
 import time
 import sys
 import pickle
+import struct
 
 class DumbProgressBar(object):
     def __init__(self):
@@ -24,3 +25,42 @@ def list2bytes(lst):
 
 def bytes2list(bytes_):
     return pickle.loads(bytes_)
+
+class TrivialConverter(object):
+    def encode(self, value):
+        return str(value)
+
+    def decode(self, value):
+        return value
+
+class IntConverter(object):
+    def __init__(self):
+        self.size = 4
+
+    def encode(self, value):
+        return struct.pack("<i", value)
+
+    def decode(self, string):
+        return struct.unpack("<i", string)[0]
+
+class FloatConverter(object):
+    def __init__(self):
+        self.size = 8
+
+    def encode(self, value):
+        return struct.pack("<d", value)
+
+    def decode(self, string):
+        return struct.unpack("<d", string)[0]
+
+class ListConverter(object):
+    def __init__(self, converter):
+        self._converter = converter
+
+    def encode(self, lst):
+        bytes_ = ''.join(map(self._converter.encode, lst))
+        return str(bytes_)
+
+    def decode(self, string):
+        codes = [string[i:i+self._converter.size] for i in range(0, len(string), self._converter.size)]
+        return map(self._converter.decode, codes)
