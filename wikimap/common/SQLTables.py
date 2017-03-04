@@ -63,6 +63,9 @@ class WikimapPointsTable(TableProxy):
     def selectTitles(self):
         return self.select(Query(u"SELECT wp_title FROM wikipoints"))
 
+    def selectTitlesAndRanks(self):
+        return self.select(Query(u"SELECT wp_title, wp_rank FROM wikipoints"))
+
 class WikimapCategoriesTable(TableProxy):
     def __init__(self, tablePath):
         super(WikimapCategoriesTable, self).__init__(tablePath, useCustomTypes=True)
