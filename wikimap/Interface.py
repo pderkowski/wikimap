@@ -63,10 +63,12 @@ def create_title_index():
     titles, ids = Data.get_titles_ids_including_redirects_excluding_disambiguations()
     Data.set_title_index(titles, ids)
 
-def evaluate_embeddings():
+def evaluate_embeddings(use_word_mapping):
     indexed_embeddings = Data.get_indexed_embeddings()
     evaluation_results = []
-    for dataset in Data.get_evaluation_datasets(word_mapping=Data.get_word_mapping()):
+    word_mapping = Data.get_word_mapping() if use_word_mapping else {}
+    for dataset in Data.get_evaluation_datasets(word_mapping=word_mapping):
+        # dataset.check_vocabulary(indexed_embeddings, verbose=True)
         score, matched_examples, skipped_examples = dataset.evaluate(indexed_embeddings)
         evaluation_results.append((dataset.name, score, matched_examples, skipped_examples))
     Data.set_evaluation_results(evaluation_results)
@@ -87,7 +89,7 @@ def compute_low_dimensional_neighbors(neighbors_count):
     Data.set_low_dimensional_neighbors(ids, titles, indices, distances)
 
 def create_aggregated_links():
-    ids = Data.get_ids_of_tsne_points()
+    ids = list(Data.get_ids_of_tsne_points())
     outlinks = Data.get_outlinks_of_points(ids)
     inlinks = Data.get_inlinks_of_points(ids)
     Data.set_outlinks(outlinks)

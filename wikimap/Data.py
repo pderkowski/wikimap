@@ -158,7 +158,14 @@ def get_terms():
     return ColumnIt(0)(wikipoints_table.selectTitles()), ColumnIt(0)(categories_table.selectTitles())
 
 def get_evaluation_datasets(word_mapping):
-    return [Tables.EvaluationDataset('WS-353-ALL', Paths.ws_353_all(), word_mapping)]
+    datasets = [Tables.EvaluationDataset('WS-353-ALL', Paths.ws_353_all(), word_mapping),
+        Tables.EvaluationDataset('WS-353-REL', Paths.ws_353_rel(), word_mapping),
+        Tables.EvaluationDataset('WS-353-SIM', Paths.ws_353_sim(), word_mapping),
+        Tables.EvaluationDataset('MC-30', Paths.mc_30(), word_mapping),
+        Tables.EvaluationDataset('RG-65', Paths.rg_65(), word_mapping),
+        Tables.EvaluationDataset('Mturk-287', Paths.mturk_287(), word_mapping),
+        Tables.EvaluationDataset('SIMLEX-999', Paths.simlex_999(), word_mapping)]
+    return datasets
 
 def get_title_index():
     return Tables.TitleIndex(Paths.title_index())

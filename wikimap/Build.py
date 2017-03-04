@@ -35,7 +35,8 @@ class Build(object):
         jobs.append(Job('COMPUTE EMBEDDINGS WITH NODE2VEC', Interface.compute_embeddings_with_node2vec, inputs=[link_edges, pagerank], outputs=[embeddings],
             node_count=1000000))
         jobs.append(Job('CREATE TITLE INDEX', Interface.create_title_index, inputs=[link_edges, pages, category_links, pagerank, redirects, embeddings], outputs=[title_index]))
-        jobs.append(Job('EVALUATE EMBEDDINGS', Interface.evaluate_embeddings, inputs=[evaluation_files, embeddings, title_index], outputs=[evaluation_report]))
+        jobs.append(Job('EVALUATE EMBEDDINGS', Interface.evaluate_embeddings, inputs=[evaluation_files, embeddings, title_index], outputs=[evaluation_report],
+            use_word_mapping=False))
         jobs.append(Job('COMPUTE TSNE', Interface.compute_tsne, inputs=[embeddings, pagerank], outputs=[tsne],
             point_count=100000))
         jobs.append(Job('COMPUTE HIGH DIMENSIONAL NEIGHBORS', Interface.compute_high_dimensional_neighbors, inputs=[embeddings, tsne, pages], outputs=[high_dimensional_neighbors],

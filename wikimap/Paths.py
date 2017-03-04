@@ -56,9 +56,8 @@ class Path(object):
         return based
 
     def _set_base(self, base):
-        if base:
-            path = os.path.join(base, self._path_string)
-        return path
+        base = base or ''
+        return os.path.join(base, self._path_string)
 
 class PathGroup(object):
     def __init__(self, paths):
@@ -101,6 +100,12 @@ title_index = Path('title_index.idx')
 evaluation_report = Path('evaluation_report.csv')
 evaluation_datasets_dir = Path('evaluation_datasets')
 ws_353_all = Path('WS-353-ALL.txt', parent=evaluation_datasets_dir)
+ws_353_rel = Path('WS-353-REL.txt', parent=evaluation_datasets_dir)
+ws_353_sim = Path('WS-353-SIM.txt', parent=evaluation_datasets_dir)
+mc_30 = Path('MC-30.txt', parent=evaluation_datasets_dir)
+rg_65 = Path('RG-65.txt', parent=evaluation_datasets_dir)
+mturk_287 = Path('MTurk-287.txt', parent=evaluation_datasets_dir)
+simlex_999 = Path('SIMLEX-999.txt', parent=evaluation_datasets_dir)
 evaluation_word_mapping = Path('word_mapping.txt', parent=evaluation_datasets_dir)
-evaluation_datasets = PathGroup([ws_353_all])
+evaluation_datasets = PathGroup([ws_353_all, ws_353_rel, ws_353_sim, mc_30, rg_65, mturk_287, simlex_999])
 evaluation_files = PathGroup([evaluation_datasets, evaluation_word_mapping])

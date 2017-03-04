@@ -50,6 +50,8 @@ class EvaluationDataset(object):
     def check_vocabulary(self, known_words, verbose=False):
         logger = logging.getLogger(__name__)
 
+        logger.info('Checking vocabulary of {}'.format(self.name))
+
         if verbose:
             logger.info('Word mapping has {} words.'.format(len(self._word_mapping)))
             for w1, w2 in self._word_mapping.iteritems():
