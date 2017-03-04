@@ -46,7 +46,7 @@ class Build(object):
         jobs.append(Job('CREATE AGGREGATED LINKS TABLES', Interface.create_aggregated_links, inputs=[link_edges, tsne], outputs=[aggregated_inlinks, aggregated_outlinks]))
         jobs.append(Job('CREATE WIKIMAP DATAPOINTS TABLE', Interface.create_wikimap_points, inputs=[tsne, pages, high_dimensional_neighbors, low_dimensional_neighbors, pagerank], outputs=[wikimap_points]))
         jobs.append(Job('CREATE WIKIMAP CATEGORIES TABLE', Interface.create_wikimap_categories, inputs=[category_links, pages, tsne], outputs=[wikimap_categories],
-            depth=1))
+            depth=0))
         jobs.append(Job('CREATE ZOOM INDEX', Interface.create_zoom_index, inputs=[wikimap_points, pagerank], outputs=[zoom_index, wikimap_points, metadata],
             bucket_size=100))
 

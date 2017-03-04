@@ -246,7 +246,7 @@ def set_wikimap_points(points):
 def set_wikimap_categories(categories):
     category_table = Tables.WikimapCategoriesTable(Paths.wikimap_categories())
     category_table.create()
-    category_table.populate(pipe(categories, NotEqualIt([], 1), LogIt(100000)))
+    category_table.populate(pipe(imap(lambda (title, ids): (title, ids, len(ids)), categories), NotEqualIt(0, 2), LogIt(100000)))
 
 def set_zoom_index(indexer):
     zoom_index = ZoomIndex(Paths.zoom_index())

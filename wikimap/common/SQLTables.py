@@ -74,11 +74,12 @@ class WikimapCategoriesTable(TableProxy):
         self.execute(Query(u"""
             CREATE TABLE wikicategories (
                 wc_title        TEXT        NOT NULL,
-                wc_page_ids     LIST        NOT NULL
+                wc_page_ids     LIST        NOT NULL,
+                wc_pages_count  INTEGER     NOT NULL
             );"""))
 
     def populate(self, values):
-        self.executemany(Query(u"INSERT INTO wikicategories VALUES (?,?)", "populating wikicategories table", logStart=True), values)
+        self.executemany(Query(u"INSERT INTO wikicategories VALUES (?,?,?)", "populating wikicategories table", logStart=True), values)
         self.execute(Query(u"CREATE UNIQUE INDEX title_idx ON wikicategories(wc_title);", "creating index title_idx in wikicategories table", logStart=True, logProgress=True))
 
     def selectByTitle(self, title):

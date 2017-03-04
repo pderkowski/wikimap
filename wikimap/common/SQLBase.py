@@ -19,7 +19,7 @@ def connect(*tables, **kwargs):
 
     con.execute("PRAGMA synchronous = OFF")
     con.execute("PRAGMA journal_mode = OFF")
-    con.execute("PRAGMA cache_size = 10000000")
+    con.execute("PRAGMA cache_size = 20000000")
 
     con.commit()
 
