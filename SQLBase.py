@@ -19,7 +19,7 @@ def connect(*tables, **kwargs):
 
     con.execute("PRAGMA synchronous = OFF")
     con.execute("PRAGMA journal_mode = OFF")
-    con.execute("PRAGMA cache_size = 10000000")
+    con.execute("PRAGMA cache_size = 20000000")
 
     con.commit()
 
@@ -63,9 +63,9 @@ class TableProxy(object):
         useCustomTypes = kwargs.pop('useCustomTypes', False)
         self._detect_types = sqlite3.PARSE_DECLTYPES if useCustomTypes else 0
 
-    def execute(self, query):
+    def execute(self, query, params=()):
         with self._setup(query) as con:
-            con.execute(query._query)
+            con.execute(query._query, params)
             con.commit()
 
     def executemany(self, query, values):
@@ -73,10 +73,10 @@ class TableProxy(object):
             con.executemany(query._query, values)
             con.commit()
 
-    def select(self, query):
+    def select(self, query, params=()):
         with self._setup(query) as con:
             cursor = con.cursor()
-            cursor.execute(query._query)
+            cursor.execute(query._query, params)
             return cursor
 
     @contextlib.contextmanager
