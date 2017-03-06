@@ -54,11 +54,12 @@ class WikimapPointsTable(TableProxy):
         return self.select(Query(u"SELECT wp_id FROM wikipoints"))
 
     def selectByTitle(self, title):
-        return self.select(Query(u"SELECT * FROM wikipoints WHERE wp_title='{}'".format(title)))
+        return self.select(Query(u"SELECT * FROM wikipoints WHERE wp_title=?"), (title,))
 
     def selectByIds(self, ids):
-        ids = '(' + ','.join(map(str, ids)) + ')'
-        return self.select(Query(u"SELECT * FROM wikipoints WHERE wp_id IN {}".format(ids)))
+        ids = list(ids)
+        placeholders = '(' + ','.join(['?']*len(ids)) + ')'
+        return self.select(Query(u"SELECT * FROM wikipoints WHERE wp_id IN " + placeholders), ids)
 
     def selectTitles(self):
         return self.select(Query(u"SELECT wp_title FROM wikipoints"))
@@ -83,7 +84,10 @@ class WikimapCategoriesTable(TableProxy):
         self.execute(Query(u"CREATE UNIQUE INDEX title_idx ON wikicategories(wc_title);", "creating index title_idx in wikicategories table", logStart=True, logProgress=True))
 
     def selectByTitle(self, title):
-        return self.select(Query(u"SELECT * FROM wikicategories WHERE wc_title='{}'".format(title)))
+        return self.select(Query(u"SELECT * FROM wikicategories WHERE wc_title=?"), (title,))
 
     def selectTitles(self):
         return self.select(Query(u"SELECT wc_title FROM wikicategories"))
+
+    def selectTitlesAndSizes(self):
+        return self.select(Query(u"SELECT wc_title, wc_pages_count FROM wikicategories"))
