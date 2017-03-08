@@ -36,23 +36,26 @@ class DependencyChecker(object):
         logger = logging.getLogger(__name__)
         unexpected, missing = Paths.expected_paths.report()
         for path in unexpected:
-            logger.warning("Unspecified dependency for job '{}': {}".format(self._job_name, path))
+            logger.warning("Unspecified dependency of '{}': on {}".format(self._job_name, path))
         for path in missing:
-            logger.warning("Unnecessary dependency for job '{}': {}".format(self._job_name, path))
+            logger.warning("Unnecessary dependency of '{}': on {}".format(self._job_name, path))
+        return len(missing) == 0 and len(unexpected) == 0
 
 class Job(object):
     SUCCESS = 'SUCCESS'
     FAILURE = 'FAILURE'
     SKIPPED = 'SKIPPED'
-    INTERRUPT = 'INTERRUPT'
+    ABORTED = 'ABORTED'
+    WARNING = 'WARNING'
 
-    def __init__(self, name, task, inputs=[], outputs=[], noskip=False, **kwargs):
+    def __init__(self, name, task, inputs=None, outputs=None, tag="", noskip=False, **kwargs):
         self._task = task
 
         self.name = name
-        self._inputs = inputs
-        self._outputs = outputs
+        self._inputs = inputs or []
+        self._outputs = outputs or []
 
+        self.tag = tag
         self.noskip = noskip
         self.config = kwargs
 
@@ -67,9 +70,11 @@ class Job(object):
                     self._task(**self.config)
                     self.outcome = Job.SUCCESS
                     guard.complete()
-                dependencies.check()
+                deps_ok = dependencies.check()
+                if not deps_ok:
+                    self.outcome = Job.WARNING
         except KeyboardInterrupt:
-            self.outcome = Job.INTERRUPT
+            self.outcome = Job.ABORTED
             raise
         except:
             self.outcome = Job.FAILURE

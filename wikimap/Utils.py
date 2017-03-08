@@ -25,7 +25,7 @@ def getProgName(fileName):
 def formatDuration(secs):
     hours, rem = divmod(secs, 3600)
     minutes, seconds = divmod(rem, 60)
-    return "{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds)
+    return "{:0>2}:{:0>2}:{:06.3f}".format(int(hours), int(minutes), seconds)
 
 def configLogging():
     logging.basicConfig(format='\33[2K\r%(asctime)s:%(filename)s:%(lineno)d:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)

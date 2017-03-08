@@ -275,7 +275,7 @@ class Join(TableProxy):
                 cl_to
             FROM
                 categorylinks,
-                page
+                page NOT INDEXED
             WHERE
                 cl_from = page_id
             AND page_namespace = 14""", "selecting links for wikicategories")

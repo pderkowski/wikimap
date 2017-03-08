@@ -3,6 +3,7 @@ import Utils
 import logging
 import sys
 import errno
+from prettytable import PrettyTable
 
 def getImmediateSubdirectories(directory):
     return [name for name in os.listdir(directory) if os.path.isdir(os.path.join(directory, name))]
@@ -44,13 +45,13 @@ class BuildManager(object):
                     config[job.name] = job.config
                 except KeyboardInterrupt:
                     summary.append((job.outcome, job.name, job.duration))
-                    self._printSummary(summary)
+                    self._print_summary(summary)
                     Utils.saveToFile(self._newConfig, config)
                     sys.exit(1)
                 except Exception, e:
                     logger.exception(str(e))
                     summary.append((job.outcome, job.name, job.duration))
-                    self._printSummary(summary)
+                    self._print_summary(summary)
                     Utils.saveToFile(self._newConfig, config)
                     sys.exit(1)
             else:
@@ -62,7 +63,7 @@ class BuildManager(object):
 
                 self._makeLinks(job)
 
-        self._printSummary(summary)
+        self._print_summary(summary)
         Utils.saveToFile(self._newConfig, config)
 
     def _outputsComputed(self, job):
@@ -147,20 +148,20 @@ class BuildManager(object):
         else:
             return last + 1
 
-    def _printSummary(self, summary):
+    def _print_summary(self, summary):
         logger = logging.getLogger(__name__)
-
-        summaryStr = '\n\n'
-
-        summaryStr += '-'*70+'\n'
-        summaryStr += '|  # | {:35} |  OUTCOME  |  DURATION   |'.format('JOB SUMMARY')+'\n'
-        summaryStr += '-'*70+'\n'
 
         OKGREEN = '\033[92m'
         OKBLUE = '\033[94m'
         FAILRED = '\033[91m'
         ENDCOLOR = '\033[0m'
         WARNING = '\033[93m'
+
+        table = PrettyTable(('#', 'JOB NAME', 'OUTCOME', 'DURATION'))
+        table.align['#'] = 'r'
+        table.align['JOB NAME'] = 'l'
+        table.align['OUTCOME'] = 'c'
+        table.align['DURATION'] = 'c'
 
         for i, (outcome, title, duration) in enumerate(summary):
             if outcome == 'SUCCESS':
@@ -171,9 +172,6 @@ class BuildManager(object):
                 COLOR = OKBLUE
             else:
                 COLOR = WARNING
+            table.add_row((str(i), title, '{}[{}]{}'.format(COLOR, outcome, ENDCOLOR), Utils.formatDuration(duration)))
 
-            summaryStr += '| {:2} | {:35} | {}[{}]{} | {} |'.format(i, title, COLOR, outcome, ENDCOLOR, Utils.formatDuration(duration))+'\n'
-
-        summaryStr += '-'*70+'\n'
-
-        logger.info(summaryStr)
+        logger.info('\n\n'+table.get_string()+'\n')
