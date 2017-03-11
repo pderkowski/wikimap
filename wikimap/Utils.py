@@ -2,36 +2,14 @@ import logging
 import sys
 import os
 import shutil
-import errno
-import subprocess
-import ast
 import urllib
 import numpy
 import tarfile
 import tempfile
-
-def openOrExit(file_, mode='r'):
-    logger = logging.getLogger(__name__)
-
-    if mode == 'r' and not os.path.isfile(file_):
-        logger.error('File {} does not exist.'.format(file_))
-        sys.exit()
-    else:
-        return open(file_, mode)
-
-def getProgName(fileName):
-    return os.path.splitext(os.path.basename(fileName))[0]
-
-def formatDuration(secs):
-    hours, rem = divmod(secs, 3600)
-    minutes, seconds = divmod(rem, 60)
-    return "{:0>2}:{:0>2}:{:06.3f}".format(int(hours), int(minutes), seconds)
+from prettytable import PrettyTable
 
 def configLogging():
     logging.basicConfig(format='\33[2K\r%(asctime)s:%(filename)s:%(lineno)d:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
-
-def getParentDirectory(file_):
-    return os.path.join(os.path.dirname(os.path.abspath(file_)), '..')
 
 class ProgressBar(object):
     def __init__(self, name):
@@ -45,19 +23,6 @@ class ProgressBar(object):
         else:
             sys.stdout.write("\33[2K\r" + self.name + "...%d%%" % percent)
         sys.stdout.flush()
-
-def call(command):
-    logger = logging.getLogger(__name__)
-    logger.info('Running command: {}'.format(command))
-    subprocess.call(command, shell=True)
-
-def loadFromFile(path):
-    with open(path, 'r') as f:
-        return ast.literal_eval(f.read()) # literal_eval only evaluates basic types instead of arbitrary code
-
-def saveToFile(path, dict_):
-    with open(path, 'w') as f:
-        f.write(str(dict_))
 
 def download(url, output_path):
     urllib.urlretrieve(url, output_path, reporthook=ProgressBar(url).report)
@@ -89,34 +54,6 @@ def any2array(something):
     else:
         raise ValueError("Argument is not convertable to an array.")
 
-def linkDirectory(src, dst):
-    names = os.listdir(src)
-    os.makedirs(dst)
-    errors = []
-    for name in names:
-        srcname = os.path.join(src, name)
-        dstname = os.path.join(dst, name)
-        try:
-            if os.path.isdir(srcname):
-                linkDirectory(srcname, dstname)
-            else:
-                os.link(srcname, dstname)
-            # XXX What about devices, sockets etc.?
-        except OSError as why:
-            errors.append((srcname, dstname, str(why)))
-        # catch the Error from the recursive copytree so that we can
-        # continue with other files
-        except StandardError as err:
-            errors.extend(err.args[0])
-    try:
-        shutil.copystat(src, dst)
-    except OSError as why:
-        # can't copy file access times on Windows
-        if why.winerror is None:
-            errors.extend((src, dst, str(why)))
-    if errors:
-        raise StandardError(errors)
-
 def clearDirectory(directory):
     for f in os.listdir(directory):
         file_path = os.path.join(directory, f)
@@ -126,25 +63,30 @@ def clearDirectory(directory):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            print(e)
+            print e
 
-def copyFiles(files, destDir, verbose=False):
-    logger = logging.getLogger(__name__)
+def make_table(headers, alignement, rows):
+    table = PrettyTable(headers)
+    for i, h in enumerate(headers):
+        table.align[h] = alignement[i]
+    for r in rows:
+        table.add_row(r)
+    return table
 
-    for f in files:
-        if os.path.exists(f):
-            if verbose:
-                logger.info("Copying {}".format(f))
+class Counter(object):
+    def __init__(self, initial=0):
+        self._next = initial
 
-            name = os.path.basename(f)
-            dest = os.path.join(destDir, name)
+    def __call__(self):
+        current = self._next
+        self._next += 1
+        return current
 
-            try:
-                shutil.copytree(f, dest)
-            except OSError as exc: # python >2.5
-                if exc.errno == errno.ENOTDIR:
-                    shutil.copyfile(f, dest)
-                else: raise
+class Colors(object):
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
 
-def basename(path):
-    return os.path.basename(path)
+def color_text(string, color):
+    return color + string + '\033[0m'
