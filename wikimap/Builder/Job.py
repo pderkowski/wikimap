@@ -1,17 +1,22 @@
 from PathUtils import DependencyChecker, CompletionGuard, resolve
 from Utils import SimpleTimer
+from abc import ABCMeta, abstractmethod
+
+class Properties(object):
+    Forced = 1
 
 class Job(object):
+    __metaclass__ = ABCMeta
+
     SUCCESS = 'SUCCESS'
     FAILURE = 'FAILURE'
     SKIPPED = 'SKIPPED'
     ABORTED = 'ABORTED'
     WARNING = 'WARNING'
 
-    def __init__(self, name, task, number, inputs=None, outputs=None, tag="", **kwargs):
-        self.task = task
+    def __init__(self, name, tag="", inputs=None, outputs=None, **kwargs):
         self.name = name
-        self.number = number
+        self.number = -1
         self._inputs = inputs or []
         self._outputs = outputs or []
 
@@ -19,12 +24,17 @@ class Job(object):
         self.config = kwargs
         self.duration = 0
         self.outcome = 'NONE'
+        self.properties = []
+
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        pass
 
     def run(self):
         timer = SimpleTimer()
         try:
             with DependencyChecker(self.name, self.inputs() + self.outputs()), CompletionGuard(self.outputs()) as guard:
-                self.task(**self.config)
+                self(**self.config)
                 self.outcome = Job.SUCCESS
                 guard.complete()
                 if not DependencyChecker.is_ok():

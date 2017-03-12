@@ -2,20 +2,18 @@ import os
 import logging
 from Utils import make_links, format_duration
 from ..Utils import Colors, color_text, make_table
-from Job import Job
+from Job import Job, Properties
 from Explorer import build_explorer
 
 class BuildManager(object):
-    def __init__(self, build, plan):
+    def __init__(self, build):
         self._logger = logging.getLogger(__name__)
         self._build = build
-        self._included_jobs = plan[0]
-        self._forced_jobs = plan[1]
         self._changed_files = set()
         self._summary = []
-        self._previous_config = build_explorer.get_last_config()
-        self._previous_build_dir = build_explorer.get_last_build_dir()
-        self._new_config = build.get_config(self._included_jobs)
+        self._previous_config = build_explorer.get_base_config()
+        self._previous_build_dir = build_explorer.get_base_build_dir()
+        self._new_config = build.get_config()
         self._new_build_dir = build_explorer.make_new_build_dir()
 
     def run(self):
@@ -23,11 +21,10 @@ class BuildManager(object):
 
         try:
             for job in self._build:
-                if self._is_included(job):
-                    if self._should_run(job):
-                        self._run_job(job)
-                    else:
-                        self._skip_job(job)
+                if self._should_run(job):
+                    self._run_job(job)
+                else:
+                    self._skip_job(job)
         except KeyboardInterrupt:
             raise
         except Exception, e:
@@ -53,9 +50,6 @@ class BuildManager(object):
         finally:
             self._summary.append((job.number, job.outcome, job.name, job.duration))
 
-    def _is_included(self, job):
-        return self._included_jobs[job.number]
-
     def _should_run(self, job):
         return self._is_forced(job)\
             or self._inputs_changed(job)\
@@ -63,7 +57,7 @@ class BuildManager(object):
             or not self._outputs_computed(job)
 
     def _is_forced(self, job):
-        return self._forced_jobs[job.number]
+        return Properties.Forced in job.properties
 
     def _outputs_computed(self, job):
         return self._previous_build_dir and all(os.path.exists(o) for o in job.outputs(base=self._previous_build_dir))

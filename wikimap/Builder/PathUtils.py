@@ -84,7 +84,7 @@ class Path(object):
         self._parent = parent
 
     def __call__(self, base=None):
-        base = base or build_explorer.get_last_build_dir()
+        base = base or build_explorer.get_base_build_dir()
         if self._parent:
             based_parent = self._parent._set_base(base)
             based = os.path.join(based_parent, self._path_string)
@@ -102,7 +102,7 @@ class PathGroup(object):
         self._paths = paths
 
     def __call__(self, base=None):
-        base = base or build_explorer.get_last_build_dir()
+        base = base or build_explorer.get_base_build_dir()
         paths = []
         for p in self._paths:
             if isinstance(p, PathGroup):

@@ -73,15 +73,6 @@ def make_table(headers, alignement, rows):
         table.add_row(r)
     return table
 
-class Counter(object):
-    def __init__(self, initial=0):
-        self._next = initial
-
-    def __call__(self):
-        current = self._next
-        self._next += 1
-        return current
-
 class Colors(object):
     YELLOW = '\033[93m'
     RED = '\033[91m'

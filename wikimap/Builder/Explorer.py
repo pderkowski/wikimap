@@ -5,10 +5,14 @@ class BuildExplorer(object):
     def __init__(self):
         self._builds_dir = None
         self._build_prefix = None
+        self._base_build_index = None
 
     def set_builds_dir(self, builds_dir, build_prefix):
         self._builds_dir = builds_dir
         self._build_prefix = build_prefix
+
+    def set_base_build(self, build_index):
+        self._base_build_index = build_index
 
     def make_new_build_dir(self):
         new_build_dir = os.path.join(self._builds_dir, self._build_prefix + str(self._get_new_build_index()))
@@ -18,16 +22,28 @@ class BuildExplorer(object):
             os.makedirs(new_build_dir)
         return new_build_dir
 
+    def get_base_build_dir(self):
+        return self._get_build_dir(self._base_build_index or self._get_last_build_index())
+
     def get_last_build_dir(self):
-        last_index = self._get_last_build_index()
-        if last_index is not None:
-            return os.path.join(self._builds_dir, self._build_prefix + str(last_index))
+        return self._get_build_dir(self._get_last_build_index())
+
+    def _get_build_dir(self, build_index):
+        if build_index is not None:
+            return os.path.join(self._builds_dir, self._build_prefix + str(build_index))
         else:
             return None
 
-    def get_last_config(self):
-        if self.get_last_build_dir() is not None:
-            path = os.path.join(self.get_last_build_dir(), 'config')
+    def has_build_dir(self, build_index):
+        return os.path.isdir(self._get_build_dir(build_index))
+
+    def get_base_config(self):
+        return self._get_config(self._base_build_index or self._get_last_build_index())
+
+    def _get_config(self, build_index):
+        build_dir = self._get_build_dir(build_index)
+        if build_dir is not None:
+            path = os.path.join(build_dir, 'config')
             if os.path.exists(path):
                 return Utils.load_dict(path)
         return {}

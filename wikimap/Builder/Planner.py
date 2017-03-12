@@ -5,24 +5,19 @@ class BuildPlanner(object):
         self._build = build
         self._dep_graph = self._build_dependency_graph()
 
-    def get_plan(self, target_jobs, forced_jobs):
-        forced_jobs = set(forced_jobs)
-        target_jobs = set(target_jobs) | forced_jobs
-
+    def get_plan(self, target_jobs):
+        target_jobs = set(target_jobs)
         jobs_count = len(self._build)
-
         included_jobs_mask = [job_num in target_jobs for job_num in range(jobs_count)]
-        forced_jobs_mask = [job_num in forced_jobs for job_num in range(jobs_count)]
-
         for i in range(jobs_count-1, -1, -1):
             if included_jobs_mask[i]:
                 for j in self._dep_graph[i]:
                     included_jobs_mask[j] = True
 
-        return included_jobs_mask, forced_jobs_mask
+        return included_jobs_mask
 
     def _build_dependency_graph(self):
-        graph = [[]]*len(self._build)
+        graph = [[] for _ in range(len(self._build))]
         deps = self._get_dependencies()
         for (dep_of, dep_on) in deps:
             graph[dep_of].append(dep_on)
