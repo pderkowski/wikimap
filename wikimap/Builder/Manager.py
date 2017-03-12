@@ -1,13 +1,13 @@
 import os
-import logging
+import sys
 from Utils import make_links, format_duration
-from ..Utils import Colors, color_text, make_table
+from ..Utils import Colors, color_text, make_table, get_logger
 from Job import Job, Properties
 from Explorer import build_explorer
 
 class BuildManager(object):
     def __init__(self, build):
-        self._logger = logging.getLogger(__name__)
+        self._logger = get_logger(__name__)
         self._build = build
         self._changed_files = set()
         self._summary = []
@@ -29,6 +29,9 @@ class BuildManager(object):
             raise
         except Exception, e:
             self._logger.exception(str(e))
+            raise
+        except:
+            self._logger.exception("Unexpected error: {}".format(sys.exc_info()[0]))
             raise
         finally:
             self._print_summary()

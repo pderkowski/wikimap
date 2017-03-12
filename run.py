@@ -49,7 +49,7 @@ def list_jobs(build):
     print table.get_string()
 
 def main():
-    Utils.configLogging()
+    Utils.config_logging()
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--list', '-l', dest='list_jobs', action='store_true',

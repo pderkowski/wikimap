@@ -8,8 +8,21 @@ import tarfile
 import tempfile
 from prettytable import PrettyTable
 
-def configLogging():
+class SingleProcessFilter(logging.Filter):
+    master_pid = None
+
+    def filter(self, record):
+        pid = os.getpid()
+        return self.master_pid != None and pid == self.master_pid
+
+def config_logging():
     logging.basicConfig(format='\33[2K\r%(asctime)s:%(filename)s:%(lineno)d:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+    SingleProcessFilter.master_pid = os.getpid()
+
+def get_logger(name):
+    logger = logging.getLogger(name)
+    logger.addFilter(SingleProcessFilter())
+    return logger
 
 class ProgressBar(object):
     def __init__(self, name):
@@ -54,7 +67,7 @@ def any2array(something):
     else:
         raise ValueError("Argument is not convertable to an array.")
 
-def clearDirectory(directory):
+def clear_directory(directory):
     for f in os.listdir(directory):
         file_path = os.path.join(directory, f)
         try:
@@ -81,3 +94,10 @@ class Colors(object):
 
 def color_text(string, color):
     return color + string + '\033[0m'
+
+def pack(files, dest_dir, dest_name):
+    logger = logging.getLogger(__name__)
+    with tarfile.open(os.path.join(dest_dir, dest_name), "w:gz") as tar:
+        for f in files:
+            logger.info('Adding {} to archive.'.format(f))
+            tar.add(f, arcname=os.path.basename(f))
