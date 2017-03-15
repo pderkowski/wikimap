@@ -151,15 +151,18 @@ def get_coords_ids_of_points():
     data = list(joined_table.select_id_x_y_byRank())
     return ColumnIt(1, 2)(data), ColumnIt(0)(data)
 
-def get_evaluation_datasets(word_mapping):
-    datasets = [Tables.EvaluationDataset('WS-353-ALL', Paths.ws_353_all(), word_mapping),
-        Tables.EvaluationDataset('WS-353-REL', Paths.ws_353_rel(), word_mapping),
-        Tables.EvaluationDataset('WS-353-SIM', Paths.ws_353_sim(), word_mapping),
-        Tables.EvaluationDataset('MC-30', Paths.mc_30(), word_mapping),
-        Tables.EvaluationDataset('RG-65', Paths.rg_65(), word_mapping),
-        Tables.EvaluationDataset('Mturk-287', Paths.mturk_287(), word_mapping),
-        Tables.EvaluationDataset('SIMLEX-999', Paths.simlex_999(), word_mapping)]
-    return datasets
+def get_similarity_datasets():
+    return [Tables.SimilarityDataset('WS-353-ALL', Paths.ws_353_all()),
+        Tables.SimilarityDataset('WS-353-REL', Paths.ws_353_rel()),
+        Tables.SimilarityDataset('WS-353-SIM', Paths.ws_353_sim()),
+        Tables.SimilarityDataset('MC-30', Paths.mc_30()),
+        Tables.SimilarityDataset('RG-65', Paths.rg_65()),
+        Tables.SimilarityDataset('Mturk-287', Paths.mturk_287()),
+        Tables.SimilarityDataset('SIMLEX-999', Paths.simlex_999())]
+
+def get_relation_datasets():
+    return [Tables.BlessRelationDataset('BLESS-REL-RANDOM', Paths.bless_rel_random()),
+        Tables.BlessRelationDataset('BLESS-REL-MERO', Paths.bless_rel_mero())]
 
 def get_title_index():
     return Tables.TitleIndex(Paths.title_index())
@@ -168,10 +171,7 @@ def get_indexed_embeddings():
     return Tables.IndexedEmbeddingsTable(Paths.embeddings(), Paths.title_index())
 
 def get_word_mapping():
-    if Paths.exists(Paths.evaluation_word_mapping):
-        return Tables.WordMapping(Paths.evaluation_word_mapping())
-    else:
-        return dict()
+    return Tables.WordMapping(Paths.evaluation_word_mapping())
 
 def set_pages(pages):
     pages_table = Tables.PageTable(Paths.pages())

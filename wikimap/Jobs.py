@@ -6,6 +6,7 @@ import NearestNeighbors
 import ZoomIndexer
 import Graph
 import Data
+import Evaluation
 import Paths as P
 
 class DownloadPagesDump(Job):
@@ -157,9 +158,12 @@ class EvaluateEmbeddings(Job):
         indexed_embeddings = Data.get_indexed_embeddings()
         evaluation_results = []
         word_mapping = Data.get_word_mapping() if use_word_mapping else {}
-        for dataset in Data.get_evaluation_datasets(word_mapping=word_mapping):
-            score, matched_examples, skipped_examples = dataset.evaluate(indexed_embeddings)
-            evaluation_results.append((dataset.name, score, matched_examples, skipped_examples))
+        for dataset in Data.get_similarity_datasets():
+            result = Evaluation.SimilarityEvaluator(indexed_embeddings, word_mapping).evaluate(dataset)
+            evaluation_results.append(result)
+        for dataset in Data.get_relation_datasets():
+            result = Evaluation.RelationEvaluator(indexed_embeddings, word_mapping).evaluate(dataset)
+            evaluation_results.append(result)
         Data.set_evaluation_results(evaluation_results)
 
 class ComputeTSNE(Job):

@@ -101,3 +101,10 @@ def pack(files, dest_dir, dest_name):
         for f in files:
             logger.info('Adding {} to archive.'.format(f))
             tar.add(f, arcname=os.path.basename(f))
+
+class Bunch(object):
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__

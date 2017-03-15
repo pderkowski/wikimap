@@ -27,8 +27,8 @@ class Trie(object):
 
     def __getitem__(self, key):
         self._ensureLoaded()
-        prefixes = self.prefixes(key)
-        return self._valC.decode(self._trie[prefixes[-1]][0])
+        item = self._trie[key][0]
+        return self._valC.decode(item)
 
     def __contains__(self, key):
         self._ensureLoaded()
