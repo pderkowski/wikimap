@@ -45,8 +45,7 @@ def parse_job_ranges(ranges, build):
     return set(jobs_in_ranges)
 
 def list_jobs(build):
-    table = Utils.make_table(['#', 'TAG', 'JOB NAME'], ['r', 'l', 'l'], [[str(job.number), job.tag, job.name] for job in build])
-    print table.get_string()
+    print Utils.make_table(['#', 'TAG', 'JOB NAME'], [[str(job.number), job.tag, job.name] for job in build], ['r', 'l', 'l'])
 
 def main():
     Utils.config_logging()
