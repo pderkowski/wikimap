@@ -173,6 +173,9 @@ def get_indexed_embeddings():
 def get_word_mapping():
     return Tables.WordMapping(Paths.evaluation_word_mapping())
 
+def get_evaluation_results_as_table():
+    return Tables.EvaluationReport(Paths.evaluation_report()).get_pretty_table()
+
 def set_pages(pages):
     pages_table = Tables.PageTable(Paths.pages())
     pages_table.create()

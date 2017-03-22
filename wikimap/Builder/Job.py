@@ -13,6 +13,7 @@ class Job(object):
     SKIPPED = 'SKIPPED'
     ABORTED = 'ABORTED'
     WARNING = 'WARNING'
+    NOT_RUN = 'NOT RUN'
 
     def __init__(self, name, tag="", inputs=None, outputs=None, **kwargs):
         self.name = name
@@ -23,8 +24,10 @@ class Job(object):
         self.tag = tag
         self.config = kwargs
         self.duration = 0
-        self.outcome = 'NONE'
+        self.outcome = Job.NOT_RUN
         self.properties = []
+        self.logs = []
+        self.warnings = []
 
     @abstractmethod
     def __call__(self, *args, **kwargs):
@@ -39,6 +42,8 @@ class Job(object):
                 guard.complete()
                 if not DependencyChecker.is_ok():
                     self.outcome = Job.WARNING
+                    self.warnings.extend(DependencyChecker.get_warnings())
+
         except KeyboardInterrupt:
             self.outcome = Job.ABORTED
             raise

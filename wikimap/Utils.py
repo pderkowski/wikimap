@@ -78,13 +78,13 @@ def clear_directory(directory):
         except Exception as e:
             print e
 
-def make_table(headers, alignement, rows):
-    table = PrettyTable(headers)
+def make_table(headers, rows, alignement, **kwargs):
+    table = PrettyTable(headers, **kwargs)
     for i, h in enumerate(headers):
         table.align[h] = alignement[i]
     for r in rows:
         table.add_row(r)
-    return table
+    return table.get_string()
 
 class Colors(object):
     YELLOW = '\033[93m'

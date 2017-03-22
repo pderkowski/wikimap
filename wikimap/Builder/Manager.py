@@ -10,7 +10,6 @@ class BuildManager(object):
         self._logger = get_logger(__name__)
         self._build = build
         self._changed_files = set()
-        self._summary = []
         self._previous_config = build_explorer.get_base_config()
         self._previous_build_dir = build_explorer.get_base_build_dir()
         self._new_config = build.get_config()
@@ -35,23 +34,18 @@ class BuildManager(object):
             raise
         finally:
             self._print_summary()
+            self._print_logs_and_warnings()
             build_explorer.save_config(self._new_config)
 
     def _run_job(self, job):
         self._logger.info('STARTING JOB: {}'.format(job.name))
-        try:
-            self._changed_files.update(job.outputs())
-            job.run()
-        finally:
-            self._summary.append((job.number, job.outcome, job.name, job.duration))
+        self._changed_files.update(job.outputs())
+        job.run()
 
     def _skip_job(self, job):
         self._logger.info('SKIPPING JOB: {}'.format(job.name))
-        try:
-            job.skip()
-            make_links(zip(job.outputs(base=self._previous_build_dir), job.outputs()))
-        finally:
-            self._summary.append((job.number, job.outcome, job.name, job.duration))
+        job.skip()
+        make_links(zip(job.outputs(base=self._previous_build_dir), job.outputs()))
 
     def _should_run(self, job):
         return self._is_forced(job)\
@@ -79,9 +73,23 @@ class BuildManager(object):
             Job.FAILURE: Colors.RED,
             Job.SKIPPED: Colors.BLUE,
             Job.ABORTED: Colors.YELLOW,
-            Job.WARNING: Colors.YELLOW
+            Job.WARNING: Colors.YELLOW,
+            Job.NOT_RUN: Colors.RED
         }
 
-        rows = [(str(number), name, color_text('[{}]'.format(outcome), outcome_2_color[outcome]), format_duration(duration)) for (number, outcome, name, duration) in self._summary]
-        table = make_table(('#', 'JOB NAME', 'OUTCOME', 'DURATION'), ('r', 'l', 'c', 'c'), rows)
-        self._logger.info('\n\n'+table.get_string()+'\n')
+        def make_summary_row(job):
+            return (str(job.number),
+                job.name,
+                color_text('[{}]'.format(job.outcome), outcome_2_color[job.outcome]),
+                format_duration(job.duration))
+
+        rows = [make_summary_row(job) for job in self._build]
+        table = make_table(('#', 'JOB NAME', 'OUTCOME', 'DURATION'), rows, ('r', 'l', 'c', 'c'))
+        self._logger.info('\n\n'+table+'\n')
+
+    def _print_logs_and_warnings(self):
+        for job in self._build:
+            if len(job.logs) > 0:
+                self._logger.info(job.name+' LOGS:\n'+'\n'.join(job.logs)+'\n')
+            if len(job.warnings) > 0:
+                self._logger.warning(job.name+' WARNINGS:\n'+'\n'.join(job.warnings)+'\n')

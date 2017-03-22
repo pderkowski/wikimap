@@ -7,7 +7,7 @@ English = Build([
     J.DownloadCategoryLinksDump(url='https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-categorylinks.sql.gz'),
     J.DownloadPagePropertiesDump(url='https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-page_props.sql.gz'),
     J.DownloadRedirectsDump(url='https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-redirect.sql.gz'),
-    J.DownloadEvaluationDatasets(url='https://dl.dropboxusercontent.com/u/71728465/datasets.tar.gz'),
+    J.DownloadEvaluationDatasets(url='https://www.dropbox.com/s/d61802lo5n3gdra/datasets.tar.gz?dl=1'),
     J.ImportPageTable(),
     J.ImportLinksTable(),
     J.ImportPagePropertiesTable(),

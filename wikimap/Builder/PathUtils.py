@@ -3,6 +3,8 @@ import logging
 from Explorer import build_explorer
 
 class DependencyChecker(object):
+    _logger = logging.getLogger(__name__)
+
     @staticmethod
     def instance():
         return DependencyChecker._instance
@@ -17,31 +19,37 @@ class DependencyChecker(object):
             DependencyChecker._instance._requested_paths.add(path)
 
     @staticmethod
-    def is_ok(verbose=True):
-        logger = logging.getLogger(__name__)
+    def is_ok():
+        warnings = DependencyChecker.get_warnings()
+        return len(warnings) == 0
+
+    @staticmethod
+    def get_warnings():
+        warnings = []
         instance = DependencyChecker._instance
         unexpected = instance._requested_paths - instance._expected_paths
         missing = instance._expected_paths - instance._requested_paths
-        if verbose:
-            for path in unexpected:
-                logger.warning("Unspecified dependency of '{}': on {}".format(instance._job_name, path))
-            for path in missing:
-                logger.warning("Unnecessary dependency of '{}': on {}".format(instance._job_name, path))
-        return len(missing) == 0 and len(unexpected) == 0
+        for path in unexpected:
+            warnings.append("Unspecified dependency of '{}': on {}".format(instance._job_name, path))
+        for path in missing:
+            warnings.append("Unnecessary dependency of '{}': on {}".format(instance._job_name, path))
+        return warnings
 
     def __init__(self, job_name, dependencies):
         self._job_name = job_name
         self._expected_paths = set(dependencies)
         self._requested_paths = set()
+        self._logger = logging.getLogger(__name__)
 
     def __enter__(self):
-        logger = logging.getLogger(__name__)
         if DependencyChecker.is_active():
-            logger.warning('Activating a new dependency checker while another is active!')
+            DependencyChecker._logger.warning('Activating a new dependency checker while another is active!')
         DependencyChecker._instance = self
         return self
 
     def __exit__(self, _1, _2, _3):
+        for warning in DependencyChecker.get_warnings():
+            DependencyChecker._logger.warning(warning)
         DependencyChecker._instance = None
 
     _instance = None
