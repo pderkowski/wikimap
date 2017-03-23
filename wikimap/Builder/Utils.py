@@ -3,6 +3,7 @@ import os
 import errno
 import shutil
 import ast
+import pprint
 
 class SimpleTimer(object):
     def __init__(self):
@@ -67,4 +68,4 @@ def load_dict(path):
 
 def save_dict(path, dict_):
     with open(path, 'w') as f:
-        f.write(str(dict_))
+        pprint.pprint(dict_, f)
