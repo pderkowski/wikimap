@@ -1,6 +1,6 @@
 from Planner import BuildPlanner
 from itertools import izip
-from Job import Properties
+from Job import Properties, InvalidConfig
 
 class Build(object):
     def __init__(self, jobs):
@@ -23,7 +23,7 @@ class Build(object):
     def __len__(self):
         return len(self._jobs)
 
-    def configure(self, target_jobs, forced_jobs):
+    def plan(self, target_jobs, forced_jobs):
         forced_jobs = set(forced_jobs)
         target_jobs = set(target_jobs) | forced_jobs
 
@@ -33,6 +33,16 @@ class Build(object):
         planner = BuildPlanner(self)
         included_jobs_mask = planner.get_plan(target_jobs)
         self._jobs = [job for job, include in izip(self._jobs, included_jobs_mask) if include]
+
+    def configure(self, config):
+        if not isinstance(config, dict):
+            raise InvalidConfig('Expected dict, got: {}'.format(type(config)))
+        for job_name, job_config in config.iteritems():
+            try:
+                job = self._get_job_by_name(job_name)
+                job.configure(job_config)
+            except KeyError:
+                raise InvalidConfig('No job {} in build.'.format(job_name))
 
     def get_config(self):
         config = {}

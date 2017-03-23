@@ -2,6 +2,9 @@ from PathUtils import DependencyChecker, CompletionGuard, resolve
 from Utils import SimpleTimer
 from abc import ABCMeta, abstractmethod
 
+class InvalidConfig(Exception):
+    pass
+
 class Properties(object):
     Forced = 1
 
@@ -61,3 +64,12 @@ class Job(object):
 
     def outputs(self, base=None):
         return resolve(self._outputs, base=base)
+
+    def configure(self, config):
+        if not isinstance(config, dict):
+            raise InvalidConfig('Expected dict, got: {}'.format(type(config)))
+        for arg_name, arg_value in config.iteritems():
+            try:
+                self.config[arg_name] = arg_value
+            except KeyError:
+                raise InvalidConfig('Unexpected argument: {} to job: {}.'.format(arg_name, self.name))
