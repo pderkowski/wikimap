@@ -70,7 +70,7 @@ class BuildArgumentParser(object):
 def list_jobs(build):
     print Utils.make_table(['#', 'TAG', 'JOB NAME'], [[str(job.number), job.tag, job.name] for job in build], ['r', 'l', 'l'])
 
-def main():
+def main(argv):
     Utils.config_logging()
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -90,7 +90,8 @@ def main():
         help="Choose the index of a 'base' build.")
     parser.add_argument('--config', '-c', dest='config', type=argparse.FileType('r'),
         help="Specify a configuration file. Its values will overwrite default parameters of jobs.")
-    args = parser.parse_args()
+
+    args = parser.parse_args(argv)
 
     if not args.buildpath:
         sys.exit("Specify the build path, using --buildpath (-b) option or by setting the WIKIMAP_BUILDPATH environment variable.")
@@ -119,4 +120,4 @@ def main():
         Builder.run_build(build)
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
