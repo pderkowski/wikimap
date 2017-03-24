@@ -1,5 +1,5 @@
 from PathUtils import DependencyChecker, CompletionGuard, resolve
-from Utils import SimpleTimer
+from .. import Utils
 from abc import ABCMeta, abstractmethod
 
 class InvalidConfig(Exception):
@@ -37,7 +37,7 @@ class Job(object):
         pass
 
     def run(self):
-        timer = SimpleTimer()
+        timer = Utils.SimpleTimer()
         try:
             with DependencyChecker(self.name, self.inputs() + self.outputs()), CompletionGuard(self.outputs()) as guard:
                 self(**self.config)

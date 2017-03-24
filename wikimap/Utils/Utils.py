@@ -1,13 +1,11 @@
 import logging
 import sys
-import os
-import shutil
 import urllib
-import numpy
 import tarfile
 import tempfile
-import math
-from prettytable import PrettyTable
+from time import time
+import ast
+import pprint
 
 class ProgressBar(object):
     def __init__(self, name):
@@ -34,59 +32,6 @@ def download_and_extract(url, output_path):
         with tarfile.open(temp.name) as tar:
             tar.extractall(output_path)
 
-def any2unicode(sth, encoding='utf8', errors='strict'):
-    if isinstance(sth, unicode):
-        return sth
-    elif isinstance(sth, basestring):
-        return unicode(sth, encoding, errors=errors)
-    else:
-        return unicode(str(sth), encoding, errors=errors)
-
-def any2array(something):
-    if isinstance(something, numpy.ndarray):
-        return something
-    elif isinstance(something, list):
-        return numpy.array(something)
-    elif hasattr(something, "__iter__"):
-        return numpy.array(list(something))
-    else:
-        raise ValueError("Argument is not convertable to an array.")
-
-def clear_directory(directory):
-    for f in os.listdir(directory):
-        file_path = os.path.join(directory, f)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print e
-
-def make_table(headers, rows, alignement, **kwargs):
-    table = PrettyTable(headers, **kwargs)
-    for i, h in enumerate(headers):
-        table.align[h] = alignement[i]
-    for r in rows:
-        table.add_row(r)
-    return table.get_string()
-
-class Colors(object):
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-
-def color_text(string, color):
-    return color + string + '\033[0m'
-
-def pack(files, dest_dir, dest_name):
-    logger = logging.getLogger(__name__)
-    with tarfile.open(os.path.join(dest_dir, dest_name), "w:gz") as tar:
-        for f in files:
-            logger.info('Adding {} to archive.'.format(f))
-            tar.add(f, arcname=os.path.basename(f))
-
 class Bunch(object):
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
@@ -94,5 +39,17 @@ class Bunch(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-def get_number_width(number):
-    return int(math.ceil(math.log10(number + 1)))
+class SimpleTimer(object):
+    def __init__(self):
+        self._start = time()
+
+    def __call__(self):
+        return time() - self._start
+
+def load_dict(path):
+    with open(path, 'r') as f:
+        return ast.literal_eval(f.read()) # literal_eval only evaluates basic types instead of arbitrary code
+
+def save_dict(path, dict_):
+    with open(path, 'w') as f:
+        pprint.pprint(dict_, f)

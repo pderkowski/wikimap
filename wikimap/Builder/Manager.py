@@ -1,14 +1,14 @@
 import os
 import sys
 from pprint import pformat
-from Utils import make_links, format_duration
-from ..Utils import Colors, color_text, make_table, get_logger, get_number_width, thin_line_separator
+from .. import Utils
+from ..Utils import Colors
 from Job import Job, Properties
 from Explorer import build_explorer
 
 class BuildManager(object):
     def __init__(self, build):
-        self._logger = get_logger(__name__)
+        self._logger = Utils.get_logger(__name__)
         self._build = build
         self._changed_files = set()
         self._previous_config = build_explorer.get_base_config()
@@ -20,7 +20,7 @@ class BuildManager(object):
         self._logger.important('STARTING BUILD IN {}'.format(self._new_build_dir))
         self._logger.important('CUSTOM BUILD CONFIG:\n{}'.format(pformat(self._build.get_custom_config())))
         self._logger.info('FULL BUILD CONFIG:\n{}'.format(pformat(self._build.get_full_config())))
-        self._logger.important(thin_line_separator)
+        self._logger.important(Utils.thin_line_separator)
         try:
             for job in self._build:
                 if self._should_run(job):
@@ -48,7 +48,7 @@ class BuildManager(object):
     def _skip_job(self, job):
         self._log_job_action('SKIPPING', job.number, job.name)
         job.skip()
-        make_links(zip(job.outputs(base=self._previous_build_dir), job.outputs()))
+        Utils.make_links(zip(job.outputs(base=self._previous_build_dir), job.outputs()))
 
     def _should_run(self, job):
         return self._is_forced(job)\
@@ -83,11 +83,11 @@ class BuildManager(object):
         def make_summary_row(job):
             return (str(job.number),
                 job.name,
-                color_text('[{}]'.format(job.outcome), outcome_2_color[job.outcome]),
-                format_duration(job.duration))
+                Utils.color_text('[{}]'.format(job.outcome), outcome_2_color[job.outcome]),
+                Utils.format_duration(job.duration))
 
         rows = [make_summary_row(job) for job in self._build]
-        table = make_table(('#', 'JOB NAME', 'OUTCOME', 'DURATION'), rows, ('r', 'l', 'c', 'c'))
+        table = Utils.make_table(('#', 'JOB NAME', 'OUTCOME', 'DURATION'), rows, ('r', 'l', 'c', 'c'))
         self._logger.info('\n\n'+table+'\n')
 
     def _print_logs_and_warnings(self):
@@ -98,5 +98,5 @@ class BuildManager(object):
                 self._logger.info(job.name+' WARNINGS:\n'+'\n'.join(job.warnings)+'\n')
 
     def _log_job_action(self, job_action, job_number, job_name):
-        format_str = '{{}} JOB [{{:{}}}/{{}}]: {{}}'.format(get_number_width(len(self._build)))
+        format_str = '{{}} JOB [{{:{}}}/{{}}]: {{}}'.format(Utils.get_number_width(len(self._build)))
         self._logger.important(format_str.format(job_action, (job_number + 1), len(self._build), job_name))

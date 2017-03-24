@@ -1,21 +1,26 @@
-from time import time
-import os
-import errno
 import shutil
-import ast
-import pprint
+import os
+import logging
+import tarfile
+import errno
 
-class SimpleTimer(object):
-    def __init__(self):
-        self._start = time()
+def clear_directory(directory):
+    for f in os.listdir(directory):
+        file_path = os.path.join(directory, f)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print e
 
-    def __call__(self):
-        return time() - self._start
-
-def format_duration(secs):
-    hours, rem = divmod(secs, 3600)
-    minutes, seconds = divmod(rem, 60)
-    return "{:0>2}:{:0>2}:{:06.3f}".format(int(hours), int(minutes), seconds)
+def pack(files, dest_dir, dest_name):
+    logger = logging.getLogger(__name__)
+    with tarfile.open(os.path.join(dest_dir, dest_name), "w:gz") as tar:
+        for f in files:
+            logger.info('Adding {} to archive.'.format(f))
+            tar.add(f, arcname=os.path.basename(f))
 
 def make_links(path_pairs):
     for src, dst in path_pairs:
@@ -61,11 +66,3 @@ def link_directory(src, dst):
 
 def get_subdirs(directory):
     return [name for name in os.listdir(directory) if os.path.isdir(os.path.join(directory, name))]
-
-def load_dict(path):
-    with open(path, 'r') as f:
-        return ast.literal_eval(f.read()) # literal_eval only evaluates basic types instead of arbitrary code
-
-def save_dict(path, dict_):
-    with open(path, 'w') as f:
-        pprint.pprint(dict_, f)

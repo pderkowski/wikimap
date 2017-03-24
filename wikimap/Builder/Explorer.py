@@ -1,5 +1,5 @@
 import os
-import Utils
+from .. import Utils
 
 class BuildExplorer(object):
     def __init__(self):
