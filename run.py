@@ -71,8 +71,6 @@ def list_jobs(build):
     print Utils.make_table(['#', 'TAG', 'JOB NAME'], [[str(job.number), job.tag, job.name] for job in build], ['r', 'l', 'l'])
 
 def main(argv):
-    Utils.config_logging()
-
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--list', '-l', dest='list_jobs', action='store_true',
         help="Print a list of jobs included in the build.")
@@ -120,4 +118,5 @@ def main(argv):
         Builder.run_build(build)
 
 if __name__ == "__main__":
+    Utils.config_logging()
     main(sys.argv[1:])

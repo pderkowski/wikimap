@@ -49,7 +49,7 @@ def parse_int_range(string):
         the first int is the inclusive lower bound, the second the exclusive upper bound
         and the optional third is the step (if missing it is 1)
     """
-    if string.find(':'): # colon case
+    if string.find(':') >= 0: # colon case
         nums = string.split(':')
         assert len(nums) in range(2, 4), "Too many colons in range expression."
         step = int(nums[2]) if len(nums) == 3 else 1
@@ -58,8 +58,6 @@ def parse_int_range(string):
         return [int(num) for num in string.split(',')]
 
 def main():
-    Utils.config_logging()
-
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--ldnn.neighbors_count', type=parse_int_range,
         help='Specify a range of ints that will be set as the neighbors_count argument of the ldnn job.')
@@ -69,4 +67,5 @@ def main():
     grid_search.run(unknown_args)
 
 if __name__ == "__main__":
+    Utils.config_logging(only_important=True)
     main()

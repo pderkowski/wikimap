@@ -14,8 +14,6 @@ def export(files, dest_dir):
     Utils.pack(files, dest_dir, 'build.tar.gz')
 
 def main():
-    Utils.config_logging()
-
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--buildpath', '-b', dest='buildpath', type=str, default=os.environ.get("WIKIMAP_BUILDPATH", None),
         help="Specify a directory where builds are located. Can also be set by WIKIMAP_BUILDPATH environment variable.")
@@ -41,4 +39,5 @@ def main():
     export(exported_files, args.exportpath)
 
 if __name__ == '__main__':
+    Utils.config_logging()
     main()

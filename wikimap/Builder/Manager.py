@@ -1,5 +1,6 @@
 import os
 import sys
+from pprint import pformat
 from Utils import make_links, format_duration
 from ..Utils import Colors, color_text, make_table, get_logger
 from Job import Job, Properties
@@ -16,8 +17,8 @@ class BuildManager(object):
         self._new_build_dir = build_explorer.make_new_build_dir()
 
     def run(self):
-        self._logger.info('STARTING BUILD IN {}'.format(self._new_build_dir))
-
+        self._logger.important('STARTING BUILD IN {}'.format(self._new_build_dir))
+        self._logger.important('BUILD CONFIG:\n{}'.format(pformat(self._build.get_config())))
         try:
             for job in self._build:
                 if self._should_run(job):
@@ -38,12 +39,12 @@ class BuildManager(object):
             build_explorer.save_config(self._new_config)
 
     def _run_job(self, job):
-        self._logger.info('STARTING JOB: {}'.format(job.name))
+        self._logger.important('STARTING JOB: {}'.format(job.name))
         self._changed_files.update(job.outputs())
         job.run()
 
     def _skip_job(self, job):
-        self._logger.info('SKIPPING JOB: {}'.format(job.name))
+        self._logger.important('SKIPPING JOB: {}'.format(job.name))
         job.skip()
         make_links(zip(job.outputs(base=self._previous_build_dir), job.outputs()))
 
@@ -92,4 +93,4 @@ class BuildManager(object):
             if len(job.logs) > 0:
                 self._logger.info(job.name+' LOGS:\n'+'\n'.join(job.logs)+'\n')
             if len(job.warnings) > 0:
-                self._logger.warning(job.name+' WARNINGS:\n'+'\n'.join(job.warnings)+'\n')
+                self._logger.info(job.name+' WARNINGS:\n'+'\n'.join(job.warnings)+'\n')

@@ -8,22 +8,6 @@ import tarfile
 import tempfile
 from prettytable import PrettyTable
 
-class SingleProcessFilter(logging.Filter):
-    master_pid = None
-
-    def filter(self, record):
-        pid = os.getpid()
-        return self.master_pid != None and pid == self.master_pid
-
-def config_logging():
-    logging.basicConfig(format='\33[2K\r%(asctime)s:%(filename)s:%(lineno)d:%(message)s', datefmt='%H:%M:%S', level=logging.INFO)
-    SingleProcessFilter.master_pid = os.getpid()
-
-def get_logger(name):
-    logger = logging.getLogger(name)
-    logger.addFilter(SingleProcessFilter())
-    return logger
-
 class ProgressBar(object):
     def __init__(self, name):
         self.name = name

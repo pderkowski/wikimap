@@ -43,13 +43,13 @@ class DependencyChecker(object):
 
     def __enter__(self):
         if DependencyChecker.is_active():
-            DependencyChecker._logger.warning('Activating a new dependency checker while another is active!')
+            DependencyChecker._logger.info('Activating a new dependency checker while another is active!')
         DependencyChecker._instance = self
         return self
 
     def __exit__(self, _1, _2, _3):
         for warning in DependencyChecker.get_warnings():
-            DependencyChecker._logger.warning(warning)
+            DependencyChecker._logger.info(warning)
         DependencyChecker._instance = None
 
     _instance = None
