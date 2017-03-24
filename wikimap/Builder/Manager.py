@@ -2,7 +2,7 @@ import os
 import sys
 from pprint import pformat
 from Utils import make_links, format_duration
-from ..Utils import Colors, color_text, make_table, get_logger
+from ..Utils import Colors, color_text, make_table, get_logger, get_number_width, thin_line_separator
 from Job import Job, Properties
 from Explorer import build_explorer
 
@@ -13,12 +13,14 @@ class BuildManager(object):
         self._changed_files = set()
         self._previous_config = build_explorer.get_base_config()
         self._previous_build_dir = build_explorer.get_base_build_dir()
-        self._new_config = build.get_config()
+        self._new_config = build.get_full_config()
         self._new_build_dir = build_explorer.make_new_build_dir()
 
     def run(self):
         self._logger.important('STARTING BUILD IN {}'.format(self._new_build_dir))
-        self._logger.important('BUILD CONFIG:\n{}'.format(pformat(self._build.get_config())))
+        self._logger.important('CUSTOM BUILD CONFIG:\n{}'.format(pformat(self._build.get_custom_config())))
+        self._logger.info('FULL BUILD CONFIG:\n{}'.format(pformat(self._build.get_full_config())))
+        self._logger.important(thin_line_separator)
         try:
             for job in self._build:
                 if self._should_run(job):
@@ -39,12 +41,12 @@ class BuildManager(object):
             build_explorer.save_config(self._new_config)
 
     def _run_job(self, job):
-        self._logger.important('STARTING JOB: {}'.format(job.name))
+        self._log_job_action('STARTING', job.number, job.name)
         self._changed_files.update(job.outputs())
         job.run()
 
     def _skip_job(self, job):
-        self._logger.important('SKIPPING JOB: {}'.format(job.name))
+        self._log_job_action('SKIPPING', job.number, job.name)
         job.skip()
         make_links(zip(job.outputs(base=self._previous_build_dir), job.outputs()))
 
@@ -94,3 +96,7 @@ class BuildManager(object):
                 self._logger.info(job.name+' LOGS:\n'+'\n'.join(job.logs)+'\n')
             if len(job.warnings) > 0:
                 self._logger.info(job.name+' WARNINGS:\n'+'\n'.join(job.warnings)+'\n')
+
+    def _log_job_action(self, job_action, job_number, job_name):
+        format_str = '{{}} JOB [{{:{}}}/{{}}]: {{}}'.format(get_number_width(len(self._build)))
+        self._logger.important(format_str.format(job_action, (job_number + 1), len(self._build), job_name))

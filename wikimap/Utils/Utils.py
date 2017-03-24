@@ -6,6 +6,7 @@ import urllib
 import numpy
 import tarfile
 import tempfile
+import math
 from prettytable import PrettyTable
 
 class ProgressBar(object):
@@ -92,3 +93,6 @@ class Bunch(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+def get_number_width(number):
+    return int(math.ceil(math.log10(number + 1)))

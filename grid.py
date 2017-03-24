@@ -9,17 +9,19 @@ from tempfile import NamedTemporaryFile
 
 class GridSearch(object):
     def __init__(self, grid_config):
+        self._logger = Utils.get_logger(__name__)
         self._grid_config = list((arg_name, arg_values) for (arg_name, arg_values) in grid_config if arg_values is not None)
         for arg_name, arg_values in self._grid_config:
             assert isinstance(arg_values, list), "Grid values must be lists."
             assert arg_name.count('.') == 1, "Nested and unnamed arguments not allowed. Should be '<job_name>.<job_arg_name>'."
 
     def run(self, run_args):
-        for flat_config in self._iter_configs():
+        for config_num, flat_config in enumerate(self._iter_configs()):
             with NamedTemporaryFile() as tmp_config_file:
                 formatted_config = self._format_config(flat_config)
                 pprint(formatted_config, tmp_config_file)
                 tmp_config_file.flush()
+                self._log_build_start(config_num + 1, self._count_configs())
                 run.main(run_args + ['-c', tmp_config_file.name])
 
     def _iter_configs(self):
@@ -40,6 +42,14 @@ class GridSearch(object):
             job_name, job_arg_name = arg_name_parts
             formatted_config[job_name][job_arg_name] = arg_value
         return dict(formatted_config)
+
+    def _count_configs(self):
+        return sum(1 for _ in self._iter_configs())
+
+    def _log_build_start(self, config_num, max_config_num):
+        self._logger.important(Utils.thick_line_separator)
+        format_str = 'STARTING BUILD [{{:{}}}/{{}}]'.format(Utils.get_number_width(max_config_num))
+        self._logger.important(format_str.format(config_num, max_config_num))
 
 def parse_int_range(string):
     """

@@ -27,3 +27,6 @@ def get_logger(name):
     logger = logging.getLogger(name)
     logger.addFilter(SingleProcessFilter())
     return logger
+
+thick_line_separator = '='*80
+thin_line_separator = '-'*80

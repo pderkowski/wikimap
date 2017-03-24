@@ -4,6 +4,7 @@ from Job import Properties, InvalidConfig
 
 class Build(object):
     def __init__(self, jobs):
+        self._custom_config = {}
         self._jobs = jobs
         for i, job in enumerate(self._jobs):
             job.number = i
@@ -43,12 +44,16 @@ class Build(object):
                 job.configure(job_config)
             except KeyError:
                 raise InvalidConfig('No job {} in build.'.format(job_name))
+            self._custom_config = config
 
-    def get_config(self):
+    def get_full_config(self):
         config = {}
         for job in self._jobs:
             config[job.name] = job.config
         return config
+
+    def get_custom_config(self):
+        return self._custom_config
 
     def _get_job_by_name(self, key):
         for job in self._jobs:
