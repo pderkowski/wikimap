@@ -71,6 +71,8 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--ldnn.neighbors_count', type=parse_int_range,
         help='Specify a range of ints that will be set as the neighbors_count argument of the ldnn job.')
+    parser.add_argument('--embed.context_size', type=parse_int_range,
+        help='Specify a range of ints that will be set as the context_size argument of the embed job.')
 
     known_args, unknown_args = parser.parse_known_args()
     grid_search = GridSearch(vars(known_args).iteritems())

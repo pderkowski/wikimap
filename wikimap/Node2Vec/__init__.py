@@ -4,7 +4,7 @@ import tempfile
 import logging
 import sys
 
-def Node2Vec(edges, dims=128, walkLength=80, walksPerNode=10, contextSize=10, epochsCount=1, backtrackProb = 0.5, verbose=True):
+def Node2Vec(edges, context_size, dims=128, walk_length=80, walks_per_node=10, epochs_count=1, backtrack_prob = 0.5, verbose=True):
     logger = logging.getLogger(__name__)
     directory = os.path.dirname(os.path.realpath(__file__))
     binPath = os.path.join(directory, "node2vec")
@@ -14,11 +14,11 @@ def Node2Vec(edges, dims=128, walkLength=80, walksPerNode=10, contextSize=10, ep
     args = [binPath,
         "-o:{}".format(tmpOutput.name),
         "-d:{}".format(str(dims)),
-        "-l:{}".format(str(walkLength)),
-        "-r:{}".format(str(walksPerNode)),
-        "-k:{}".format(str(contextSize)),
-        "-e:{}".format(str(epochsCount)),
-        "-b:{}".format(str(backtrackProb))]
+        "-l:{}".format(str(walk_length)),
+        "-r:{}".format(str(walks_per_node)),
+        "-k:{}".format(str(context_size)),
+        "-e:{}".format(str(epochs_count)),
+        "-b:{}".format(str(backtrack_prob))]
     if verbose:
         args.append("-v")
 
