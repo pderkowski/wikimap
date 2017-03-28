@@ -5,9 +5,8 @@ import TSNE
 import NearestNeighbors
 import ZoomIndexer
 import Graph
-import Data
 from Evaluation import SimilarityEvaluator, RelationEvaluator
-import Paths as P
+from Paths import AbstractPaths as P
 
 class DownloadPagesDump(Job):
     def __init__(self, url):
@@ -16,7 +15,7 @@ class DownloadPagesDump(Job):
             url=url)
 
     def __call__(self, url):
-        Data.download_pages_dump(url)
+        self.data.download_pages_dump(url)
 
 class DownloadLinksDump(Job):
     def __init__(self, url):
@@ -25,7 +24,7 @@ class DownloadLinksDump(Job):
             url=url)
 
     def __call__(self, url):
-        Data.download_links_dump(url)
+        self.data.download_links_dump(url)
 
 class DownloadCategoryLinksDump(Job):
     def __init__(self, url):
@@ -34,7 +33,7 @@ class DownloadCategoryLinksDump(Job):
             url=url)
 
     def __call__(self, url):
-        Data.download_category_links_dump(url)
+        self.data.download_category_links_dump(url)
 
 class DownloadPagePropertiesDump(Job):
     def __init__(self, url):
@@ -43,7 +42,7 @@ class DownloadPagePropertiesDump(Job):
             url=url)
 
     def __call__(self, url):
-        Data.download_page_properties_dump(url)
+        self.data.download_page_properties_dump(url)
 
 class DownloadRedirectsDump(Job):
     def __init__(self, url):
@@ -52,7 +51,7 @@ class DownloadRedirectsDump(Job):
             url=url)
 
     def __call__(self, url):
-        Data.download_redirects_dump(url)
+        self.data.download_redirects_dump(url)
 
 class DownloadEvaluationDatasets(Job):
     def __init__(self, url):
@@ -61,7 +60,7 @@ class DownloadEvaluationDatasets(Job):
             url=url)
 
     def __call__(self, url):
-        Data.download_evaluation_datasets(url)
+        self.data.download_evaluation_datasets(url)
 
 class ImportPageTable(Job):
     def __init__(self):
@@ -69,8 +68,8 @@ class ImportPageTable(Job):
             inputs=[P.pages_dump], outputs=[P.pages])
 
     def __call__(self):
-        pages = Data.import_pages()
-        Data.set_pages(pages)
+        pages = self.data.import_pages()
+        self.data.set_pages(pages)
 
 class ImportLinksTable(Job):
     def __init__(self):
@@ -78,8 +77,8 @@ class ImportLinksTable(Job):
             inputs=[P.links_dump], outputs=[P.links])
 
     def __call__(self):
-        links = Data.import_links()
-        Data.set_links(links)
+        links = self.data.import_links()
+        self.data.set_links(links)
 
 class ImportPagePropertiesTable(Job):
     def __init__(self):
@@ -87,8 +86,8 @@ class ImportPagePropertiesTable(Job):
             inputs=[P.page_properties_dump], outputs=[P.page_properties])
 
     def __call__(self):
-        page_properties = Data.import_page_properties()
-        Data.set_page_properties(page_properties)
+        page_properties = self.data.import_page_properties()
+        self.data.set_page_properties(page_properties)
 
 class ImportCategoryLinksTable(Job):
     def __init__(self):
@@ -96,9 +95,9 @@ class ImportCategoryLinksTable(Job):
             inputs=[P.category_links_dump, P.pages, P.page_properties], outputs=[P.category_links])
 
     def __call__(self):
-        hidden_categories = Data.get_hidden_categories()
-        category_links = Data.import_category_links()
-        Data.set_category_links(category_links, hidden_categories)
+        hidden_categories = self.data.get_hidden_categories()
+        category_links = self.data.import_category_links()
+        self.data.set_category_links(category_links, hidden_categories)
 
 class ImportRedirectsTable(Job):
     def __init__(self):
@@ -106,8 +105,8 @@ class ImportRedirectsTable(Job):
             inputs=[P.redirects_dump], outputs=[P.redirects])
 
     def __call__(self):
-        redirects = Data.import_redirects()
-        Data.set_redirects(redirects)
+        redirects = self.data.import_redirects()
+        self.data.set_redirects(redirects)
 
 class CreateLinkEdgesTable(Job):
     def __init__(self):
@@ -115,8 +114,8 @@ class CreateLinkEdgesTable(Job):
             inputs=[P.links, P.pages], outputs=[P.link_edges])
 
     def __call__(self):
-        link_edges = Data.get_link_edges()
-        Data.set_link_edges(link_edges)
+        link_edges = self.data.get_link_edges()
+        self.data.set_link_edges(link_edges)
 
 class ComputePagerank(Job):
     def __init__(self):
@@ -124,9 +123,9 @@ class ComputePagerank(Job):
             inputs=[P.link_edges], outputs=[P.pagerank])
 
     def __call__(self):
-        edges = Data.get_link_edges_as_strings()
+        edges = self.data.get_link_edges_as_strings()
         pagerank = Pagerank.pagerank(edges, stringified=True)
-        Data.set_pagerank(pagerank)
+        self.data.set_pagerank(pagerank)
 
 class ComputeEmbeddings(Job):
     def __init__(self, node_count, context_size):
@@ -135,9 +134,9 @@ class ComputeEmbeddings(Job):
             node_count=node_count, context_size=context_size)
 
     def __call__(self, node_count, context_size):
-        edges = Data.get_link_edges_between_highest_ranked_nodes(node_count)
+        edges = self.data.get_link_edges_between_highest_ranked_nodes(node_count)
         embeddings = Node2Vec(edges, context_size=context_size)
-        Data.set_embeddings(embeddings)
+        self.data.set_embeddings(embeddings)
 
 class CreateTitleIndex(Job):
     def __init__(self):
@@ -145,8 +144,8 @@ class CreateTitleIndex(Job):
             inputs=[P.pages, P.category_links, P.redirects, P.embeddings], outputs=[P.title_index])
 
     def __call__(self):
-        titles, ids = Data.get_titles_ids_including_redirects_excluding_disambiguations()
-        Data.set_title_index(titles, ids)
+        titles, ids = self.data.get_titles_ids_including_redirects_excluding_disambiguations()
+        self.data.set_title_index(titles, ids)
 
 class EvaluateEmbeddings(Job):
     def __init__(self, use_word_mapping):
@@ -155,13 +154,13 @@ class EvaluateEmbeddings(Job):
             use_word_mapping=use_word_mapping)
 
     def __call__(self, use_word_mapping):
-        indexed_embeddings = Data.get_indexed_embeddings()
-        word_mapping = Data.get_word_mapping() if use_word_mapping else {}
+        indexed_embeddings = self.data.get_indexed_embeddings()
+        word_mapping = self.data.get_word_mapping() if use_word_mapping else {}
         evaluation_results = []
-        evaluation_results.extend([SimilarityEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in Data.get_similarity_datasets()])
-        evaluation_results.extend([RelationEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in Data.get_relation_datasets()])
-        Data.set_evaluation_results(evaluation_results)
-        self.logs.append(Data.get_evaluation_results_as_table())
+        evaluation_results.extend([SimilarityEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in self.data.get_similarity_datasets()])
+        evaluation_results.extend([RelationEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in self.data.get_relation_datasets()])
+        self.data.set_evaluation_results(evaluation_results)
+        self.logs.append(self.data.get_evaluation_results_as_table())
 
 class ComputeTSNE(Job):
     def __init__(self, point_count):
@@ -170,9 +169,9 @@ class ComputeTSNE(Job):
             point_count=point_count)
 
     def __call__(self, point_count):
-        ids, embeddings = Data.get_ids_embeddings_of_highest_ranked_points(point_count)
+        ids, embeddings = self.data.get_ids_embeddings_of_highest_ranked_points(point_count)
         mappings = TSNE.train(embeddings)
-        Data.set_tsne_points(ids, mappings)
+        self.data.set_tsne_points(ids, mappings)
 
 class ComputeHighDimensionalNeighbors(Job):
     def __init__(self, neighbors_count):
@@ -181,9 +180,9 @@ class ComputeHighDimensionalNeighbors(Job):
             neighbors_count=neighbors_count)
 
     def __call__(self, neighbors_count):
-        ids, titles, embeddings = Data.get_ids_titles_embeddings_of_tsne_points()
+        ids, titles, embeddings = self.data.get_ids_titles_embeddings_of_tsne_points()
         distances, indices = NearestNeighbors.computeNearestNeighbors(embeddings, neighbors_count)
-        Data.set_high_dimensional_neighbors(ids, titles, indices, distances)
+        self.data.set_high_dimensional_neighbors(ids, titles, indices, distances)
 
 class ComputeLowDimensionalNeighbors(Job):
     def __init__(self, neighbors_count):
@@ -192,9 +191,9 @@ class ComputeLowDimensionalNeighbors(Job):
             neighbors_count=neighbors_count)
 
     def __call__(self, neighbors_count):
-        ids, titles, tsne_points = Data.get_ids_titles_tsne_points()
+        ids, titles, tsne_points = self.data.get_ids_titles_tsne_points()
         distances, indices = NearestNeighbors.computeNearestNeighbors(tsne_points, neighbors_count)
-        Data.set_low_dimensional_neighbors(ids, titles, indices, distances)
+        self.data.set_low_dimensional_neighbors(ids, titles, indices, distances)
 
 class CreateAggregatedLinksTables(Job):
     def __init__(self):
@@ -202,11 +201,11 @@ class CreateAggregatedLinksTables(Job):
             inputs=[P.link_edges, P.tsne], outputs=[P.aggregated_inlinks, P.aggregated_outlinks])
 
     def __call__(self):
-        ids = list(Data.get_ids_of_tsne_points())
-        outlinks = Data.get_outlinks_of_points(ids)
-        inlinks = Data.get_inlinks_of_points(ids)
-        Data.set_outlinks(outlinks)
-        Data.set_inlinks(inlinks)
+        ids = list(self.data.get_ids_of_tsne_points())
+        outlinks = self.data.get_outlinks_of_points(ids)
+        inlinks = self.data.get_inlinks_of_points(ids)
+        self.data.set_outlinks(outlinks)
+        self.data.set_inlinks(inlinks)
 
 class CreateWikimapDatapointsTable(Job):
     def __init__(self):
@@ -214,8 +213,8 @@ class CreateWikimapDatapointsTable(Job):
             inputs=[P.tsne, P.pages, P.high_dimensional_neighbors, P.low_dimensional_neighbors, P.pagerank], outputs=[P.wikimap_points])
 
     def __call__(self):
-        points = Data.get_wikimap_points()
-        Data.set_wikimap_points(points)
+        points = self.data.get_wikimap_points()
+        self.data.set_wikimap_points(points)
 
 class CreateWikimapCategoriesTable(Job):
     def __init__(self, depth):
@@ -224,10 +223,10 @@ class CreateWikimapCategoriesTable(Job):
             depth=depth)
 
     def __call__(self, depth):
-        ids_category_names = Data.get_ids_category_names_of_tsne_points()
-        edges = Data.get_edges_between_categories()
+        ids_category_names = self.data.get_ids_category_names_of_tsne_points()
+        edges = self.data.get_edges_between_categories()
         categories = Graph.aggregate(ids_category_names, edges, depth=depth)
-        Data.set_wikimap_categories(categories)
+        self.data.set_wikimap_categories(categories)
 
 class CreateZoomIndex(Job):
     def __init__(self, bucket_size):
@@ -236,6 +235,6 @@ class CreateZoomIndex(Job):
             bucket_size=bucket_size)
 
     def __call__(self, bucket_size):
-        coords, ids = Data.get_coords_ids_of_points()
+        coords, ids = self.data.get_coords_ids_of_points()
         indexer = ZoomIndexer.Indexer(coords, ids, bucket_size)
-        Data.set_zoom_index(indexer)
+        self.data.set_zoom_index(indexer)

@@ -5,7 +5,7 @@ class BuildPlanner(object):
         self._build = build
         self._dep_graph = self._build_dependency_graph()
 
-    def get_plan(self, target_jobs):
+    def get_included_jobs(self, target_jobs):
         target_jobs = set(target_jobs)
         jobs_count = len(self._build)
         included_jobs_mask = [job_num in target_jobs for job_num in range(jobs_count)]
@@ -14,7 +14,7 @@ class BuildPlanner(object):
                 for j in self._dep_graph[i]:
                     included_jobs_mask[j] = True
 
-        return included_jobs_mask
+        return [i for i, included in enumerate(included_jobs_mask) if included]
 
     def _build_dependency_graph(self):
         graph = [[] for _ in range(len(self._build))]
@@ -29,8 +29,7 @@ class BuildPlanner(object):
         output_2_jobs = self._get_output_2_jobs()
         deps = set()
         for job_num, job in enumerate(self._build):
-            inputs = job.inputs()
-            for i in inputs:
+            for i in job.inputs:
                 job_nums = output_2_jobs[i]
                 for j in job_nums:
                     if j < job_num:
@@ -40,7 +39,6 @@ class BuildPlanner(object):
     def _get_output_2_jobs(self):
         output_2_jobs = defaultdict(list) # numbers of jobs that have the key as an output
         for job_num, job in enumerate(self._build):
-            outputs = job.outputs()
-            for o in outputs:
+            for o in job.outputs:
                 output_2_jobs[o].append(job_num)
         return output_2_jobs

@@ -1,20 +1,39 @@
-import os
 import sys
-from pprint import pformat
+import os
+from Planner import BuildPlanner
 from .. import Utils
-from ..Utils import Colors
-from Job import Job, Properties
-from Explorer import build_explorer
+from pprint import pformat
+from Job import Properties
 
 class BuildManager(object):
     def __init__(self, build):
+        self._build = build
+
+    def plan(self, target_jobs, forced_jobs):
+        forced_jobs = set(forced_jobs)
+        target_jobs = set(target_jobs) | forced_jobs
+
+        for job in forced_jobs:
+            self._build[job].properties.append(Properties.Forced)
+
+        planner = BuildPlanner(self._build)
+        included_jobs = planner.get_included_jobs(target_jobs)
+        self._build.filter_jobs(included_jobs)
+
+    def configure(self, config):
+        self._build.set_custom_config(config)
+
+    def run(self, prev_config, prev_build_dir, new_build_dir):
+        BuildRunner(self._build, prev_config, prev_build_dir, new_build_dir).run()
+
+class BuildRunner(object):
+    def __init__(self, build, prev_config, prev_build_dir, new_build_dir):
         self._logger = Utils.get_logger(__name__)
         self._build = build
+        self._prev_config = prev_config
+        self._prev_build_dir = prev_build_dir
+        self._new_build_dir = new_build_dir
         self._changed_files = set()
-        self._previous_config = build_explorer.get_base_config()
-        self._previous_build_dir = build_explorer.get_base_build_dir()
-        self._new_config = build.get_full_config()
-        self._new_build_dir = build_explorer.make_new_build_dir()
 
     def run(self):
         self._logger.important('STARTING BUILD IN {}'.format(self._new_build_dir))
@@ -22,10 +41,12 @@ class BuildManager(object):
         self._logger.info('FULL BUILD CONFIG:\n{}'.format(pformat(self._build.get_full_config())))
         self._logger.important(Utils.thin_line_separator)
         try:
-            for job in self._build:
+            for i, job in enumerate(self._build):
                 if self._should_run(job):
+                    self._log_job_action('STARTING', i, job.name)
                     self._run_job(job)
                 else:
+                    self._log_job_action('SKIPPING', i, job.name)
                     self._skip_job(job)
         except KeyboardInterrupt:
             raise
@@ -36,67 +57,34 @@ class BuildManager(object):
             self._logger.exception("Unexpected error: {}".format(sys.exc_info()[0]))
             raise
         finally:
-            self._print_summary()
-            self._print_logs_and_warnings()
-            build_explorer.save_config(self._new_config)
+            self._build.print_summary()
+            self._build.print_logs()
 
     def _run_job(self, job):
-        self._log_job_action('STARTING', job.number, job.name)
-        self._changed_files.update(job.outputs())
-        job.run()
+        self._changed_files.update(job.outputs(self._new_build_dir))
+        job.run(self._new_build_dir)
 
     def _skip_job(self, job):
-        self._log_job_action('SKIPPING', job.number, job.name)
         job.skip()
-        Utils.make_links(zip(job.outputs(base=self._previous_build_dir), job.outputs()))
+        Utils.make_links(zip(job.outputs(self._prev_build_dir), job.outputs(self._new_build_dir)))
 
     def _should_run(self, job):
-        return self._is_forced(job)\
+        return job.is_forced()\
             or self._inputs_changed(job)\
             or self._config_changed(job)\
             or not self._outputs_computed(job)
 
-    def _is_forced(self, job):
-        return Properties.Forced in job.properties
-
     def _outputs_computed(self, job):
-        return self._previous_build_dir and all(os.path.exists(o) for o in job.outputs(base=self._previous_build_dir))
+        return self._prev_build_dir and all(os.path.exists(o) for o in job.outputs(self._prev_build_dir))
 
     def _inputs_changed(self, job):
-        return any(input_ in self._changed_files for input_ in job.inputs())
+        return any(input_ in self._changed_files for input_ in job.inputs(self._new_build_dir))
 
     def _config_changed(self, job):
-        previous_build_config = self._previous_config.get(job.name, {})
+        previous_build_config = self._prev_config.get(job.name, {})
         current_build_config = job.config
         return previous_build_config != current_build_config
 
-    def _print_summary(self):
-        outcome_2_color = {
-            Job.SUCCESS: Colors.GREEN,
-            Job.FAILURE: Colors.RED,
-            Job.SKIPPED: Colors.BLUE,
-            Job.ABORTED: Colors.YELLOW,
-            Job.WARNING: Colors.YELLOW,
-            Job.NOT_RUN: Colors.RED
-        }
-
-        def make_summary_row(job):
-            return (str(job.number),
-                job.name,
-                Utils.color_text('[{}]'.format(job.outcome), outcome_2_color[job.outcome]),
-                Utils.format_duration(job.duration))
-
-        rows = [make_summary_row(job) for job in self._build]
-        table = Utils.make_table(('#', 'JOB NAME', 'OUTCOME', 'DURATION'), rows, ('r', 'l', 'c', 'c'))
-        self._logger.info('\n\n'+table+'\n')
-
-    def _print_logs_and_warnings(self):
-        for job in self._build:
-            if len(job.logs) > 0:
-                self._logger.info(job.name+' LOGS:\n'+'\n'.join(job.logs)+'\n')
-            if len(job.warnings) > 0:
-                self._logger.info(job.name+' WARNINGS:\n'+'\n'.join(job.warnings)+'\n')
-
-    def _log_job_action(self, job_action, job_number, job_name):
+    def _log_job_action(self, job_action, job_build_order, job_name):
         format_str = '{{}} JOB [{{:{}}}/{{}}]: {{}}'.format(Utils.get_number_width(len(self._build)))
-        self._logger.important(format_str.format(job_action, (job_number + 1), len(self._build), job_name))
+        self._logger.important(format_str.format(job_action, (job_build_order + 1), len(self._build), job_name))

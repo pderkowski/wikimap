@@ -1,5 +1,7 @@
-from PathUtils import DependencyChecker, CompletionGuard, resolve
+import os
 from .. import Utils
+from ..Data import Data
+from ..Paths import CheckedPaths, AbstractPathGroup
 from abc import ABCMeta, abstractmethod
 
 class InvalidConfig(Exception):
@@ -7,6 +9,24 @@ class InvalidConfig(Exception):
 
 class Properties(object):
     Forced = 1
+
+class CompletionGuard(object):
+    def __init__(self, files):
+        self._files = files
+        self._completed = False
+
+    def __enter__(self):
+        self._completed = False
+        return self
+
+    def __exit__(self, _1, _2, _3):
+        if not self._completed:
+            for f in self._files:
+                if os.path.isfile(f):
+                    os.remove(f)
+
+    def complete(self):
+        self._completed = True
 
 class Job(object):
     __metaclass__ = ABCMeta
@@ -21,8 +41,8 @@ class Job(object):
     def __init__(self, name, tag="", inputs=None, outputs=None, **kwargs):
         self.name = name
         self.number = -1
-        self._inputs = inputs or []
-        self._outputs = outputs or []
+        self.inputs = AbstractPathGroup(inputs or [])
+        self.outputs = AbstractPathGroup(outputs or [])
 
         self.tag = tag
         self.config = kwargs
@@ -30,22 +50,35 @@ class Job(object):
         self.outcome = Job.NOT_RUN
         self.properties = []
         self.logs = []
-        self.warnings = []
+
+        self.data = None
+
+        self._logger = Utils.get_logger(__name__)
 
     @abstractmethod
     def __call__(self, *args, **kwargs):
         pass
 
-    def run(self):
+    def run(self, base):
         timer = Utils.SimpleTimer()
         try:
-            with DependencyChecker(self.name, self.inputs() + self.outputs()), CompletionGuard(self.outputs()) as guard:
+            paths = CheckedPaths(base, (self.inputs + self.outputs)(base))
+            self.data = Data(paths)
+            with CompletionGuard(self.outputs(base)) as guard:
                 self(**self.config)
                 self.outcome = Job.SUCCESS
                 guard.complete()
-                if not DependencyChecker.is_ok():
+                if paths.has_invalid_dependencies():
                     self.outcome = Job.WARNING
-                    self.warnings.extend(DependencyChecker.get_warnings())
+                    unexpected, missing = paths.get_invalid_dependencies()
+                    for path in unexpected:
+                        message = 'Unexpected dependency of {} on {}'.format(self.name, path)
+                        self.logs.append(message)
+                        self._logger.info(message)
+                    for path in missing:
+                        message = 'Missing dependency of {} on {}'.format(self.name, path)
+                        self.logs.append(message)
+                        self._logger.info(message)
 
         except KeyboardInterrupt:
             self.outcome = Job.ABORTED
@@ -59,13 +92,7 @@ class Job(object):
     def skip(self):
         self.outcome = Job.SKIPPED
 
-    def inputs(self, base=None):
-        return resolve(self._inputs, base=base)
-
-    def outputs(self, base=None):
-        return resolve(self._outputs, base=base)
-
-    def configure(self, config):
+    def set_config(self, config):
         if not isinstance(config, dict):
             raise InvalidConfig('Expected dict, got: {}'.format(type(config)))
         for arg_name, arg_value in config.iteritems():
@@ -73,3 +100,6 @@ class Job(object):
                 self.config[arg_name] = arg_value
             except KeyError:
                 raise InvalidConfig('Unexpected argument: {} to job: {}.'.format(arg_name, self.name))
+
+    def is_forced(self):
+        return Properties.Forced in self.properties

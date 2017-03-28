@@ -24,9 +24,15 @@ class SingleProcessFilter(logging.Filter):
         pid = os.getpid()
         return self.master_pid != None and pid == self.master_pid
 
-def config_logging(only_important=False):
+def config_logging(only_important=False, log_length="long"):
+    if log_length == "long":
+        format_str = '\33[2K\r%(asctime)s:%(filename)s:%(lineno)d:%(message)s'
+    elif log_length == "short":
+        format_str = '\33[2K\r%(asctime)s%(message)s'
+    else: # "minimal"
+        format_str = '\33[2K\r%(message)s'
     level = logging.IMPORTANT if only_important else logging.INFO
-    logging.basicConfig(format='\33[2K\r%(asctime)s:%(filename)s:%(lineno)d:%(message)s', datefmt='%H:%M:%S', level=level)
+    logging.basicConfig(format=format_str, datefmt='%H:%M:%S', level=level)
     SingleProcessFilter.master_pid = os.getpid()
 
 def get_logger(name):

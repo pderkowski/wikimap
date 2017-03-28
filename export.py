@@ -3,7 +3,7 @@
 import argparse
 import os
 import sys
-from wikimap import Utils, Paths, Builder
+from wikimap import Utils, BuildExplorer
 
 def export(files, dest_dir):
     dest_dir = os.path.realpath(dest_dir)
@@ -21,7 +21,7 @@ def main():
         help="Specify a directory to which files should be exported. Can also be set by WIKIMAP_EXPORTPATH environment variable.")
     parser.add_argument('--prefix', '-p', dest='prefix', type=str, default='build',
         help="Specify a prefix of subdirectories inside the builds directory.")
-    parser.add_argument('--index', '-i', dest='build_index', type=int,
+    parser.add_argument('--index', '-i', dest='build_index', default=-1, type=int,
         help="Choose an index if you want to export a specific build. Otherwise the last build will be exported.")
     args = parser.parse_args()
 
@@ -31,13 +31,11 @@ def main():
     if not args.exportpath:
         sys.exit("Specify the export path, using --exportpath (-e) option or by setting the WIKIMAP_EXPORTPATH environment variable.")
 
-    Builder.set_builds_dir(args.buildpath, args.prefix)
-    if args.build_index:
-        Builder.set_base_build(args.build_index)
-
-    exported_files = [Paths.wikimap_points(), Paths.wikimap_categories(), Paths.zoom_index(), Paths.metadata(), Paths.aggregated_inlinks(), Paths.aggregated_outlinks()]
+    build_explorer = BuildExplorer(args.buildpath, args.prefix)
+    P = build_explorer.get_paths(args.build_index)
+    exported_files = [P.wikimap_points, P.wikimap_categories, P.zoom_index, P.metadata, P.aggregated_inlinks, P.aggregated_outlinks]
     export(exported_files, args.exportpath)
 
 if __name__ == '__main__':
-    Utils.config_logging()
+    Utils.config_logging(log_length="minimal")
     main()

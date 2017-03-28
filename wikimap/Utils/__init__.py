@@ -2,5 +2,4 @@ from LogUtils import config_logging, get_logger, thick_line_separator, thin_line
 from OsUtils import clear_directory, link_directory, pack, make_links, make_link, get_subdirs
 from CastUtils import any2unicode, any2array
 from ParseUtils import parse_int_range
-from PathUtils import CompletionGuard, DependencyChecker
 from Utils import *

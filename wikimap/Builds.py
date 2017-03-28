@@ -45,3 +45,8 @@ Polish = Build([
     J.CreateWikimapDatapointsTable(),
     J.CreateWikimapCategoriesTable(depth=1),
     J.CreateZoomIndex(bucket_size=100)])
+
+Builds = {
+    "en": English,
+    "pl": Polish
+}
