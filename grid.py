@@ -51,33 +51,25 @@ class GridSearch(object):
         format_str = 'STARTING BUILD [{{:{}}}/{{}}]'.format(Utils.get_number_width(max_config_num))
         self._logger.important(format_str.format(config_num, max_config_num))
 
-def parse_int_range(string):
-    """
-    Two types of strings allowed:
-    - comma-separated list of ints (e.g. '7' or '7,12,1')
-    - range in the form of <int>:<int> or <int>:<int>:<int> (e.g '1:5' or '1:5:2')
-        the first int is the inclusive lower bound, the second the exclusive upper bound
-        and the optional third is the step (if missing it is 1)
-    """
-    if string.find(':') >= 0: # colon case
-        nums = string.split(':')
-        assert len(nums) in range(2, 4), "Too many colons in range expression."
-        step = int(nums[2]) if len(nums) == 3 else 1
-        return range(int(nums[0]), int(nums[1]), step)
-    else: # comma case
-        return [int(num) for num in string.split(',')]
-
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--ldnn.neighbors_count', type=parse_int_range,
+    parser.add_argument('--ldnn.neighbors_count', type=Utils.parse_int_range,
         help='Specify a range of ints that will be set as the neighbors_count argument of the ldnn job.')
-    parser.add_argument('--embed.context_size', type=parse_int_range,
+    parser.add_argument('--embed.context_size', type=Utils.parse_int_range,
         help='Specify a range of ints that will be set as the context_size argument of the embed job.')
+    parser.add_argument('--embed.backtrack_probability', type=Utils.parse_float_range,
+        help='Specify a range of floats that will be set as the backtrack_probability argument of the embed job.')
+    parser.add_argument('--verbose', '-v', action='store_true',
+        help='Increase log verbosity.')
 
     known_args, unknown_args = parser.parse_known_args()
-    grid_search = GridSearch(vars(known_args).iteritems())
+    grid_arg_names = ['ldnn.neighbors_count', 'embed.context_size', 'embed.backtrack_probability']
+    grid_args = [(arg, val) for (arg, val) in vars(known_args).iteritems() if arg in grid_arg_names]
+
+    Utils.config_logging(verbose=known_args.verbose)
+
+    grid_search = GridSearch(grid_args)
     grid_search.run(unknown_args)
 
 if __name__ == "__main__":
-    Utils.config_logging(only_important=True)
     main()

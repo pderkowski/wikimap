@@ -128,14 +128,14 @@ class ComputePagerank(Job):
         self.data.set_pagerank(pagerank)
 
 class ComputeEmbeddings(Job):
-    def __init__(self, node_count, context_size):
+    def __init__(self, node_count, context_size, backtrack_probability):
         super(ComputeEmbeddings, self).__init__('COMPUTE EMBEDDINGS', tag='embed',
             inputs=[P.link_edges, P.pagerank], outputs=[P.embeddings],
-            node_count=node_count, context_size=context_size)
+            node_count=node_count, context_size=context_size, backtrack_probability=backtrack_probability)
 
-    def __call__(self, node_count, context_size):
+    def __call__(self, node_count, context_size, backtrack_probability):
         edges = self.data.get_link_edges_between_highest_ranked_nodes(node_count)
-        embeddings = Node2Vec(edges, context_size=context_size)
+        embeddings = Node2Vec(edges, context_size=context_size, backtrack_prob=backtrack_probability)
         self.data.set_embeddings(embeddings)
 
 class CreateTitleIndex(Job):
