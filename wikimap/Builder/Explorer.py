@@ -1,11 +1,15 @@
 import os
 from .. import Utils
 from ..Paths import ConcretePaths as Paths
+from ..Data import Data
 
 class BuildExplorer(object):
     def __init__(self, builds_dir, build_prefix):
         self._builds_dir = builds_dir
         self._build_prefix = build_prefix
+
+    def get_build_name(self, build_index):
+        return os.path.basename(self.get_build_dir(build_index))
 
     def get_build_dir(self, build_index):
         if build_index == -1:
@@ -25,6 +29,9 @@ class BuildExplorer(object):
             return Utils.load_dict(paths.config)
         else:
             return {}
+
+    def get_data(self, build_index):
+        return Data(self.get_paths(build_index))
 
     def get_paths(self, build_index):
         return Paths(self.get_build_dir(build_index))

@@ -179,6 +179,9 @@ class Data(object):
     def get_evaluation_results_as_table(self):
         return Tables.EvaluationReport(self.P.evaluation_report).get_pretty_table()
 
+    def get_evaluation_scores(self):
+        return Tables.EvaluationReport(self.P.evaluation_report).get_evaluation_scores()
+
     def set_pages(self, pages):
         pages_table = Tables.PageTable(self.P.pages)
         pages_table.create()
