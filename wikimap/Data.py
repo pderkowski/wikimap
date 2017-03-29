@@ -180,7 +180,10 @@ class Data(object):
         return Tables.EvaluationReport(self.P.evaluation_report).get_pretty_table()
 
     def get_evaluation_scores(self):
-        return Tables.EvaluationReport(self.P.evaluation_report).get_evaluation_scores()
+        return Tables.EvaluationReport(self.P.evaluation_report).get_scores()
+
+    def get_evaluation_test_names(self):
+        return Tables.EvaluationReport(self.P.evaluation_report).get_test_names()
 
     def set_pages(self, pages):
         pages_table = Tables.PageTable(self.P.pages)

@@ -90,8 +90,11 @@ class EvaluationReport(object):
         rows = [[row[f] for f in EvaluationReport.field_names] for row in self]
         return make_table(EvaluationReport.short_field_names, rows, ['l', 'l', 'l', 'r', 'r', 'r'], float_format='.3')
 
-    def get_evaluation_scores(self):
+    def get_scores(self):
         return [(row['name'], row['score']) for row in self]
+
+    def get_test_names(self):
+        return [row['name'] for row in self]
 
     def _map_types(self, rows):
         for row in rows:
