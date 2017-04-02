@@ -1,3 +1,3 @@
 from Explorer import BuildExplorer
 from Creator import BuildCreator
-from ReportCreator import ReportCreator
+from Report import Report, ReportConfig

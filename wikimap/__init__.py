@@ -1,1 +1,1 @@
-from Builder import BuildExplorer, BuildCreator, ReportCreator
+from Builder import BuildExplorer, BuildCreator, Report, ReportConfig
