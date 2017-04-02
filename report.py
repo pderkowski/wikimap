@@ -2,32 +2,31 @@
 
 import argparse
 import os
-import sys
 from wikimap import Utils, ReportCreator
+
+def get_config(args):
+    config = Utils.Config.from_string(args.config.read())
+    config.validate(
+        required=[('name', str), ('dest_dir', str), ('indices', str), ('builds_dir', str), ('build_prefix', str)],
+        optional=[('included_tests', list)]
+    )
+    config['dest_dir'] = os.path.realpath(config['dest_dir'])
+    config['dest_path'] = os.path.join(config['dest_dir'], config['name'])
+    config['indices'] = Utils.parse_int_range(config['indices'])
+    return config
 
 def main():
     logger = Utils.get_logger(__name__)
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--buildpath', '-b', dest='buildpath', type=str, default=os.environ.get("WIKIMAP_BUILDPATH", None),
-        help="Specify a directory where builds are located. Can also be set by WIKIMAP_BUILDPATH environment variable.")
-    parser.add_argument('--reportpath', '-r', dest='reportpath', type=str, default=os.environ.get("WIKIMAP_REPORTPATH", None),
-        help="Specify a path for the report. Can also be set by WIKIMAP_REPORTPATH environment variable.")
-    parser.add_argument('--prefix', '-p', dest='prefix', type=str, default='build',
-        help="Specify a prefix of subdirectories inside the builds directory.")
-    parser.add_argument('indices', type=Utils.parse_int_range,
-        help="Specify the indices of builds to include in the report.")
+    parser.add_argument('config', type=argparse.FileType('r'),
+        help="Specify a configuration file.")
     args = parser.parse_args()
 
-    if not args.buildpath:
-        sys.exit("Specify the build path, using --buildpath (-b) option or by setting the WIKIMAP_BUILDPATH environment variable.")
-
-    if not args.reportpath:
-        sys.exit("Specify the report path, using --reportpath (-r) option or by setting the WIKIMAP_REPORTPATH environment variable.")
-
     try:
-        creator = ReportCreator(args.buildpath, args.prefix)
-        creator.make_plot(args.indices, args.reportpath)
+        config = get_config(args)
+        creator = ReportCreator(config['builds_dir'], config['build_prefix'])
+        creator.create(config['indices'], config['dest_path'], included_tests=config['included_tests'])
     except Exception, e:
         logger.exception(e)
         raise

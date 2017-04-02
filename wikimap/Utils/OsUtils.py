@@ -26,20 +26,23 @@ def make_links(path_pairs):
     for src, dst in path_pairs:
         make_link(src, dst)
 
+def make_dir_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
 def make_link(src, dst):
     try:
         link_directory(src, dst)
     except OSError as exc: # python >2.5
         if exc.errno == errno.ENOTDIR:
-            if not os.path.exists(os.path.dirname(dst)):
-                os.makedirs(os.path.dirname(dst))
+            make_dir_if_not_exists(os.path.dirname(dst))
             if not os.path.exists(dst):
                 os.link(src, dst)
         else: raise
 
 def link_directory(src, dst):
     names = os.listdir(src)
-    os.makedirs(dst)
+    make_dir_if_not_exists(dst)
     errors = []
     for name in names:
         srcname = os.path.join(src, name)
