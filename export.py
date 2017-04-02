@@ -7,18 +7,17 @@ from wikimap import Utils, BuildExplorer
 
 def export(files, dest_dir):
     dest_dir = os.path.realpath(dest_dir)
-    print 'EXPORTING RESULTS TO {}'.format(dest_dir)
-    if not os.path.isdir(dest_dir):
-        os.makedirs(dest_dir)
-    Utils.clear_directory(dest_dir)
-    Utils.pack(files, dest_dir, 'build.tar.gz')
+    dest_path = os.path.join(dest_dir, 'build.tar.gz')
+    print 'EXPORTING RESULTS TO {}'.format(dest_path)
+    Utils.make_dir_if_not_exists(dest_dir)
+    if os.path.exists(dest_path):
+        os.unlink(dest_path)
+    Utils.pack(files, dest_dir, dest_path)
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--buildpath', '-b', dest='buildpath', type=str, default=os.environ.get("WIKIMAP_BUILDPATH", None),
         help="Specify a directory where builds are located. Can also be set by WIKIMAP_BUILDPATH environment variable.")
-    parser.add_argument('--exportpath', '-e', dest='exportpath', type=str, default=os.environ.get("WIKIMAP_EXPORTPATH", None),
-        help="Specify a directory to which files should be exported. Can also be set by WIKIMAP_EXPORTPATH environment variable.")
     parser.add_argument('--prefix', '-p', dest='prefix', type=str, default='build',
         help="Specify a prefix of subdirectories inside the builds directory.")
     parser.add_argument('--index', '-i', dest='build_index', default=-1, type=int,
@@ -28,13 +27,12 @@ def main():
     if not args.buildpath:
         sys.exit("Specify the build path, using --buildpath (-b) option or by setting the WIKIMAP_BUILDPATH environment variable.")
 
-    if not args.exportpath:
-        sys.exit("Specify the export path, using --exportpath (-e) option or by setting the WIKIMAP_EXPORTPATH environment variable.")
+    export_dir = './bin'
 
     build_explorer = BuildExplorer(args.buildpath, args.prefix)
     P = build_explorer.get_paths(args.build_index)
     exported_files = [P.wikimap_points, P.wikimap_categories, P.zoom_index, P.metadata, P.aggregated_inlinks, P.aggregated_outlinks]
-    export(exported_files, args.exportpath)
+    export(exported_files, export_dir)
 
 if __name__ == '__main__':
     Utils.config_logging(log_length="minimal")
