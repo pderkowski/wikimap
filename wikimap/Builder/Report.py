@@ -2,7 +2,7 @@
 
 import os
 import ast
-from Explorer import BuildExplorer
+from Extractor import DataExtractor
 import plotly
 from plotly.graph_objs import Scatter, Layout, Figure
 from .. import Utils
@@ -19,7 +19,9 @@ class ReportConfig(object):
         if not isinstance(config, dict):
             raise InvalidConfigException('Expected a dict.')
 
+        self._logger = Utils.get_logger(__name__)
         self._config = dict(config)
+
 
         required_args = [
             ('filename', str, None),
@@ -29,8 +31,9 @@ class ReportConfig(object):
             ('build_prefix', str, None)
         ]
         optional_args = [
-            ('included_tests', (list, str), 'all'),
-            ('title', str, 'No title')
+            ('tests', (list, str), 'all'),
+            ('title', str, 'No title'),
+            ('best_builds_per_test', int, 10)
         ]
 
         self._check_if_present(required_args)
@@ -41,9 +44,8 @@ class ReportConfig(object):
         self._config['dest_path'] = os.path.join(self._config['dest_dir'], self._config['filename'])
         self._config['indices'] = Utils.parse_int_range(self._config['indices'])
 
-        if self._config['included_tests'] == 'all':
-            self._config['included_tests'] = self._get_all_test_names()
-
+        if self._config['tests'] == 'all':
+            self._config['tests'] = DataExtractor(self._config['builds_dir'], self._config['build_prefix']).get_test_names(self._config['indices'])
 
     def _check_if_present(self, args):
         for (arg_name, _1, _2) in args:
@@ -61,14 +63,6 @@ class ReportConfig(object):
                 raise InvalidConfigException("Wrong type of parameter '{}'. Expected {}, got {}.".format(
                     arg_name, str(arg_type), str(type(self._config[arg_name]))))
 
-    def _get_all_test_names(self):
-        build_explorer = BuildExplorer(self._config['builds_dir'], self._config['build_prefix'])
-        test_names = set([])
-        for i in self._config['indices']:
-            names = build_explorer.get_data(i).get_evaluation_test_names()
-            test_names.update(names)
-        return sorted(list(test_names))
-
     def __getitem__(self, key):
         return self._config[key]
 
@@ -78,56 +72,66 @@ class ReportConfig(object):
     def get(self):
         return self._config
 
+class Selection(object):
+    def __init__(self, config):
+        self._config = config
+
+    def apply_to(self, data):
+        data = self._select_n_best_per_test(data)
+        return data
+
+    def _select_n_best_per_test(self, data):
+        n = self._config['best_builds_per_test']
+        selected = set()
+        for col in data.columns:
+            best = data.nlargest(n, col).index.tolist()
+            selected.update(best)
+        selected = sorted(list(selected))
+        return data.filter(items=selected, axis='index')
 
 class Report(object):
     def __init__(self, config):
+        self._logger = Utils.get_logger(__name__)
         self._config = config
-        self._build_explorer = BuildExplorer(self._config['builds_dir'], self._config['build_prefix'])
+        self._extractor = DataExtractor(self._config['builds_dir'], self._config['build_prefix'])
 
     def create(self):
-        logger = Utils.get_logger(__name__)
-        logger.info(Utils.thick_line_separator)
-        logger.info('Generating report: {}'.format(self._config['title']))
-        logger.info(Utils.thick_line_separator)
+        self._logger.info(Utils.thick_line_separator)
+        self._logger.info('Generating report: {}'.format(self._config['title']))
+        self._logger.info(Utils.thin_line_separator)
 
-        data = self._select_data()
-        self._plot(data)
+        self._logger.info('Config:')
+        for arg, val in sorted(self._config.get().iteritems()):
+            self._logger.info(' {}: {}'.format(arg, repr(val)))
+        self._logger.info(Utils.thin_line_separator)
 
-    def _select_data(self):
-        def filter_tests(series):
-            series['test_scores'] = [(name, score) for name, score in series['test_scores'] if name in self._config['included_tests']]
-            return series
+        data = self._extractor.get_test_scores(self._config['indices'], self._config['tests'])
+        selected_data = Selection(self._config).apply_to(data)
 
-        data_series = self._get_data_series()
-        return [filter_tests(s) for s in data_series]
+        self._logger.info('Data:')
+        self._logger.info(selected_data)
+        self._logger.info(Utils.thin_line_separator)
 
-    def _get_data_series(self):
-        build_explorer = BuildExplorer(self._config['builds_dir'], self._config['build_prefix'])
-        series = []
-        for index in self._config['indices']:
-            series.append({
-                'name': build_explorer.get_build_name(index),
-                'test_scores': sorted(build_explorer.get_data(index).get_evaluation_scores(), key=lambda x: x[0])
-            })
-        return series
+        self._plot(selected_data)
+
+        self._logger.info(Utils.thick_line_separator)
 
     def _plot(self, data):
-        logger = Utils.get_logger(__name__)
-
         traces = [
             Scatter(
-                name=series['name'],
-                x=[s[0] for s in series['test_scores']],
-                y=[s[1] for s in series['test_scores']]
-            ) for series in data
+                name=name,
+                x=data.columns,
+                y=scores
+            ) for name, scores in data.iterrows()
         ]
 
         layout = Layout(
-            title=self._config['title']
+            title=self._config['title'],
+            hovermode='closest'
         )
 
         figure = Figure(data=traces, layout=layout)
 
         Utils.make_dir_if_not_exists(os.path.dirname(self._config['dest_path']))
         plotly.offline.plot(figure, filename=self._config['dest_path'])
-        logger.info('Saving report to {}'.format(self._config['dest_path']))
+        self._logger.info('Saving report to {}'.format(self._config['dest_path']))

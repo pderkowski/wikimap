@@ -58,4 +58,3 @@ class BuildExplorer(object):
     def _get_index_of_build(self, build_dir):
         suffix = build_dir[len(self._build_prefix):]
         return int(suffix)
-
