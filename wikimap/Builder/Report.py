@@ -33,7 +33,8 @@ class ReportConfig(object):
         optional_args = [
             ('tests', (list, str), 'all'),
             ('title', str, 'No title'),
-            ('best_builds_per_test', int, 10)
+            ('best_builds_per_test', int, 10),
+            ('tooltip', list, [])
         ]
 
         self._check_if_present(required_args)
@@ -121,7 +122,8 @@ class Report(object):
             Scatter(
                 name=name,
                 x=data.columns,
-                y=scores
+                y=scores,
+                text=self._make_tooltip(name)
             ) for name, scores in data.iterrows()
         ]
 
@@ -135,3 +137,8 @@ class Report(object):
         Utils.make_dir_if_not_exists(os.path.dirname(self._config['dest_path']))
         plotly.offline.plot(figure, filename=self._config['dest_path'])
         self._logger.info('Saving report to {}'.format(self._config['dest_path']))
+
+    def _make_tooltip(self, build_name):
+        build_config = [(config_arg, self._extractor.get_config_value(build_name, config_arg)) for config_arg in self._config['tooltip']]
+        build_config_strings = ['{}: {}'.format(a, v) for a, v in build_config]
+        return '\n'.join(build_config_strings)

@@ -22,3 +22,6 @@ class DataExtractor(BuildExplorer):
             scores = dict(self.get_data(index).get_evaluation_scores())
             series.append([scores[t] for t in test_names])
         return DataFrame(data=series, index=builds, columns=test_names)
+
+    def get_config_value(self, build, config_arg_name):
+        return self.get_config(build)[config_arg_name]

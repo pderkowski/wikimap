@@ -2,7 +2,6 @@
 
 import argparse
 import run
-from collections import defaultdict
 from wikimap import Utils
 from pprint import pprint
 from tempfile import NamedTemporaryFile

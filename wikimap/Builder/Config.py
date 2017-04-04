@@ -37,3 +37,6 @@ class BuildConfig(object):
 
     def __str__(self):
         return pformat(self._config)
+
+    def __getitem__(self, key):
+        return self._config[key]
