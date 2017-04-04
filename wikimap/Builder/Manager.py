@@ -2,12 +2,15 @@ import sys
 import os
 from Planner import BuildPlanner
 from .. import Utils
-from pprint import pformat
 from Job import Properties
+from Build import Build
+from Config import BuildConfig
+from ..Paths import AbstractPaths as Paths
 
 class BuildManager(object):
     def __init__(self, build):
         self._build = build
+        self._logger = Utils.get_logger(__name__)
 
     def plan(self, target_jobs, forced_jobs):
         forced_jobs = set(forced_jobs)
@@ -17,28 +20,37 @@ class BuildManager(object):
             self._build[job].properties.append(Properties.Forced)
 
         planner = BuildPlanner(self._build)
-        included_jobs = planner.get_included_jobs(target_jobs)
-        self._build.filter_jobs(included_jobs)
+        included_jobs_nums = planner.get_included_jobs(target_jobs)
+        self._build = Build([job for job in self._build if job.number in included_jobs_nums])
 
     def configure(self, config):
-        self._build.set_custom_config(config)
+        for job in self._build:
+            job_config = config.get_job_config(job.alias)
+            job.configure(job_config)
 
     def run(self, prev_config, prev_build_dir, new_build_dir):
-        BuildRunner(self._build, prev_config, prev_build_dir, new_build_dir).run()
+        new_config = BuildConfig.from_build(self._build)
+        BuildRunner(self._build, prev_config, prev_build_dir, new_build_dir, new_config).run()
+
+    def print_jobs(self):
+        self._logger.info('\n\n'+self._build.get_job_list_str()+'\n')
+
+    def print_config(self):
+        self._logger.info('\n\n'+str(BuildConfig.from_build(self._build))+'\n')
 
 class BuildRunner(object):
-    def __init__(self, build, prev_config, prev_build_dir, new_build_dir):
+    def __init__(self, build, prev_config, prev_build_dir, new_build_dir, new_config):
         self._logger = Utils.get_logger(__name__)
         self._build = build
         self._prev_config = prev_config
         self._prev_build_dir = prev_build_dir
         self._new_build_dir = new_build_dir
+        self._new_config = new_config
         self._changed_files = set()
 
     def run(self):
         self._logger.important('STARTING BUILD IN {}'.format(self._new_build_dir))
-        self._logger.important('CUSTOM BUILD CONFIG:\n{}'.format(pformat(self._build.get_custom_config())))
-        self._logger.info('FULL BUILD CONFIG:\n{}'.format(pformat(self._build.get_full_config())))
+        self._logger.info('BUILD CONFIG:\n{}'.format(self._new_config))
         self._logger.important(Utils.thin_line_separator)
         try:
             for i, job in enumerate(self._build):
@@ -57,8 +69,9 @@ class BuildRunner(object):
             self._logger.exception("Unexpected error: {}".format(sys.exc_info()[0]))
             raise
         finally:
-            self._build.print_summary()
-            self._build.print_logs()
+            self._new_config.save(Paths.config(self._new_build_dir))
+            self._logger.info('\n\n'+self._build.get_summary_str()+'\n')
+            self._print_job_logs()
 
     def _run_job(self, job):
         self._changed_files.update(job.outputs(self._new_build_dir))
@@ -81,10 +94,15 @@ class BuildRunner(object):
         return any(input_ in self._changed_files for input_ in job.inputs(self._new_build_dir))
 
     def _config_changed(self, job):
-        previous_build_config = self._prev_config.get(job.name, {})
-        current_build_config = job.config
+        previous_build_config = self._prev_config.get_job_config(job.alias)
+        current_build_config = self._new_config.get_job_config(job.alias)
         return previous_build_config != current_build_config
 
     def _log_job_action(self, job_action, job_build_order, job_name):
         format_str = '{{}} JOB [{{:{}}}/{{}}]: {{}}'.format(Utils.get_number_width(len(self._build)))
         self._logger.important(format_str.format(job_action, (job_build_order + 1), len(self._build), job_name))
+
+    def _print_job_logs(self):
+        for job in self._build:
+            if len(job.logs) > 0:
+                self._logger.info(job.name+' LOGS:\n'+'\n'.join(job.logs)+'\n')

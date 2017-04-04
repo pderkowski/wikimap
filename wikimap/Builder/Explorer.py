@@ -2,6 +2,7 @@ import os
 from .. import Utils
 from ..Paths import ConcretePaths as Paths
 from ..Data import Data
+from Config import BuildConfig
 
 class BuildExplorer(object):
     def __init__(self, builds_dir, build_prefix):
@@ -26,7 +27,7 @@ class BuildExplorer(object):
     def get_config(self, build_index):
         if self.has_build_dir(build_index):
             paths = self.get_paths(build_index)
-            return Utils.load_dict(paths.config)
+            return BuildConfig.from_path(paths.config)
         else:
             return {}
 

@@ -4,11 +4,9 @@ from Job import Job
 
 class Build(object):
     def __init__(self, jobs):
-        self._logger = Utils.get_logger(__name__)
         self._jobs = jobs
         for i, job in enumerate(self._jobs):
             job.number = i
-        self._custom_config = {}
 
     def __iter__(self):
         return iter(self._jobs)
@@ -20,19 +18,10 @@ class Build(object):
             try:
                 return self._get_job_by_name(key)
             except KeyError:
-                return self._get_job_by_tag(key)
+                return self._get_job_by_alias(key)
 
     def __len__(self):
         return len(self._jobs)
-
-    def get_full_config(self):
-        config = {}
-        for job in self._jobs:
-            config[job.name] = job.config
-        return config
-
-    def get_custom_config(self):
-        return self._custom_config
 
     def _get_job_by_name(self, key):
         for job in self._jobs:
@@ -40,11 +29,11 @@ class Build(object):
                 return job
         raise KeyError('No job found with a given name.')
 
-    def _get_job_by_tag(self, key):
+    def _get_job_by_alias(self, key):
         for job in self._jobs:
-            if job.tag == key:
+            if job.alias == key:
                 return job
-        raise KeyError('No job found with a given tag.')
+        raise KeyError('No job found with a given alias.')
 
     def _get_job_by_number(self, key):
         for job in self._jobs:
@@ -52,7 +41,7 @@ class Build(object):
                 return job
         raise KeyError('No job found with a given number.')
 
-    def print_summary(self):
+    def get_summary_str(self):
         outcome_2_color = {
             Job.SUCCESS: Colors.GREEN,
             Job.FAILURE: Colors.RED,
@@ -69,19 +58,7 @@ class Build(object):
                 Utils.format_duration(job.duration))
 
         rows = [make_summary_row(job) for job in self]
-        table = Utils.make_table(('#', 'JOB NAME', 'OUTCOME', 'DURATION'), rows, ('r', 'l', 'c', 'c'))
-        self._logger.info('\n\n'+table+'\n')
+        return Utils.make_table(('#', 'JOB NAME', 'OUTCOME', 'DURATION'), rows, ('r', 'l', 'c', 'c'))
 
-    def print_logs(self):
-        for job in self:
-            if len(job.logs) > 0:
-                self._logger.info(job.name+' LOGS:\n'+'\n'.join(job.logs)+'\n')
-
-    def filter_jobs(self, included_jobs):
-        self._jobs = [job for job in self if job.number in included_jobs]
-
-    def set_custom_config(self, config):
-        for job_name, job_config in config.iteritems():
-            job = self[job_name]
-            job.set_config(job_config)
-        self._custom_config = config
+    def get_job_list_str(self):
+        return Utils.make_table(['#', 'ALIAS', 'JOB NAME'], [[str(job.number), job.alias, job.name] for job in self], ['r', 'l', 'l'])

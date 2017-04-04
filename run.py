@@ -5,13 +5,8 @@ import sys
 import argparse
 from wikimap import Utils, BuildCreator
 
-def list_jobs(build):
-    print Utils.make_table(['#', 'TAG', 'JOB NAME'], [[str(job.number), job.tag, job.name] for job in build], ['r', 'l', 'l'])
-
 def main(argv):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--list', '-l', dest='list_jobs', action='store_true',
-        help="Print a list of jobs included in the build.")
     parser.add_argument('--target', '-t', dest='target_jobs', type=str, default='*',
         help="Specify which jobs to perform. All of their dependencies will also be included.")
     parser.add_argument('--forced', '-f', dest='forced_jobs', type=str, default='',
@@ -26,6 +21,10 @@ def main(argv):
         help="Choose the index of a 'base' build. By default the last one will be used.")
     parser.add_argument('--config', '-c', dest='config', type=argparse.FileType('r'),
         help="Specify a configuration file. Its values will overwrite default parameters of jobs.")
+    parser.add_argument('--print-config', action='store_true',
+        help="Print the full configuration of the build.")
+    parser.add_argument('--print-jobs', action='store_true',
+        help="Print a list of jobs included in the build.")
 
     args = parser.parse_args(argv)
 
@@ -41,8 +40,10 @@ def main(argv):
         forced_jobs=args.forced_jobs,
         config=args.config.read() if args.config else r"{}")
 
-    if args.list_jobs:
-        list_jobs(build_creator.get_build())
+    if args.print_jobs:
+        build_creator.print_jobs()
+    elif args.print_config:
+        build_creator.print_config()
     else:
         build_creator.run()
 

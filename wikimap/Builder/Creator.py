@@ -1,10 +1,9 @@
 import os
-from .. import Utils
 from ..Builds import Builds
-from ..Paths import AbstractPaths as Paths
 from Explorer import BuildExplorer
 from Manager import BuildManager
 from ArgumentParser import BuildArgumentParser
+from Config import BuildConfig
 
 class BuildCreator(BuildExplorer):
     def __init__(self, builds_dir, build_prefix, base_build_index, language, target_jobs, forced_jobs, config):
@@ -12,26 +11,24 @@ class BuildCreator(BuildExplorer):
 
         self._base_build_index = base_build_index
 
-        self._build = Builds[language]
-        self._manager = BuildManager(self._build)
+        build = Builds[language]
+        self._manager = BuildManager(build)
 
-        parser = BuildArgumentParser(self._build)
-
+        parser = BuildArgumentParser(build)
         target_jobs = parser.parse_job_ranges(target_jobs)
         forced_jobs = parser.parse_job_ranges(forced_jobs)
-        config = parser.parse_config(config)
-
         self._manager.plan(target_jobs, forced_jobs)
-        self._manager.configure(config)
+
+        self._manager.configure(BuildConfig.from_string(config))
 
     def run(self):
-        try:
-            self._manager.run(prev_config=self._get_base_config(), prev_build_dir=self._get_base_build_dir(), new_build_dir=self._make_new_build_dir())
-        finally:
-            self._save_config(self._build.get_full_config())
+        self._manager.run(prev_config=self._get_base_config(), prev_build_dir=self._get_base_build_dir(), new_build_dir=self._make_new_build_dir())
 
-    def get_build(self):
-        return self._build
+    def print_jobs(self):
+        self._manager.print_jobs()
+
+    def print_config(self):
+        self._manager.print_config()
 
     def _get_base_build_dir(self):
         return self.get_build_dir(self._base_build_index or self._get_last_build_index())
@@ -42,9 +39,6 @@ class BuildCreator(BuildExplorer):
     def _get_new_build_index(self):
         last = self._get_last_build_index()
         return 0 if last is None else last + 1
-
-    def _save_config(self, config):
-        Utils.save_dict(Paths.config(self.get_last_build_dir()), config)
 
     def _make_new_build_dir(self):
         new_build_dir = os.path.join(self._builds_dir, self._build_prefix + str(self._get_new_build_index()))

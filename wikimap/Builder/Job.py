@@ -38,13 +38,13 @@ class Job(object):
     WARNING = 'WARNING'
     NOT_RUN = 'NOT RUN'
 
-    def __init__(self, name, tag="", inputs=None, outputs=None, **kwargs):
+    def __init__(self, name, alias="", inputs=None, outputs=None, **kwargs):
         self.name = name
         self.number = -1
         self.inputs = AbstractPathGroup(inputs or [])
         self.outputs = AbstractPathGroup(outputs or [])
 
-        self.tag = tag
+        self.alias = alias
         self.config = kwargs
         self.duration = 0
         self.outcome = Job.NOT_RUN
@@ -92,9 +92,7 @@ class Job(object):
     def skip(self):
         self.outcome = Job.SKIPPED
 
-    def set_config(self, config):
-        if not isinstance(config, dict):
-            raise InvalidConfig('Expected dict, got: {}'.format(type(config)))
+    def configure(self, config):
         for arg_name, arg_value in config.iteritems():
             try:
                 self.config[arg_name] = arg_value

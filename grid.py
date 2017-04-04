@@ -6,6 +6,7 @@ from collections import defaultdict
 from wikimap import Utils
 from pprint import pprint
 from tempfile import NamedTemporaryFile
+from itertools import imap
 
 class GridSearch(object):
     def __init__(self, grid_config):
@@ -16,10 +17,10 @@ class GridSearch(object):
             assert arg_name.count('.') == 1, "Nested and unnamed arguments not allowed. Should be '<job_name>.<job_arg_name>'."
 
     def run(self, run_args):
-        for config_num, flat_config in enumerate(self._iter_configs()):
+        for config_num, config in enumerate(self._iter_configs()):
             with NamedTemporaryFile() as tmp_config_file:
-                formatted_config = self._format_config(flat_config)
-                pprint(formatted_config, tmp_config_file)
+                pprint(config)
+                pprint(config, tmp_config_file)
                 tmp_config_file.flush()
                 self._log_build_start(config_num + 1, self._count_configs())
                 run.main(run_args + ['-c', tmp_config_file.name])
@@ -33,15 +34,7 @@ class GridSearch(object):
                 for value in value_axis:
                     for tail in recursive_iterator(grid[1:]):
                         yield [(key, value)] + tail
-        return iter(recursive_iterator(self._grid_config))
-
-    def _format_config(self, flat_config):
-        formatted_config = defaultdict(dict)
-        for arg_name, arg_value in flat_config:
-            arg_name_parts = arg_name.split('.')
-            job_name, job_arg_name = arg_name_parts
-            formatted_config[job_name][job_arg_name] = arg_value
-        return dict(formatted_config)
+        return imap(dict, iter(recursive_iterator(self._grid_config)))
 
     def _count_configs(self):
         return sum(1 for _ in self._iter_configs())

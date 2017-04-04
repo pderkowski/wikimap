@@ -3,8 +3,6 @@ import urllib
 import tarfile
 import tempfile
 from time import time
-import ast
-import pprint
 import LogUtils
 
 def download(url, output_path):
@@ -32,11 +30,3 @@ class SimpleTimer(object):
 
     def __call__(self):
         return time() - self._start
-
-def load_dict(path):
-    with open(path, 'r') as f:
-        return ast.literal_eval(f.read()) # literal_eval only evaluates basic types instead of arbitrary code
-
-def save_dict(path, dict_):
-    with open(path, 'w') as f:
-        pprint.pprint(dict_, f)
