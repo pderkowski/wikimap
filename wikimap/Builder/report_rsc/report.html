@@ -22,6 +22,9 @@
         text-overflow: ellipsis;
         max-width: 100px;
       }
+      .col-max {
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
@@ -29,6 +32,7 @@
     <div id='table-container'> {{ table|safe }} </div>
     <!-- page content -->
     <script>
+      // set tooltips
       var tooltips = {{ tooltips|safe }};
       $('#table-container tbody th')
         .each(function () {
@@ -39,16 +43,27 @@
             }
           });
         });
-      // $(function () {
-      //   $('#table-container td, #table-container th')
-      //     .each(function() {
-      //       var text = $(this).text();
-      //       $(this)
-      //         .append('<span class="text-truncate">'+text+'</span>') // move text from cells to span
-      //         .contents().filter(function () { return this.nodeType == 3; }).remove(); // remove original text
-      //     });
-      // });
+
+      // add table sort
       new Tablesort(document.getElementsByClassName('table')[0]);
+
+      // bold highest in column
+      $(function(){
+        var cols = []
+        var trs = $('#table-container tbody tr')
+        var data =$.each(trs, function(index, tr) {
+          $.each($(tr).find("td"), function(index, td){
+            cols[index] = cols[index] || [];
+            cols[index].push($(td).text())
+          })
+        });
+        cols.forEach(function(col, index){
+          var max = Math.max.apply(null, col);
+          $('#table-container tbody tr').find('td:eq('+index+')').each(function(i, td){
+            $(td).toggleClass('col-max', +$(td).text() === max)
+          })
+        })
+      })
     </script>
   </body>
 </html>
