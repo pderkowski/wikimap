@@ -149,9 +149,9 @@ class Report(object):
         return data.to_html(classes='table table-bordered', float_format="{:.3f}".format)
 
     def _render_report(self, plot_html, table_html):
-        templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+        resources_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'report_rsc')
         env = Environment(
-            loader=FileSystemLoader(templates_path),
+            loader=FileSystemLoader(resources_path),
             autoescape=select_autoescape(['html', 'xml'])
         )
 
