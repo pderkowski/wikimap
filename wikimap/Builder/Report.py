@@ -117,17 +117,27 @@ class Report(object):
 
         plot_html = self._make_plot(selected_data)
         table_html = self._make_table(selected_data)
-        self._render_report(plot_html, table_html)
+        tooltips = self._make_tooltips(selected_data)
+        self._render_report(plot_html, table_html, tooltips)
 
         self._logger.info(Utils.thick_line_separator)
 
+    def _make_tooltips(self, data):
+        tooltips = {}
+        for name, _ in data.iterrows():
+            build_config = [(config_arg, self._extractor.get_config_value(name, config_arg)) for config_arg in self._config['tooltip']]
+            build_config_strings = ['{}: {}'.format(a, v) for a, v in build_config]
+            tooltips[name] = '\n'.join(build_config_strings)
+        return tooltips
+
     def _make_plot(self, data):
+        tooltips = self._make_tooltips(data)
         traces = [
             Scatter(
                 name=name,
                 x=data.columns,
                 y=scores,
-                text=self._make_tooltip(name)
+                text=tooltips[name]
             ) for name, scores in data.iterrows()
         ]
 
@@ -140,15 +150,10 @@ class Report(object):
 
         return plotly.offline.plot(figure, output_type='div')
 
-    def _make_tooltip(self, build_name):
-        build_config = [(config_arg, self._extractor.get_config_value(build_name, config_arg)) for config_arg in self._config['tooltip']]
-        build_config_strings = ['{}: {}'.format(a, v) for a, v in build_config]
-        return '\n'.join(build_config_strings)
-
     def _make_table(self, data):
         return data.to_html(classes='table table-bordered', float_format="{:.3f}".format)
 
-    def _render_report(self, plot_html, table_html):
+    def _render_report(self, plot_html, table_html, tooltips):
         resources_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'report_rsc')
         env = Environment(
             loader=FileSystemLoader(resources_path),
@@ -159,4 +164,4 @@ class Report(object):
         with open(self._config['dest_path'], 'w') as output:
             Utils.make_dir_if_not_exists(os.path.dirname(self._config['dest_path']))
             self._logger.info('Saving report to {}'.format(self._config['dest_path']))
-            template.stream(plot=plot_html, table=table_html).dump(output)
+            template.stream(plot=plot_html, table=table_html, tooltips=json.dumps(tooltips)).dump(output)

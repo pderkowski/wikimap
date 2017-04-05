@@ -10,8 +10,8 @@
         src="https://code.jquery.com/jquery-3.2.1.min.js"
         integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
         crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script> {% include 'tablesort.min.js' %} </script>
-    <!-- <script src="script.js"></script> -->
     <style>
       .table th, .table td {
         text-align: center;
@@ -29,6 +29,16 @@
     <div id='table-container'> {{ table|safe }} </div>
     <!-- page content -->
     <script>
+      var tooltips = {{ tooltips|safe }};
+      $('#table-container tbody th')
+        .each(function () {
+          $(this).tooltip({
+            container: 'body',
+            title: function () {
+              return tooltips[$(this).text()];
+            }
+          });
+        });
       // $(function () {
       //   $('#table-container td, #table-container th')
       //     .each(function() {
@@ -38,7 +48,7 @@
       //         .contents().filter(function () { return this.nodeType == 3; }).remove(); // remove original text
       //     });
       // });
-        new Tablesort(document.getElementsByClassName('table')[0]);
+      new Tablesort(document.getElementsByClassName('table')[0]);
     </script>
   </body>
 </html>
