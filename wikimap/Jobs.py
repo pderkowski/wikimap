@@ -1,5 +1,5 @@
 from Builder.Job import Job
-from Node2Vec import Node2Vec
+from Embeddings import Node2Vec
 import Pagerank
 import TSNE
 import NearestNeighbors
