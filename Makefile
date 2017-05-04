@@ -1,5 +1,4 @@
 export PAGERANKDIR = $(realpath wikimap/Pagerank)
-export PAGERANKTESTDIR = $(realpath $(PAGERANKDIR)/test)
 export TSNEDIR = $(realpath external/bhtsne)
 export SNAPDIR = $(realpath external/snap)
 export GRAPHDIR = $(realpath wikimap/Graph)
@@ -10,9 +9,6 @@ PAGERANKCOMMONSOURCES = $(PAGERANKDIR)/pagerank.cpp
 PAGERANKCOMMONOBJECTS = $(patsubst %.cpp, %.o, $(PAGERANKCOMMONSOURCES))
 PAGERANKBINSOURCES = $(PAGERANKDIR)/run_pagerank.cpp
 PAGERANKBINOBJECTS = $(patsubst %.cpp, %.o, $(PAGERANKBINSOURCES))
-PAGERANKTESTSOURCES = $(wildcard $(PAGERANKTESTDIR)/*.cpp)
-PAGERANKTESTOBJECTS = $(patsubst %.cpp, %.o, $(PAGERANKTESTSOURCES))
-PAGERANKTESTBIN = $(PAGERANKTESTDIR)/run_tests
 PAGERANKBIN = $(PAGERANKDIR)/pagerank
 
 TABLEIMPORTERDIR = wikimap/Tables/TableImporter
@@ -20,7 +16,6 @@ AGGREGATESOURCES = $(GRAPHDIR)/categorygraph.cpp $(GRAPHDIR)/aggregate.cpp
 AGGREGATEOBJECTS = $(patsubst %.cpp, %.o, $(AGGREGATESOURCES))
 AGGREGATEBIN = $(GRAPHDIR)/aggregate
 
-$(PAGERANKTESTOBJECTS) : CXXFLAGS += -I$(PAGERANKDIR) -std=c++11
 $(PAGERANKBIN): CXXFLAGS += -std=c++11
 $(AGGREGATEOBJECTS) : CXXFLAGS += -I$(SNAPDIR)/snap-core -I$(SNAPDIR)/glib-core -std=c++11
 $(AGGREGATEBIN) : CXXFLAGS +=  -fopenmp -lrt
@@ -55,19 +50,14 @@ $(SNAPDIR)/snap-core/Snap.o:
 $(AGGREGATEBIN): $(SNAPDIR)/snap-core/Snap.o $(AGGREGATEOBJECTS)
 	$(CXX) $(CXXFLAGS) -o $(AGGREGATEBIN) $^
 
-$(PAGERANKTESTBIN): $(PAGERANKCOMMONOBJECTS) $(PAGERANKTESTOBJECTS)
-	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -o $(PAGERANKTESTBIN) $^
-
 $(PAGERANKBIN): $(PAGERANKCOMMONOBJECTS) $(PAGERANKBINSOURCES)
 	$(CXX) $(CXXFLAGS) -o $(PAGERANKBIN) $^
 
-test: build $(PAGERANKTESTBIN)
-	./$(PAGERANKTESTBIN)
+test: build
 	python -m unittest discover -s wikimap/ -v
 
 clean:
-	rm -f $(PAGERANKCOMMONOBJECTS) $(PAGERANKTESTBIN) $(PAGERANKBIN) $(PAGERANKTESTOBJECTS) $(PAGERANKBINOBJECTS) $(AGGREGATEOBJECTS) $(AGGREGATEBIN)
+	rm -f $(PAGERANKCOMMONOBJECTS) $(PAGERANKBIN) $(PAGERANKBINOBJECTS) $(AGGREGATEOBJECTS) $(AGGREGATEBIN)
 	cd $(NODE2VECDIR) && $(MAKE) clean
 	cd $(SNAPDIR) && $(MAKE) clean
 	cd $(EDGEARRAYDIR) && $(MAKE) clean
