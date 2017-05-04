@@ -4,7 +4,7 @@ import tempfile
 import logging
 import sys
 
-def Node2Vec(edges, dims, context_size, backtrack_prob, walk_length=80, walks_per_node=10, epochs_count=1, verbose=True):
+def Node2Vec(edges, dims, context_size, backtrack_prob, walks_per_node, walk_length=80, epochs_count=1, verbose=True):
     logger = logging.getLogger(__name__)
     directory = os.path.dirname(os.path.realpath(__file__))
     binPath = os.path.join(directory, "node2vec")
