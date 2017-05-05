@@ -1,13 +1,6 @@
 #include "stdafx.h"
 #include "n2v.h"
-
-TVec<TRnd> makeRnds(int num, int seed) {
-  TVec<TRnd> Rnds;
-  for (int i = 0; i < num; ++i) {
-    Rnds.Add(TRnd(seed + i));
-  }
-  return Rnds;
-}
+#include "random.h"
 
 void node2vec(const PNGraph& InGraph, double BacktrackProb, int Dimensions,
  int WalkLen, int NumWalks, int WinSize, int Iter, bool Verbose,
@@ -19,9 +12,7 @@ void node2vec(const PNGraph& InGraph, double BacktrackProb, int Dimensions,
 
   //Generate random walks
   int64 AllWalks = (int64)NumWalks * NIdsV.Len();
-  TVVec<TInt, int64> WalksVV(AllWalks,WalkLen);
-  TIntV WalkLens(AllWalks);
-  TVec<TRnd> Rnds = makeRnds(omp_get_max_threads(), time(NULL));
+  TVec<TIntV> Walks(AllWalks);
   int64 WalksDone = 0;
   const int64 MaxChunkSize = 1000;
 
@@ -30,18 +21,14 @@ void node2vec(const PNGraph& InGraph, double BacktrackProb, int Dimensions,
   }
 
   for (int64 i = 0; i < NumWalks; i++) {
-    NIdsV.Shuffle(Rnds[0]);
+    NIdsV.Shuffle(ThreadRandom::get());
 #pragma omp parallel for schedule(dynamic, 1)
     for (int64 j = 0; j < NIdsV.Len(); j += MaxChunkSize) {
-      TRnd& ThreadRnd = Rnds[omp_get_thread_num()];
       const int64 ChunkSize = (NIdsV.Len() - j < MaxChunkSize)? (NIdsV.Len() - j) : MaxChunkSize;
       for (int64 k = j; k < j + ChunkSize; ++k) {
         TIntV WalkV;
-        SimulateWalk(InGraph, NIdsV[k], WalkLen, BacktrackProb, ThreadRnd, WalkV);
-        for (int64 l = 0; l < WalkV.Len(); l++) {
-          WalksVV.PutXY(i*NIdsV.Len()+k, l, WalkV[l]);
-        }
-        WalkLens[k] = WalkV.Len();
+        SimulateWalk(InGraph, NIdsV[k], WalkLen, BacktrackProb, WalkV);
+        Walks[i*NIdsV.Len()+k] = WalkV;
       }
 #pragma omp atomic
       WalksDone += ChunkSize;
@@ -59,5 +46,5 @@ void node2vec(const PNGraph& InGraph, double BacktrackProb, int Dimensions,
     printf("\rWalking Progress: 100.00%%\n");fflush(stdout);
   }
   //Learning embeddings
-  LearnEmbeddings(WalksVV, WalkLens, Dimensions, WinSize, Iter, Verbose, Rnds, EmbeddingsHV);
+  LearnEmbeddings(Walks, Dimensions, WinSize, Iter, Verbose, EmbeddingsHV);
 }

@@ -5,7 +5,7 @@
 
 #include "Snap.h"
 #include "backtrackingrandomwalk.h"
-#include "word2vec.h"
+#include "w2v.h"
 
 /// Modified node2vec for unweighted directed graphs
 /// Based on see http://arxiv.org/pdf/1607.00653v1.pdf

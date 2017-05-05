@@ -1,9 +1,9 @@
-#ifndef WORD_2_VEC_H
-#define WORD_2_VEC_H
+#ifndef W2V_H
+#define W2V_H
 
 ///Learns embeddings using SGD, Skip-gram with negative sampling.
-void LearnEmbeddings(TVVec<TInt, int64>& WalksVV, const TIntV& WalkLens, int Dimensions, int WinSize,
- int Iter, bool Verbose, TVec<TRnd>& Rnds, TIntFltVH& EmbeddingsHV);
+void LearnEmbeddings(TVec<TIntV> Sentences, int Dimensions, int WinSize,
+ int Iter, bool Verbose, TIntFltVH& EmbeddingsHV);
 
 //Max x for e^x. Value taken from original word2vec code.
 const int MaxExp = 6;
@@ -18,4 +18,4 @@ const int NegSamN = 5;
 //Learning rate for SGD. Value taken from original word2vec code.
 const double StartAlpha = 0.025;
 
-#endif //WORD_2_VEC_H
+#endif //W2V_H

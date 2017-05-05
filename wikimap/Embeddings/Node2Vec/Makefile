@@ -1,15 +1,20 @@
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
-BIN = node2vec
+COMMONOBJECTS = $(filter-out node2vec.o word2vec.o, $(OBJECTS))
+N2VBIN = node2vec
+W2VBIN = word2vec
 
 CXXFLAGS += -fopenmp -lrt -I$(SNAPDIR)/snap-core -I$(SNAPDIR)/glib-core
 
 .PHONY: clean all
 
-all: $(BIN)
+all: $(N2VBIN) $(W2VBIN)
 
-$(BIN): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $(BIN) $^ $(SNAPDIR)/snap-core/Snap.o
+$(N2VBIN): $(COMMONOBJECTS) node2vec.o
+	$(CXX) $(CXXFLAGS) -o $(N2VBIN) $^ $(SNAPDIR)/snap-core/Snap.o
+
+$(W2VBIN): $(COMMONOBJECTS) word2vec.o
+	$(CXX) $(CXXFLAGS) -o $(W2VBIN) $^ $(SNAPDIR)/snap-core/Snap.o
 
 clean:
-	rm -f $(OBJECTS) $(BIN)
+	rm -f $(OBJECTS) $(N2VBIN) $(W2VBIN)

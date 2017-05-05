@@ -75,8 +75,10 @@ class Embeddings(object):
 
     def train(self, data):
         """
-        Run the specified embedding method. Handle choosing and passing
-        required arguments.
+        Run the specified embedding method.
+
+        This method handles choosing and passing required arguments, depending
+        on the selected embedding method.
 
         `data` is the data to train on.
         """
