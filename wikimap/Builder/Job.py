@@ -38,14 +38,14 @@ class Job(object):
     WARNING = 'WARNING'
     NOT_RUN = 'NOT RUN'
 
-    def __init__(self, name, alias="", inputs=None, outputs=None, **kwargs):
+    def __init__(self, name, alias="", inputs=None, outputs=None):
         self.name = name
         self.number = -1
         self.inputs = AbstractPathGroup(inputs or [])
         self.outputs = AbstractPathGroup(outputs or [])
 
         self.alias = alias
-        self.config = kwargs
+        self.config = {}
         self.duration = 0
         self.outcome = Job.NOT_RUN
         self.properties = []
@@ -65,7 +65,7 @@ class Job(object):
             paths = CheckedPaths(base, (self.inputs + self.outputs)(base))
             self.data = Data(paths)
             with CompletionGuard(self.outputs(base)) as guard:
-                self(**self.config)
+                self()
                 self.outcome = Job.SUCCESS
                 guard.complete()
                 if paths.has_invalid_dependencies():

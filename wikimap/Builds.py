@@ -16,16 +16,16 @@ def english():
         J.ImportRedirectsTable(),
         J.CreateLinkEdgesTable(),
         J.ComputePagerank(),
-        J.ComputeEmbeddings(node_count=1000000, dimensions=128, context_size=10, backtrack_probability=0.5, walks_per_node=10),
+        J.ComputeEmbeddings(),
         J.CreateTitleIndex(),
-        J.EvaluateEmbeddings(use_word_mapping=False),
-        J.ComputeTSNE(point_count=100000),
-        J.ComputeHighDimensionalNeighbors(neighbors_count=10),
-        J.ComputeLowDimensionalNeighbors(neighbors_count=10),
+        J.EvaluateEmbeddings(),
+        J.ComputeTSNE(),
+        J.ComputeHighDimensionalNeighbors(),
+        J.ComputeLowDimensionalNeighbors(),
         J.CreateAggregatedLinksTables(),
         J.CreateWikimapDatapointsTable(),
-        J.CreateWikimapCategoriesTable(depth=1),
-        J.CreateZoomIndex(bucket_size=100)])
+        J.CreateWikimapCategoriesTable(),
+        J.CreateZoomIndex()])
 
 def polish():
     return Build([
@@ -39,14 +39,14 @@ def polish():
         J.ImportCategoryLinksTable(),
         J.CreateLinkEdgesTable(),
         J.ComputePagerank(),
-        J.ComputeEmbeddings(node_count=1000000, dimensions=128, context_size=10, backtrack_probability=0.5, walks_per_node=10),
-        J.ComputeTSNE(point_count=100000),
-        J.ComputeHighDimensionalNeighbors(neighbors_count=10),
-        J.ComputeLowDimensionalNeighbors(neighbors_count=10),
+        J.ComputeEmbeddings(),
+        J.ComputeTSNE(),
+        J.ComputeHighDimensionalNeighbors(),
+        J.ComputeLowDimensionalNeighbors(),
         J.CreateAggregatedLinksTables(),
         J.CreateWikimapDatapointsTable(),
-        J.CreateWikimapCategoriesTable(depth=1),
-        J.CreateZoomIndex(bucket_size=100)])
+        J.CreateWikimapCategoriesTable(),
+        J.CreateZoomIndex()])
 
 Builds = {
     "en": english(),

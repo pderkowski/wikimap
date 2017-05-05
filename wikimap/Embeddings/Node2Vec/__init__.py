@@ -4,7 +4,9 @@ import tempfile
 import logging
 import sys
 
-def Node2Vec(edges, dims, context_size, backtrack_prob, walks_per_node, walk_length=80, epochs_count=1, verbose=True):
+
+def Node2Vec(edges, dimensions, context_size, backtrack_prob, walks_per_node,
+             walk_length=80, epochs_count=1, verbose=True):
     logger = logging.getLogger(__name__)
     directory = os.path.dirname(os.path.realpath(__file__))
     binPath = os.path.join(directory, "node2vec")
@@ -13,7 +15,7 @@ def Node2Vec(edges, dims, context_size, backtrack_prob, walks_per_node, walk_len
 
     args = [binPath,
         "-o:{}".format(tmpOutput.name),
-        "-d:{}".format(str(dims)),
+        "-d:{}".format(str(dimensions)),
         "-l:{}".format(str(walk_length)),
         "-r:{}".format(str(walks_per_node)),
         "-k:{}".format(str(context_size)),
@@ -38,7 +40,7 @@ def Node2Vec(edges, dims, context_size, backtrack_prob, walks_per_node, walk_len
         if line:
             words = line.split()
             embedding = map(float, words[1:])
-            if len(embedding) != dims:
+            if len(embedding) != dimensions:
                 sys.stdout.write(line)
                 raise Exception('Invalid embedding length')
             yield (int(words[0]), embedding)
