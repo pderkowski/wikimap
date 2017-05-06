@@ -35,3 +35,6 @@ def parse_float_range(string):
         return list(np.arange(float(nums[0]), float(nums[1]), float(nums[2])))
     else: # comma case
         return [float(num) for num in string.split(',')]
+
+def parse_comma_separated_strings(string):
+    return string.split(',')
