@@ -9,5 +9,6 @@ env/
 wikimap/Pagerank/pagerank
 wikimap/Pagerank/test/run_tests
 wikimap/Graph/aggregate
-wikimap/Node2Vec/node2vec
+wikimap/Embeddings/Node2Vec/node2vec
+wikimap/Embeddings/Node2Vec/word2vec
 wikimap/Array/testarray
