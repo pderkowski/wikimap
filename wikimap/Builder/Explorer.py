@@ -1,5 +1,4 @@
 import os
-from .. import Utils
 from ..Paths import ConcretePaths as Paths
 from ..Data import Data
 from Config import BuildConfig
@@ -15,13 +14,7 @@ class BuildExplorer(object):
 
     def get_build_dir(self, build):
         index = self._get_index_of_build(build)
-        if index == -1:
-            return self.get_last_build_dir()
-        else:
-            return os.path.join(self._builds_dir, self._build_prefix + str(index))
-
-    def get_last_build_dir(self):
-        return self.get_build_dir(self._get_last_build_index())
+        return os.path.join(self._builds_dir, self._build_prefix + str(index))
 
     def has_build_dir(self, build):
         index = self._get_index_of_build(build)
@@ -29,11 +22,8 @@ class BuildExplorer(object):
 
     def get_config(self, build):
         index = self._get_index_of_build(build)
-        if self.has_build_dir(index):
-            paths = self.get_paths(index)
-            return BuildConfig.from_path(paths.config)
-        else:
-            return BuildConfig({})
+        paths = self.get_paths(index)
+        return BuildConfig.from_path(paths.config)
 
     def get_data(self, build):
         index = self._get_index_of_build(build)
@@ -42,25 +32,6 @@ class BuildExplorer(object):
     def get_paths(self, build):
         index = self._get_index_of_build(build)
         return Paths(self.get_build_dir(index))
-
-    def _get_last_build_index(self):
-        subdirs = Utils.get_subdirs(self._builds_dir)
-        build_subdirs = [d for d in subdirs if d.startswith(self._build_prefix)]
-
-        best_i, best_suffix = None, None
-        for i, s in enumerate(build_subdirs):
-            try:
-                suffix = self._get_index_of_build(s)
-                if best_suffix is None or suffix > best_suffix:
-                    best_i = i
-                    best_suffix = suffix
-            except ValueError:
-                pass
-
-        if best_i is not None:
-            return self._get_index_of_build(build_subdirs[best_i])
-        else:
-            return None
 
     def _get_index_of_build(self, build):
         if isinstance(build, int):
