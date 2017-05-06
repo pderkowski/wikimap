@@ -27,7 +27,8 @@ def _iterate_embeddings(file_, expected_dimensions):
             yield (int(words[0]), embedding)
 
 
-def Word2Vec(sentences, dimensions, context_size, epochs_count, verbose):
+def Word2Vec(sentences, dimensions, context_size, epochs_count, dynamic_window,
+             verbose):
     """Run word2vec on provided sentences."""
     logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ def Word2Vec(sentences, dimensions, context_size, epochs_count, verbose):
     ]
     if verbose:
         args.append('-v')
+    if not dynamic_window:
+        args.append('-f')
 
     process = Popen(args, stdin=PIPE, stdout=sys.stdout, stderr=sys.stderr,
                     bufsize=-1)
@@ -58,7 +61,7 @@ def Word2Vec(sentences, dimensions, context_size, epochs_count, verbose):
 
 
 def Node2Vec(edges, dimensions, context_size, backtrack_prob, walks_per_node,
-             walk_length, epochs_count, verbose):
+             walk_length, epochs_count, dynamic_window, verbose):
     logger = logging.getLogger(__name__)
 
     exec_path = _find_executable('node2vec')
@@ -76,6 +79,8 @@ def Node2Vec(edges, dimensions, context_size, backtrack_prob, walks_per_node,
     ]
     if verbose:
         args.append('-v')
+    if not dynamic_window:
+        args.append('-f')
 
     process = Popen(args, stdin=PIPE, stdout=sys.stdout, stderr=sys.stderr,
                     bufsize=-1)

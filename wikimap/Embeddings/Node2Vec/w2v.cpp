@@ -82,8 +82,9 @@ void InitPosEmb(const TIntV& Vocab, int Dimensions, TVVec<TFlt, int64>& SynPos) 
 }
 
 void TrainModel(const TIntV& WalkV, int Dimensions, int WinSize,
-   const TIntV& KTable, const TFltV& UTable, const TFltV& ExpTable, double Alpha,
-   TVVec<TFlt, int64>& SynNeg, TVVec<TFlt, int64>& SynPos)  {
+    bool DynamicWindow, const TIntV& KTable, const TFltV& UTable,
+    const TFltV& ExpTable, double Alpha, TVVec<TFlt, int64>& SynNeg,
+    TVVec<TFlt, int64>& SynPos)  {
   TFltV Neu1V(Dimensions);
   TFltV Neu1eV(Dimensions);
 
@@ -93,7 +94,12 @@ void TrainModel(const TIntV& WalkV, int Dimensions, int WinSize,
       Neu1V[i] = 0;
       Neu1eV[i] = 0;
     }
-    int Offset = ThreadRandom::get().GetUniDevInt() % WinSize;
+    int Offset;
+    if (DynamicWindow) {
+      Offset = ThreadRandom::get().GetUniDevInt() % WinSize;
+    } else {
+      Offset = 0;
+    }
     for (int a = Offset; a < WinSize * 2 + 1 - Offset; a++) {
       if (a == WinSize) { continue; }
       int64 CurrWordI = WordI - WinSize + a;
@@ -146,7 +152,7 @@ void normalizeEmbeddings(TVVec<TFlt, int64>& SynPos) {
 }
 
 void LearnEmbeddings(TVec<TIntV> Sentences, int Dimensions, int WinSize,
- int Iter, bool Verbose, TIntFltVH& EmbeddingsHV) {
+ int Iter, bool DynamicWindow, bool Verbose, TIntFltVH& EmbeddingsHV) {
   TIntIntH RnmH;
   TIntIntH RnmBackH;
   int64 NNodes = 0;
@@ -209,7 +215,7 @@ void LearnEmbeddings(TVec<TIntV> Sentences, int Dimensions, int WinSize,
 
       const int64 ChunkSize = (Sentences.Len() - i < MaxChunkSize)? (Sentences.Len() - i) : MaxChunkSize;
       for (int64 l = i; l < i + ChunkSize; ++l) {
-        TrainModel(Sentences[l], Dimensions, WinSize, KTable, UTable,
+        TrainModel(Sentences[l], Dimensions, WinSize, DynamicWindow, KTable, UTable,
          ExpTable, Alpha, SynNeg, SynPos);
 
         ChunkTotalLen += Sentences[l].Len();

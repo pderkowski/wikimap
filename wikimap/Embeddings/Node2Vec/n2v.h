@@ -11,6 +11,6 @@
 /// Based on see http://arxiv.org/pdf/1607.00653v1.pdf
 /// Calculates node2vec feature representation for nodes and writes them into EmbeddinsHV
 void node2vec(const PNGraph& InGraph, double BacktrackProb, int Dimensions,
-    int WalkLen, int NumWalks, int WinSize, int Iter, bool Verbose,
-    TIntFltVH& EmbeddingsHV);
+    int WalkLen, int NumWalks, int WinSize, int Iter, bool DynamicWindow,
+    bool Verbose, TIntFltVH& EmbeddingsHV);
 #endif //N2V_H

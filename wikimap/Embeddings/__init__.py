@@ -6,7 +6,7 @@ class Embeddings(object):
 
     def __init__(self, method='node2vec', dimensions=128, epochs_count=1,
                  context_size=10, backtrack_probability=0.5, walks_per_node=10,
-                 walk_length=80, verbose=True):
+                 walk_length=80, dynamic_window=True, verbose=True):
         """
         Choose and validate the model.
 
@@ -30,6 +30,9 @@ class Embeddings(object):
         in a graph used by node2vec.
 
         `walk_length` is a maximum length of a sampled path. Used in node2vec.
+
+        `dynamic_window` controls whether the actual context_size is sampled
+        with context_size being the max possible choice, or fixed to its value
 
         `verbose` - choose whether or not print additional info
         """
@@ -71,6 +74,7 @@ class Embeddings(object):
         else:
             raise ValueError('`walk_length` has to be a positive integer.')
 
+        self._dynamic_window = dynamic_window
         self._verbose = verbose
 
     def train(self, data):
@@ -91,6 +95,7 @@ class Embeddings(object):
                 self._walks_per_node,
                 self._walk_length,
                 self._epochs_count,
+                self._dynamic_window,
                 self._verbose))
         else:
             raise ValueError('Unrecognized method.')

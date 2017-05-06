@@ -3,7 +3,7 @@
 
 ///Learns embeddings using SGD, Skip-gram with negative sampling.
 void LearnEmbeddings(TVec<TIntV> Sentences, int Dimensions, int WinSize,
- int Iter, bool Verbose, TIntFltVH& EmbeddingsHV);
+ int Iter, bool DynamicWindow, bool Verbose, TIntFltVH& EmbeddingsHV);
 
 //Max x for e^x. Value taken from original word2vec code.
 const int MaxExp = 6;

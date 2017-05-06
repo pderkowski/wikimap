@@ -3,8 +3,8 @@
 #include "random.h"
 
 void node2vec(const PNGraph& InGraph, double BacktrackProb, int Dimensions,
- int WalkLen, int NumWalks, int WinSize, int Iter, bool Verbose,
- TIntFltVH& EmbeddingsHV) {
+ int WalkLen, int NumWalks, int WinSize, int Iter, bool DynamicWindow,
+ bool Verbose, TIntFltVH& EmbeddingsHV) {
   TIntV NIdsV;
   for (TNGraph::TNodeI NI = InGraph->BegNI(); NI < InGraph->EndNI(); NI++) {
     NIdsV.Add(NI.GetId());
@@ -46,5 +46,5 @@ void node2vec(const PNGraph& InGraph, double BacktrackProb, int Dimensions,
     printf("\rWalking Progress: 100.00%%\n");fflush(stdout);
   }
   //Learning embeddings
-  LearnEmbeddings(Walks, Dimensions, WinSize, Iter, Verbose, EmbeddingsHV);
+  LearnEmbeddings(Walks, Dimensions, WinSize, Iter, DynamicWindow, Verbose, EmbeddingsHV);
 }

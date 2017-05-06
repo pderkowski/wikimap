@@ -7,7 +7,7 @@
 #endif
 
 void ParseArgs(int& argc, char* argv[], TStr& InFile, TStr& OutFile,
- int& Dimensions, int& WinSize, int& Iter, bool& Verbose) {
+ int& Dimensions, int& WinSize, int& Iter, bool& DynamicWindow, bool& Verbose) {
   Env = TEnv(argc, argv, TNotify::StdNotify);
   Env.PrepArgs("");
   InFile = Env.GetIfArgPrefixStr("-i:", "stdin",
@@ -20,6 +20,7 @@ void ParseArgs(int& argc, char* argv[], TStr& InFile, TStr& OutFile,
    "Context size for optimization. Default is 5");
   Iter = Env.GetIfArgPrefixInt("-e:", 1,
    "Number of epochs in SGD. Default is 1");
+  DynamicWindow = !Env.IsArgStr("-f", "Fixed window.");
   Verbose = Env.IsArgStr("-v", "Verbose output.");
 }
 
@@ -85,12 +86,14 @@ void WriteOutput(const TStr& OutFile, TIntFltVH& EmbeddingsHV) {
 int main(int argc, char* argv[]) {
   TStr InFile, OutFile;
   int Dimensions, WinSize, Iter;
-  bool Verbose;
-  ParseArgs(argc, argv, InFile, OutFile, Dimensions, WinSize, Iter, Verbose);
+  bool DynamicWindow, Verbose;
+  ParseArgs(argc, argv, InFile, OutFile, Dimensions, WinSize, Iter,
+    DynamicWindow, Verbose);
   TVec<TIntV> Sentences;
   ReadSentences(InFile, Verbose, Sentences);
   TIntFltVH EmbeddingsHV;
-  LearnEmbeddings(Sentences, Dimensions, WinSize, Iter, Verbose, EmbeddingsHV);
+  LearnEmbeddings(Sentences, Dimensions, WinSize, Iter, DynamicWindow, Verbose,
+    EmbeddingsHV);
   WriteOutput(OutFile, EmbeddingsHV);
   return 0;
 }

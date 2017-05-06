@@ -8,7 +8,7 @@
 
 void ParseArgs(int& argc, char* argv[], TStr& InFile, TStr& OutFile,
  int& Dimensions, int& WalkLen, int& NumWalks, int& WinSize, int& Iter,
- bool& Verbose, double& BacktrackProb) {
+ bool& DynamicWindow, bool& Verbose, double& BacktrackProb) {
   Env = TEnv(argc, argv, TNotify::StdNotify);
   Env.PrepArgs(TStr::Fmt("\nAn algorithmic framework for representational learning on graphs."));
   InFile = Env.GetIfArgPrefixStr("-i:", "stdin",
@@ -27,6 +27,7 @@ void ParseArgs(int& argc, char* argv[], TStr& InFile, TStr& OutFile,
    "Number of epochs in SGD. Default is 1");
   BacktrackProb = Env.GetIfArgPrefixFlt("-b:", 0.5,
    "Backtracking probability. Default is 0.5");
+  DynamicWindow = !Env.IsArgStr("-f", "Fixed window.");
   Verbose = Env.IsArgStr("-v", "Verbose output.");
 }
 
@@ -91,12 +92,14 @@ int main(int argc, char* argv[]) {
   TStr InFile,OutFile;
   int Dimensions, WalkLen, NumWalks, WinSize, Iter;
   double BacktrackProb;
-  bool Verbose;
-  ParseArgs(argc, argv, InFile, OutFile, Dimensions, WalkLen, NumWalks, WinSize, Iter, Verbose, BacktrackProb);
+  bool DynamicWindow, Verbose;
+  ParseArgs(argc, argv, InFile, OutFile, Dimensions, WalkLen, NumWalks, WinSize,
+    Iter, DynamicWindow, Verbose, BacktrackProb);
   PNGraph InGraph = PNGraph::New();
   TIntFltVH EmbeddingsHV;
   ReadGraph(InFile, Verbose, InGraph);
-  node2vec(InGraph, BacktrackProb, Dimensions, WalkLen, NumWalks, WinSize, Iter, Verbose, EmbeddingsHV);
+  node2vec(InGraph, BacktrackProb, Dimensions, WalkLen, NumWalks, WinSize, Iter,
+    DynamicWindow, Verbose, EmbeddingsHV);
   WriteOutput(OutFile, EmbeddingsHV);
   return 0;
 }

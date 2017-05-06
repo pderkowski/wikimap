@@ -212,7 +212,8 @@ class ComputeEmbeddings(Job):
             'dimensions': 128,
             'context_size': 10,
             'backtrack_probability': 0.5,
-            'walks_per_node': 10
+            'walks_per_node': 10,
+            'dynamic_window': True
         }
 
     def __call__(self):
