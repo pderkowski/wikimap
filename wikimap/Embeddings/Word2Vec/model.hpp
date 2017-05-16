@@ -13,9 +13,12 @@
 namespace w2v {
 
 
+class View;
+
 class ConstView {
 public:
     ConstView(const Float* data, Int size);
+    ConstView(const View& view);
 
     Float operator [] (Int index) const { return data_[index] * multiplier_; }
 
@@ -23,6 +26,9 @@ public:
 
     friend ConstView operator * (double multiplier, const ConstView& v);
     friend ConstView operator * (const ConstView& v, double multiplier);
+    friend class View;
+
+    explicit operator Embedding () const;
 
 private:
     const Float* data_;
@@ -30,11 +36,6 @@ private:
 
     double multiplier_;
 };
-
-ConstView::ConstView(const Float* data, Int size)
-:   data_(data), size_(size), multiplier_(1.)
-{ }
-
 
 class View {
 public:
@@ -47,16 +48,32 @@ public:
 
     friend ConstView operator * (double multiplier, const View& v);
     friend ConstView operator * (const View& v, double multiplier);
+    friend class ConstView;
 
 private:
     Float* data_;
     Int size_;
 };
 
+ConstView::ConstView(const Float* data, Int size)
+:   data_(data), size_(size), multiplier_(1.)
+{ }
+
+ConstView::ConstView(const View& view)
+:   ConstView(view.data_, view.size_)
+{ }
+
+ConstView::operator Embedding () const {
+    Embedding res(size_);
+    for (int i = 0; i < size_; ++i) {
+        res[i] = (*this)[i];
+    }
+    return res;
+}
+
 View::View(Float* data, Int size)
 :   data_(data), size_(size)
 { }
-
 
 inline ConstView operator * (double multiplier, const View& v) {
     return v * multiplier;
@@ -79,7 +96,6 @@ inline ConstView operator * (const ConstView& v, double multiplier) {
 
 class Model {
 public:
-    Model();
     Model(Int vocab_size, Int dimension);
 
     View word_embedding(Int index);
@@ -88,6 +104,7 @@ public:
     View context_embedding(Int index);
     ConstView context_embedding(Int index) const;
 
+    void init();
     void normalize();
 
 private:
@@ -105,14 +122,15 @@ private:
     std::unique_ptr<Float[]> context_embeddings_;
 };
 
-Model::Model()
-:   Model(0, 0)
-{ }
-
 Model::Model(Int vocab_size, Int dimension)
 :   rows_(vocab_size), cols_(dimension), size_(vocab_size * dimension),
     word_embeddings_(new Float[size_]), context_embeddings_(new Float[size_])
 {
+    init_word_embeddings();
+    init_context_embeddings();
+}
+
+void Model::init() {
     init_word_embeddings();
     init_context_embeddings();
 }
