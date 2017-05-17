@@ -11,6 +11,7 @@ namespace w2v {
 
 typedef float Float;
 typedef std::vector<Float> Embedding;
+
 template<class Word>
 using Embeddings = std::unordered_map<Word, Embedding>;
 

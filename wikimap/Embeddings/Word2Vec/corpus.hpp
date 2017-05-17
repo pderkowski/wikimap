@@ -7,6 +7,7 @@
 
 #include "defs.hpp"
 #include "utils.hpp"
+#include "logging.hpp"
 
 
 namespace w2v {
@@ -100,7 +101,7 @@ void Corpus::add_token(Id token_id) {
     } else if (token_id == id2count_.size()) {
         id2count_.push_back(1);
     } else {
-        w2v::log("Trying to insert nonsequential token id to corpus!");
+        logging::log("Trying to insert nonsequential token id to corpus!");
         exit(1);
     }
 }

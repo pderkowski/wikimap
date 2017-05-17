@@ -16,4 +16,5 @@ $(BIN): $(SOURCES)
 	$(CXX) $(CXXFLAGS) -o $@ word2vec.cpp
 
 clean:
+	rm -f *.o
 	rm -f $(BIN)

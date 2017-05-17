@@ -9,6 +9,8 @@
 
 namespace w2v {
 
+namespace math {
+
 
 const double MAX_EXPONENT = 7.;
 const int TABLE_SIZE = 100000;
@@ -55,6 +57,9 @@ double sigmoid(double x) {
         return sigmoid_table[index];
     }
 }
+
+
+} // namespace math
 
 
 } // namespace w2v

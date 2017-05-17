@@ -1,12 +1,9 @@
 #pragma once
 
 #include <vector>
-#include <unordered_map>
 #include <algorithm>
 #include <tuple>
 #include <random>
-#include <fstream>
-#include <iostream>
 
 #include <omp.h>
 
@@ -14,7 +11,8 @@
 #include "corpus.hpp"
 #include "model.hpp"
 #include "utils.hpp"
-#include "sigmoid.hpp"
+#include "math.hpp"
+#include "logging.hpp"
 
 
 namespace w2v {
@@ -156,11 +154,18 @@ void Word2Vec<Word>::process_training_data(
         Vocabulary<Word>& vocab,
         Corpus& corpus) const {
 
-    if (settings.verbose) { w2v::log("Preparing training data...\n"); }
+    if (settings.verbose) { logging::log("Preparing training data\n"); }
 
     std::for_each(begin, end, [this, &vocab, &corpus] (const Sentence& s) {
         process_sentence(s, vocab, corpus);
     });
+
+    if (settings.verbose) {
+        logging::log("- sentences: %lld\n", corpus.sequence_count());
+        logging::log("- words: %lld\n", corpus.size());
+        logging::log("- unique words: %lld\n", vocab.size());
+    }
+
     corpus.set_unigram_distribution(settings.subsampling_factor);
 }
 
@@ -184,27 +189,41 @@ Training::Training(const Settings& settings, const Corpus& corpus, Model& model)
 { }
 
 void Training::init_model() {
-    if (stg_.verbose) { w2v::log("Initializing model...\n"); }
+    if (stg_.verbose) {
+        logging::log("Initializing model\n");
+        logging::log(
+            "- model dimensions: [2 x %d x %d]\n",
+            model_.rows(),
+            model_.cols());
+        logging::log("- estimated size: %dMB\n", model_.estimate_size());
+    }
     model_.init();
 }
 
 void Training::train_model() {
-    if (stg_.verbose) { w2v::log("Training model...\n"); }
+    if (stg_.verbose) { logging::log("Training model\n"); }
 
     Int words_seen = 0;
     Int words_expected = corpus_.size() * stg_.epochs;
 
     for (int epoch = 0; epoch < stg_.epochs; ++epoch) {
         if (stg_.verbose) {
-            w2v::log("\rStarting epoch (%d/%d).\n", epoch + 1, stg_.epochs);
-            report_progress(words_seen, words_expected);
+            logging::inline_log(
+                "- Starting epoch (%d/%d)\n",
+                epoch + 1,
+                stg_.epochs);
+            logging::inline_log(
+                "* Progress: %.2f%%  ",
+                words_seen * 100. / words_expected);
         }
 
         #pragma omp parallel for schedule(static, BATCH_SIZE)
         for (Int index = 0; index < corpus_.sequence_count(); ++index) {
             // only master thread reports progress
             if (omp_get_thread_num() == 0 && stg_.verbose) {
-                report_progress(words_seen, words_expected);
+                logging::inline_log(
+                    "* Progress: %.2f%%  ",
+                    words_seen * 100. / words_expected);
             }
 
             auto learning_rate = get_learning_rate(words_seen, words_expected);
@@ -219,11 +238,11 @@ void Training::train_model() {
         }
     }
 
-    if (stg_.verbose) { w2v::log("\rProgress: 100.00%% \n"); }
+    if (stg_.verbose) { logging::inline_log("- Progress: 100.00%% \n"); }
 }
 
 void Training::normalize_model() {
-    if (stg_.verbose) { w2v::log("Normalizing model...\n"); }
+    if (stg_.verbose) { logging::log("Normalizing model\n"); }
     model_.normalize();
 }
 
@@ -233,10 +252,13 @@ void Training::train_on_sequence(
         double learning_rate) {
 
     const auto seq_size = seq_end - seq_start;
+    if (seq_size < 2) { return; } // nothing to do
+
     Embedding word_embedding_delta(stg_.dimension, 0);
 
     for (int word_pos = 0; word_pos < seq_size; ++word_pos) {
         auto word = seq_start[word_pos];
+        // context_size may be vary if -dynamic is on
         auto context_size = get_context_size();
 
         for (int offset = -context_size; offset <= context_size; ++offset) {
@@ -293,7 +315,7 @@ inline double Training::get_gradient_for_positive_sample(
     auto product = vec::dot_product(
         model_.word_embedding(word),
         model_.context_embedding(context));
-    return 1. - sigmoid(product);
+    return 1. - math::sigmoid(product);
 }
 
 inline double Training::get_gradient_for_negative_sample(
@@ -303,7 +325,7 @@ inline double Training::get_gradient_for_negative_sample(
     auto product = vec::dot_product(
         model_.word_embedding(word),
         model_.context_embedding(context));
-    return sigmoid(-product) - 1.;
+    return math::sigmoid(-product) - 1.;
 }
 
 inline int Training::get_context_size() const {

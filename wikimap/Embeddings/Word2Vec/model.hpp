@@ -107,6 +107,11 @@ public:
     void init();
     void normalize();
 
+    Int rows() const { return rows_; }
+    Int cols() const { return cols_; }
+
+    Int estimate_size() const { return 2L * size_ * sizeof(Float) / 1000000; }
+
 private:
     void init_word_embeddings();
     void init_context_embeddings();
@@ -124,13 +129,12 @@ private:
 
 Model::Model(Int vocab_size, Int dimension)
 :   rows_(vocab_size), cols_(dimension), size_(vocab_size * dimension),
-    word_embeddings_(new Float[size_]), context_embeddings_(new Float[size_])
-{
-    init_word_embeddings();
-    init_context_embeddings();
-}
+    word_embeddings_(nullptr), context_embeddings_(nullptr)
+{ }
 
 void Model::init() {
+    word_embeddings_ = std::unique_ptr<Float[]>(new Float[size_]);
+    context_embeddings_ = std::unique_ptr<Float[]>(new Float[size_]);
     init_word_embeddings();
     init_context_embeddings();
 }
