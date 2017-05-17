@@ -2,7 +2,7 @@ SOURCES = $(wildcard *.hpp *.cpp)
 # SOURCES = word2vec.cpp
 # OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
 
-CXXFLAGS += -std=c++11 -fopenmp
+CXXFLAGS += -std=c++11 -fopenmp -O3 -funroll-loops -Wall -march=native
 BIN = word2vec
 
 .PHONY: clean all

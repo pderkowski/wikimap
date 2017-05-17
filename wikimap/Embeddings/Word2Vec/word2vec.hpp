@@ -270,8 +270,10 @@ void Training::train_on_sequence(
             vec::fill_with_zeros(word_embedding_delta);
 
             auto context = seq_start[context_pos];
-            auto gradient = get_gradient_for_positive_sample(word, context);
-            gradient *= learning_rate;
+            auto gradient =
+                get_gradient_for_positive_sample(word, context)
+                * learning_rate;
+
             vec::add_to(
                 word_embedding_delta,
                 model_.context_embedding(context) * gradient);
@@ -283,10 +285,10 @@ void Training::train_on_sequence(
                 auto context = corpus_.sample();
                 if (word == context) { continue; }
 
-                double gradient = get_gradient_for_negative_sample(
-                    word,
-                    context);
-                gradient *= learning_rate;
+                double gradient =
+                    get_gradient_for_negative_sample(word, context)
+                    * learning_rate;
+
                 vec::add_to(
                     word_embedding_delta,
                     model_.context_embedding(context) * gradient);

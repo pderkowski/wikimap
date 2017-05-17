@@ -96,9 +96,9 @@ Corpus::Corpus()
 
 void Corpus::add_token(Id token_id) {
     token_ids_.push_back(token_id);
-    if (token_id < id2count_.size()) {
+    if (static_cast<size_t>(token_id) < id2count_.size()) {
         ++id2count_[token_id];
-    } else if (token_id == id2count_.size()) {
+    } else if (static_cast<size_t>(token_id) == id2count_.size()) {
         id2count_.push_back(1);
     } else {
         logging::log("Trying to insert nonsequential token id to corpus!");
@@ -116,7 +116,7 @@ void Corpus::set_unigram_distribution(double subsampling_factor) {
     std::vector<double> weights(id2count_.size());
 
     #pragma omp parallel for schedule(static)
-    for (Int i = 0; i < id2count_.size(); ++i) {
+    for (size_t i = 0; i < id2count_.size(); ++i) {
         weights[i] = pow(id2count_[i], subsampling_factor);
     }
 

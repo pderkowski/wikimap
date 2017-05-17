@@ -7,7 +7,7 @@ const char* help_message = R"(
 word2vec
 
 Options:
-    -h -help --help
+    -h, -help, --help
         Print this message and exit.
     -input <file>
         Use data from <file> to train the model. [Default: stdin]

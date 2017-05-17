@@ -60,16 +60,10 @@ int read_sentence(FILE* in, std::vector<std::string>& sentence) {
         std::string word;
 
         for (int words = 0; words < MAX_SENTENCE_SIZE; ++words) {
-            int found_newline = read_newline(in);
-            if (found_newline == 1 || found_newline == EOF) {
-                break;
+            if (!read_newline(in) && read_word(in, word) == 1) {
+                sentence.push_back(word);
             } else {
-                if (read_word(in, word) == 1) {
-                    sentence.push_back(word);
-                    ++words;
-                } else {
-                    break;
-                }
+                break;
             }
         }
         return 1;
@@ -185,7 +179,7 @@ void write(
                 typedef Embedding::value_type value_type;
                 fwrite(embedding.data(), sizeof(value_type), dimension, out);
             } else {
-                for (int i = 0; i < dimension; ++i) {
+                for (size_t i = 0; i < dimension; ++i) {
                     fprintf(out, "%f ", embedding[i]);
                 }
             }

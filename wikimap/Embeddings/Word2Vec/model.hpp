@@ -17,6 +17,7 @@ class View;
 
 class ConstView {
 public:
+    ConstView(const Float* data, Int size, double multiplier);
     ConstView(const Float* data, Int size);
     ConstView(const View& view);
 
@@ -50,13 +51,19 @@ public:
     friend ConstView operator * (const View& v, double multiplier);
     friend class ConstView;
 
+    explicit operator Embedding () const;
+
 private:
     Float* data_;
     Int size_;
 };
 
+ConstView::ConstView(const Float* data, Int size, double multiplier)
+:   data_(data), size_(size), multiplier_(multiplier)
+{ }
+
 ConstView::ConstView(const Float* data, Int size)
-:   data_(data), size_(size), multiplier_(1.)
+:   ConstView(data, size, 1.)
 { }
 
 ConstView::ConstView(const View& view)
@@ -65,7 +72,7 @@ ConstView::ConstView(const View& view)
 
 ConstView::operator Embedding () const {
     Embedding res(size_);
-    for (int i = 0; i < size_; ++i) {
+    for (Int i = 0; i < size_; ++i) {
         res[i] = (*this)[i];
     }
     return res;
@@ -75,12 +82,20 @@ View::View(Float* data, Int size)
 :   data_(data), size_(size)
 { }
 
+View::operator Embedding () const {
+    Embedding res(size_);
+    for (Int i = 0; i < size_; ++i) {
+        res[i] = (*this)[i];
+    }
+    return res;
+}
+
 inline ConstView operator * (double multiplier, const View& v) {
-    return v * multiplier;
+    return ConstView(v.data_, v.size_, multiplier);
 }
 
 inline ConstView operator * (const View& v, double multiplier) {
-    return ConstView(v.data_, v.size_);
+    return ConstView(v.data_, v.size_, multiplier);
 }
 
 inline ConstView operator * (double multiplier, const ConstView& v) {
@@ -141,19 +156,21 @@ void Model::init() {
 
 void Model::init_word_embeddings() {
     std::uniform_real_distribution<Float> dist(-0.5, 0.5);
-#pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static)
     for (Int i = 0; i < size_; ++i) {
         word_embeddings_[i] = dist(Random::get()) / cols_;
     }
 }
 
 void Model::init_context_embeddings() {
+    #pragma omp parallel for schedule(static)
     for (Int i = 0; i < size_; ++i) {
         context_embeddings_[i] = 0;
     }
 }
 
 void Model::normalize() {
+    #pragma omp parallel for schedule(static)
     for (Int i = 0; i < rows_; ++i) {
         vec::normalize(word_embedding(i));
         vec::normalize(context_embedding(i));

@@ -12,8 +12,8 @@ namespace w2v {
 namespace math {
 
 
-const double MAX_EXPONENT = 7.;
-const int TABLE_SIZE = 100000;
+const double MAX_EXPONENT = 6.;
+const int TABLE_SIZE = 10000;
 
 
 std::vector<double> compute_sigmoid_table() {
@@ -41,11 +41,10 @@ std::vector<double> compute_sigmoid_table() {
     return table;
 }
 
+// Tabularized values of sigmoid.
+std::vector<double> sigmoid_table = compute_sigmoid_table();
 
 double sigmoid(double x) {
-    // Tabularized values of sigmoid.
-    static const std::vector<double> sigmoid_table = compute_sigmoid_table();
-
     if (x >= MAX_EXPONENT) {
         return 1.; // close enough to real value
     } else if (x < -MAX_EXPONENT) {

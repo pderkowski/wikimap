@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 
 namespace w2v {
 
@@ -33,10 +35,11 @@ template<class Target>
 inline void normalize(Target&& target) {
     double sum = 0.;
     for (int i = 0; i < target.size(); ++i) {
-        sum += target[i];
+        sum += target[i] * target[i];
     }
+    double root = sqrt(sum);
     for (int i = 0; i < target.size(); ++i) {
-        target[i] /= sum;
+        target[i] /= root;
     }
 }
 
