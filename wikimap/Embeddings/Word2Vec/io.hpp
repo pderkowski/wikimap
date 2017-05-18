@@ -188,6 +188,8 @@ void write(
     } else {
         fprintf(out, "0 0\n");
     }
+
+    if (verbose) { logging::log("Done!\n"); }
 }
 
 

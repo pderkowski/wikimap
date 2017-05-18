@@ -37,8 +37,8 @@ public:
 public:
     Word2Vec(int dimension = 100, int epochs = 1, double learning_rate = 0.025,
         int context_size = 5, bool dynamic_context = true,
-        int negative_samples = 5, double subsampling_factor = 0.75,
-        bool verbose = true);
+        int negative_samples = 5, bool verbose = true,
+        double subsampling_factor = 0.75);
 
     template<class Container>
     Embeddings<Word> learn_embeddings(const Container& sentences) const;
@@ -106,7 +106,7 @@ Embeddings<Word> get_embeddings_from_model(
 template<class Word>
 Word2Vec<Word>::Word2Vec(int dimension, int epochs, double learning_rate,
         int context_size, bool dynamic_context, int negative_samples,
-        double subsampling_factor, bool verbose) {
+        bool verbose, double subsampling_factor) {
 
     settings.dimension = dimension;
     settings.epochs = epochs;
