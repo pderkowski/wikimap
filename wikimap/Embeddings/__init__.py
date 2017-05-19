@@ -1,4 +1,5 @@
 import Node2Vec
+import Word2Vec
 
 
 class Embeddings(object):
@@ -99,7 +100,7 @@ class Embeddings(object):
                 self._dynamic_window,
                 self._verbose))
         elif self._method == 'link_word2vec':
-            return iter(Node2Vec.Word2Vec(
+            return iter(Word2Vec.Word2Vec(
                 data,
                 self._dimensions,
                 context_size=1,
