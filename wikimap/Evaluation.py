@@ -64,7 +64,10 @@ class RelationEvaluator(Evaluator):
             except KeyError:
                 skipped_examples += 1
 
-        fraction = float(correct) / (correct + incorrect)
+        if correct == 0 and incorrect == 0:
+            fraction = 0.
+        else:
+            fraction = float(correct) / (correct + incorrect)
         self._logger.info('{} score: {}, matched: {}, skipped: {}'.format(dataset.name, fraction, matched_examples, skipped_examples))
         return { 'name': dataset.name, 'type': dataset.type, 'method': 'fraction', 'score': fraction, 'matched_examples': matched_examples, 'skipped_examples': skipped_examples }
 
