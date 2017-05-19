@@ -10,6 +10,8 @@ namespace w2v {
 namespace logging {
 
 
+clock_t last_log = 0;
+
 inline void clear_line() {
     fprintf(stderr, "\r");
 }
@@ -29,6 +31,7 @@ inline void log(const char* format, ...) {
     vfprintf(stderr, format, arglist);
     va_end(arglist);
     fflush(stdout);
+    last_log = std::clock();
 }
 
 inline void inline_log(const char* format, ...) {
@@ -39,6 +42,14 @@ inline void inline_log(const char* format, ...) {
     vfprintf(stderr, format, arglist);
     va_end(arglist);
     fflush(stdout);
+    last_log = std::clock();
+}
+
+//simple, not necessarily accurate
+inline double time_since_last_log() {
+    clock_t now = std::clock();
+    double elapsed_secs = static_cast<double>(now - last_log) / CLOCKS_PER_SEC;
+    return elapsed_secs;
 }
 
 

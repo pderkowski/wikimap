@@ -42,8 +42,6 @@ class Args {
 public:
     Args(int argc, const char* argv[]);
 
-
-
     std::string get(const std::string& arg_name, const std::string& default_) const;
     std::string get(
         std::initializer_list<std::string> names,

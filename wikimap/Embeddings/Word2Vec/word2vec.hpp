@@ -217,10 +217,13 @@ void Training::train_model() {
                 words_seen * 100. / words_expected);
         }
 
-        #pragma omp parallel for schedule(static, BATCH_SIZE)
+        #pragma omp parallel for schedule(dynamic, BATCH_SIZE)
         for (Int index = 0; index < corpus_.sequence_count(); ++index) {
             // only master thread reports progress
-            if (omp_get_thread_num() == 0 && stg_.verbose) {
+            if (    omp_get_thread_num() == 0
+                    && stg_.verbose
+                    && logging::time_since_last_log() > 0.2) {
+
                 logging::inline_log(
                     "* Progress: %.2f%%  ",
                     words_seen * 100. / words_expected);

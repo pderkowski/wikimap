@@ -15,29 +15,24 @@ const int MAX_WORD_SIZE = 100;
 const int MAX_SENTENCE_SIZE = 1000;
 
 
-int read_newline(FILE* in) {
-    int c;
-
-    while ((c = getc(in)) != EOF) {
+bool read_newline(FILE* in) {
+    while (true) {
+        int c = getc(in);
         if (c == '\n') {
-            return 1;
+            return true;
         } else if (!isspace(c)) {
             ungetc(c, in);
-            return 0;
-        }
+            return false;
+        } // else: whitespace, keep looking
     }
-    return EOF; // EOF encountered
 }
 
 void skip_chars_over_limit(FILE* in) {
     int c;
-
     while (isalnum(c = getc(in)))
         ;
 
-    if (c != EOF) {
-        ungetc(c, in);
-    }
+    ungetc(c, in);
 }
 
 int read_word(FILE* in, std::string& word) {
@@ -53,21 +48,33 @@ int read_word(FILE* in, std::string& word) {
 }
 
 int read_sentence(FILE* in, std::vector<std::string>& sentence) {
-    if (feof(in)) {
-        return EOF;
-    } else {
-        sentence.clear();
-        std::string word;
+    sentence.clear();
+    std::string word;
 
-        for (int words = 0; words < MAX_SENTENCE_SIZE; ++words) {
-            if (!read_newline(in) && read_word(in, word) == 1) {
+    for (int words = 0; words < MAX_SENTENCE_SIZE; ++words) {
+        // if there is a newline next in stream, end sentence
+        if (read_newline(in)) {
+            return 1;
+        } else {
+            // otherwise read word
+            int rw = read_word(in, word);
+            if (rw == 1) {
+                // if there was a word, add it to the sentence
                 sentence.push_back(word);
-            } else {
-                break;
-            }
+            } else if (rw == -1) {
+                // otherwise it must have been the end of input
+                // if there are already words in the sentence, return it (next one will fail)
+                if (sentence.size() > 0) {
+                    return 1;
+                } else {
+                    // no words in the sentence and EOF seen - nothing to return and nothing more to see
+                    return EOF;
+                }
+            }// else: rw == 0 should not happen ?
         }
-        return 1;
     }
+    // maximum number of words reached
+    return 1;
 }
 
 
@@ -78,9 +85,13 @@ class TextInput {
 public:
     class iterator;
 
-    TextInput(const std::string& fname)
-    :   in_((fname == "stdout")? stdin : fopen(fname.c_str(), "r"))
-    { }
+    TextInput(const std::string& fname) {
+        in_ = (fname == "stdin")? stdin : fopen(fname.c_str(), "r");
+        if (in_ == NULL) {
+            logging::log("Could not open `%s`\n", fname.c_str());
+            exit(1);
+        }
+    }
 
     iterator begin() const { return iterator(in_); }
     iterator end() const { return iterator(); }
@@ -94,7 +105,7 @@ public:
         typedef std::input_iterator_tag iterator_category;
 
         iterator()
-        :   in_(nullptr)
+        :   in_(NULL)
         { }
 
         iterator(FILE* in)
@@ -110,7 +121,7 @@ public:
 
         iterator& operator++() {
             if (in_ && io::read_sentence(in_, value_) == EOF) {
-                in_ = nullptr;
+                in_ = NULL;
             }
             return *this;
         }
@@ -164,6 +175,10 @@ void write(
     }
 
     FILE* out = (fname == "stdout")? stdout : fopen(fname.c_str(), "w");
+    if (out == NULL) {
+        logging::log("Could not open `%s`\n", fname.c_str());
+        exit(1);
+    }
 
     if (!embeddings.empty()) {
         const auto dimension = embeddings.begin()->second.size();
