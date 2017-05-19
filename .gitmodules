@@ -7,3 +7,6 @@
 [submodule "external/vptree"]
 	path = external/vptree
 	url = https://github.com/piotder/vptree.git
+[submodule "external/pybind11"]
+	path = external/pybind11
+	url = https://github.com/pybind/pybind11.git
