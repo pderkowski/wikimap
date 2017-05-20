@@ -195,7 +195,7 @@ void Training::init_model() {
             "- model dimensions: [2 x %d x %d]\n",
             model_.rows(),
             model_.cols());
-        logging::log("- estimated size: %dMB\n", model_.estimate_size());
+        logging::log("- estimated size: %dMB\n", model_.estimate_size_mb());
     }
     model_.init();
 }
@@ -222,7 +222,7 @@ void Training::train_model() {
             // only master thread reports progress
             if (    omp_get_thread_num() == 0
                     && stg_.verbose
-                    && logging::time_since_last_log() > 0.2) {
+                    && logging::time_since_last_log() > 0.1) {
 
                 logging::inline_log(
                     "* Progress: %.2f%%  ",

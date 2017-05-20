@@ -125,7 +125,7 @@ public:
     Int rows() const { return rows_; }
     Int cols() const { return cols_; }
 
-    Int estimate_size() const { return 2L * size_ * sizeof(Float) / 1000000; }
+    Int estimate_size_mb() const { return 2L * size_ * sizeof(Float) / 1000000; }
 
 private:
     void init_word_embeddings();

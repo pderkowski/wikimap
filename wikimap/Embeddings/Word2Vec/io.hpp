@@ -2,13 +2,23 @@
 
 #include <cstddef>
 #include <vector>
+#include <fstream>
 
 #include "defs.hpp"
 #include "utils.hpp"
 
+
 namespace w2v {
 
 namespace io {
+
+
+std::ifstream::pos_type estimate_file_size_mb(const std::string& fname)
+{
+    std::ifstream in(fname.c_str(), std::ifstream::ate | std::ifstream::binary);
+    auto fsize =in.tellg();
+    return fsize / 1000000;
+}
 
 
 const int MAX_WORD_SIZE = 100;
@@ -166,7 +176,7 @@ TextInput read(const std::string& fname, bool verbose = true) {
 void write(
         const Embeddings<std::string>& embeddings,
         const std::string& fname,
-        bool binary,
+        bool binary = false,
         bool verbose = true) {
 
     if (verbose) {
@@ -180,8 +190,9 @@ void write(
         exit(1);
     }
 
+    size_t dimension;
     if (!embeddings.empty()) {
-        const auto dimension = embeddings.begin()->second.size();
+        dimension = embeddings.begin()->second.size();
 
         fprintf(out, "%lu %lu\n", embeddings.size(), dimension);
 
@@ -201,10 +212,19 @@ void write(
             fprintf(out, "\n");
         }
     } else {
+        dimension = 0;
         fprintf(out, "0 0\n");
     }
 
-    if (verbose) { logging::log("Done!\n"); }
+    if (verbose) {
+        logging::log("- saved %d embeddings\n", embeddings.size());
+        if (binary) {
+            logging::log("- binary format\n");
+        } else {
+            logging::log("- text format\n");
+        }
+        logging::log("- file size %dMB\n", io::estimate_file_size_mb(fname));
+    }
 }
 
 
