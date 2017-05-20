@@ -12,6 +12,9 @@ namespace w2v {
 
 namespace io {
 
+const int MAX_WORD_SIZE = 100;
+const int MAX_SENTENCE_SIZE = 1000;
+
 
 std::ifstream::pos_type estimate_file_size_mb(const std::string& fname)
 {
@@ -19,11 +22,6 @@ std::ifstream::pos_type estimate_file_size_mb(const std::string& fname)
     auto fsize =in.tellg();
     return fsize / 1000000;
 }
-
-
-const int MAX_WORD_SIZE = 100;
-const int MAX_SENTENCE_SIZE = 1000;
-
 
 bool read_newline(FILE* in) {
     while (true) {
@@ -163,7 +161,7 @@ bool operator !=(const TextInput::iterator& lhs, const TextInput::iterator& rhs)
 }
 
 
-TextInput read(const std::string& fname, bool verbose = true) {
+TextInput read(const std::string& fname, bool verbose = def::VERBOSE) {
     if (verbose) {
         std::string message("Reading data from `" + fname + "`\n");
         logging::log(message.c_str());
@@ -176,8 +174,8 @@ TextInput read(const std::string& fname, bool verbose = true) {
 void write(
         const Embeddings<std::string>& embeddings,
         const std::string& fname,
-        bool binary = false,
-        bool verbose = true) {
+        bool binary = def::BINARY,
+        bool verbose = def::VERBOSE) {
 
     if (verbose) {
         std::string message("Writing embeddings to `" + fname + "`\n");

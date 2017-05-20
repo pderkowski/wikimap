@@ -35,10 +35,15 @@ public:
     typedef std::vector<Word> Sentence;
 
 public:
-    Word2Vec(int dimension = 100, int epochs = 1, double learning_rate = 0.025,
-        int context_size = 5, bool dynamic_context = true,
-        int negative_samples = 5, bool verbose = true,
-        double subsampling_factor = 0.75);
+    Word2Vec(
+        int dimension = def::DIMENSION,
+        int epochs = def::EPOCHS,
+        double learning_rate = def::LEARNING_RATE,
+        int context_size = def::CONTEXT_SIZE,
+        bool dynamic_context = def::DYNAMIC_CONTEXT,
+        int negative_samples = def::NEGATIVE_SAMPLES,
+        bool verbose = def::VERBOSE,
+        double subsampling_factor = def::SUMBSAMPLING_FACTOR);
 
     template<class Container>
     Embeddings<Word> learn_embeddings(const Container& sentences) const;
@@ -196,8 +201,8 @@ void Training::init_model() {
             model_.rows(),
             model_.cols());
         logging::log("- estimated size: %dMB\n", model_.estimate_size_mb());
+        model_.init();
     }
-    model_.init();
 }
 
 void Training::train_model() {

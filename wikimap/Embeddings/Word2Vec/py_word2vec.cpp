@@ -106,10 +106,14 @@ PYBIND11_PLUGIN(word2vec) {
 
     py::class_<Word2Vec>(m, "Word2Vec")
         .def(py::init<int, int, double, int, bool, int, bool, double>(),
-            py::arg("dimension") = 100, py::arg("epochs") = 1,
-            py::arg("learning_rate") = 0.025, py::arg("context_size") = 5,
-            py::arg("dynamic_context") = true, py::arg("negative_samples") = 5,
-            py::arg("verbose") = true, py::arg("subsampling_factor") = 0.75)
+            py::arg("dimension") = w2v::def::DIMENSION,
+            py::arg("epochs") = w2v::def::EPOCHS,
+            py::arg("learning_rate") = w2v::def::LEARNING_RATE,
+            py::arg("context_size") = w2v::def::CONTEXT_SIZE,
+            py::arg("dynamic_context") = w2v::def::DYNAMIC_CONTEXT,
+            py::arg("negative_samples") = w2v::def::NEGATIVE_SAMPLES,
+            py::arg("verbose") = w2v::def::VERBOSE,
+            py::arg("subsampling_factor") = w2v::def::SUMBSAMPLING_FACTOR)
         .def("learn_embeddings", [] (
                 const Word2Vec& self,
                 py::iterable iterable) {

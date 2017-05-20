@@ -45,14 +45,14 @@ int main(int argc, const char* argv[]) {
 
     auto input  = args.get({"-i", "-input", "-train"}, "stdin");
     auto output = args.get({"-o", "-output"}, "stdout");
-    auto size = args.get({"-s", "-size"}, 100);
-    auto epochs = args.get({"-e", "-epochs"}, 1);
-    auto window = args.get({"-w", "-window"}, 5);
-    auto negative = args.get({"-n", "-negative"}, 5);
-    auto alpha = args.get({"-a", "-alpha"}, 0.025);
-    auto dynamic = args.get({"-d", "-dynamic"}, 1);
-    auto binary = args.get({"-b", "-binary"}, 0);
-    auto verbose = args.get({"-v", "-verbose"}, 1);
+    auto size = args.get({"-s", "-size"}, w2v::def::DIMENSION);
+    auto epochs = args.get({"-e", "-epochs"}, w2v::def::EPOCHS);
+    auto window = args.get({"-w", "-window"}, w2v::def::CONTEXT_SIZE);
+    auto negative = args.get({"-n", "-negative"}, w2v::def::NEGATIVE_SAMPLES);
+    auto alpha = args.get({"-a", "-alpha"}, w2v::def::LEARNING_RATE);
+    auto dynamic = args.get({"-d", "-dynamic"}, w2v::def::DYNAMIC_CONTEXT);
+    auto binary = args.get({"-b", "-binary"}, w2v::def::BINARY);
+    auto verbose = args.get({"-v", "-verbose"}, w2v::def::VERBOSE);
 
     auto word2vec = w2v::Word2Vec<>(size, epochs, alpha, window, dynamic,
         negative, verbose);
