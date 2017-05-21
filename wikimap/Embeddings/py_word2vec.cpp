@@ -101,24 +101,24 @@ PYBIND11_PLUGIN(word2vec) {
             const std::string& input_file,
             const std::string& output_file) {
 
-        auto word2vec = w2v::Word2Vec<>();
-        auto text_input = w2v::read(input_file);
+        auto word2vec = emb::Word2Vec<>();
+        auto text_input = emb::read(input_file);
         auto embeddings = word2vec.learn_embeddings(text_input);
-        w2v::write(embeddings, output_file);
+        emb::write(embeddings, output_file);
     });
 
-    typedef w2v::Word2Vec<py::object> Word2Vec;
+    typedef emb::Word2Vec<py::object> Word2Vec;
 
     py::class_<Word2Vec>(m, "Word2Vec")
         .def(py::init<int, int, double, int, bool, int, bool, double>(),
-            py::arg("dimension") = w2v::def::DIMENSION,
-            py::arg("epochs") = w2v::def::EPOCHS,
-            py::arg("learning_rate") = w2v::def::LEARNING_RATE,
-            py::arg("context_size") = w2v::def::CONTEXT_SIZE,
-            py::arg("dynamic_context") = w2v::def::DYNAMIC_CONTEXT,
-            py::arg("negative_samples") = w2v::def::NEGATIVE_SAMPLES,
-            py::arg("verbose") = w2v::def::VERBOSE,
-            py::arg("subsampling_factor") = w2v::def::SUMBSAMPLING_FACTOR)
+            py::arg("dimension") = emb::def::DIMENSION,
+            py::arg("epochs") = emb::def::EPOCHS,
+            py::arg("learning_rate") = emb::def::LEARNING_RATE,
+            py::arg("context_size") = emb::def::CONTEXT_SIZE,
+            py::arg("dynamic_context") = emb::def::DYNAMIC_CONTEXT,
+            py::arg("negative_samples") = emb::def::NEGATIVE_SAMPLES,
+            py::arg("verbose") = emb::def::VERBOSE,
+            py::arg("subsampling_factor") = emb::def::SUMBSAMPLING_FACTOR)
         .def("learn_embeddings", [] (
                 const Word2Vec& self,
                 py::iterable iterable) {

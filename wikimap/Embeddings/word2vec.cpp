@@ -36,7 +36,7 @@ Examples:
 )";
 
 int main(int argc, const char* argv[]) {
-    auto args = w2v::Args(argc, argv);
+    auto args = emb::Args(argc, argv);
 
     if (argc == 1 || args.has({"-h", "-help", "--help"})) {
         fprintf(stderr, "%s", help_message);
@@ -45,21 +45,21 @@ int main(int argc, const char* argv[]) {
 
     auto input  = args.get({"-i", "-input", "-train"}, "stdin");
     auto output = args.get({"-o", "-output"}, "stdout");
-    auto size = args.get({"-s", "-size"}, w2v::def::DIMENSION);
-    auto epochs = args.get({"-e", "-epochs"}, w2v::def::EPOCHS);
-    auto window = args.get({"-w", "-window"}, w2v::def::CONTEXT_SIZE);
-    auto negative = args.get({"-n", "-negative"}, w2v::def::NEGATIVE_SAMPLES);
-    auto alpha = args.get({"-a", "-alpha"}, w2v::def::LEARNING_RATE);
-    auto dynamic = args.get({"-d", "-dynamic"}, w2v::def::DYNAMIC_CONTEXT);
-    auto binary = args.get({"-b", "-binary"}, w2v::def::BINARY);
-    auto verbose = args.get({"-v", "-verbose"}, w2v::def::VERBOSE);
+    auto size = args.get({"-s", "-size"},   emb::def::DIMENSION);
+    auto epochs = args.get({"-e", "-epochs"},   emb::def::EPOCHS);
+    auto window = args.get({"-w", "-window"},   emb::def::CONTEXT_SIZE);
+    auto negative = args.get({"-n", "-negative"},   emb::def::NEGATIVE_SAMPLES);
+    auto alpha = args.get({"-a", "-alpha"}, emb::def::LEARNING_RATE);
+    auto dynamic = args.get({"-d", "-dynamic"}, emb::def::DYNAMIC_CONTEXT);
+    auto binary = args.get({"-b", "-binary"},   emb::def::BINARY);
+    auto verbose = args.get({"-v", "-verbose"}, emb::def::VERBOSE);
 
-    auto word2vec = w2v::Word2Vec<>(size, epochs, alpha, window, dynamic,
+    auto word2vec = emb::Word2Vec<>(size, epochs, alpha, window, dynamic,
         negative, verbose);
 
-    auto text_input = w2v::read(input, verbose);
+    auto text_input =   emb::read(input, verbose);
     auto embeddings = word2vec.learn_embeddings(text_input);
-    w2v::write(embeddings, output, binary, verbose);
+    emb::write(embeddings, output, binary, verbose);
 
     return 0;
 }

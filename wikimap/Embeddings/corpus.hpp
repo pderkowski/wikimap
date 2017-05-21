@@ -10,7 +10,7 @@
 #include "logging.hpp"
 
 
-namespace w2v {
+namespace emb {
 
 
 template<class Word>
@@ -124,4 +124,4 @@ void Corpus::set_unigram_distribution(double subsampling_factor) {
 }
 
 
-}
+} // namespace emb

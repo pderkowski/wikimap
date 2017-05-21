@@ -7,7 +7,7 @@
 #include <omp.h>
 
 
-namespace w2v {
+namespace emb {
 
 namespace math {
 
@@ -61,4 +61,4 @@ double sigmoid(double x) {
 } // namespace math
 
 
-} // namespace w2v
+} // namespace emb

@@ -5,7 +5,7 @@
 #include <ctime>
 
 
-namespace w2v {
+namespace emb {
 
 namespace logging {
 
@@ -55,4 +55,4 @@ inline double time_since_last_log() {
 
 } // namespace logging
 
-} // namespace w2v
+} // namespace emb

@@ -8,9 +8,10 @@
 #include "utils.hpp"
 
 
-namespace w2v {
+namespace emb {
 
 namespace io {
+
 
 const int MAX_WORD_SIZE = 100;
 const int MAX_SENTENCE_SIZE = 1000;
@@ -226,4 +227,4 @@ void write(
 }
 
 
-} // namespace w2v
+} // namespace emb

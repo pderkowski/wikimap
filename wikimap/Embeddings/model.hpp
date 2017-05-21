@@ -10,7 +10,7 @@
 #include "vector_ops.hpp"
 
 
-namespace w2v {
+namespace emb {
 
 
 class View;
@@ -202,4 +202,4 @@ inline ConstView Model::get_row(Int index, const Float* matrix) const {
 }
 
 
-} // namespace w2v
+} // namespace emb

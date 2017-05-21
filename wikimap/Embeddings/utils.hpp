@@ -10,7 +10,7 @@
 #include "logging.hpp"
 
 
-namespace w2v {
+namespace emb {
 
 // This class holds random number generators for each thread.
 class Random {
@@ -186,4 +186,4 @@ int Args::arg_pos(std::initializer_list<std::string> names) const {
 }
 
 
-} // namespace w2v
+} // namespace emb

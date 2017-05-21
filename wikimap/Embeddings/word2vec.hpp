@@ -15,7 +15,7 @@
 #include "logging.hpp"
 
 
-namespace w2v {
+namespace emb {
 
 
 struct Settings {
@@ -344,4 +344,4 @@ inline int Training::get_context_size() const {
 }
 
 
-} // namespace w2v
+} // namespace emb

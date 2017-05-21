@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 
-namespace w2v {
+namespace emb {
 
 
 typedef float Float;
@@ -35,7 +35,7 @@ const bool VERBOSE = true;
 const double SUMBSAMPLING_FACTOR = 0.75;
 const bool BINARY = false;
 
-}
+} // namespace def
 
 
-}
+} // namespace emb

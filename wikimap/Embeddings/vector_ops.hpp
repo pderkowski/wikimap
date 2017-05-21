@@ -3,7 +3,7 @@
 #include <cmath>
 
 
-namespace w2v {
+namespace emb {
 
 namespace vec {
 
@@ -47,4 +47,4 @@ inline void normalize(Target&& target) {
 } // namespace vec
 
 
-} // namespace w2v
+} // namespace emb
