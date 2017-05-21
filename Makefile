@@ -4,7 +4,7 @@ export TSNEDIR = $(realpath external/bhtsne)
 export SNAPDIR = $(realpath external/snap)
 export GRAPHDIR = $(realpath wikimap/Graph)
 export NODE2VECDIR = $(realpath wikimap/Embeddings/Node2Vec)
-export WORD2VECDIR = $(realpath wikimap/Embeddings/Word2Vec)
+export WORD2VECDIR = $(realpath wikimap/Embeddings/)
 export EDGEARRAYDIR = $(realpath wikimap/Tables/EdgeArray)
 export TABLEIMPORTERDIR = $(realpath wikimap/Tables/TableImporter)
 

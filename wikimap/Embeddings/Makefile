@@ -20,3 +20,4 @@ clean:
 	rm -f *.o
 	rm -f $(LIB)
 	rm -f $(BIN)
+	rm -f *.pyc
