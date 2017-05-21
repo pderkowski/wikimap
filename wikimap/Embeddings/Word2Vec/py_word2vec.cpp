@@ -28,9 +28,14 @@ struct hash<py::object> {
 };
 
 bool operator ==(const py::object& lhs, const py::object& rhs) {
-    py::object eq_fun = lhs.attr("__eq__");
-    py::object eq_value = eq_fun(rhs);
-    return eq_value.cast<bool>();
+    py::object eq_fun;
+    if (py::hasattr(lhs, "__eq__")) {
+        eq_fun = py::getattr(lhs, "__eq__");
+        return eq_fun(rhs).cast<bool>();
+    } else {
+        eq_fun = py::getattr(lhs, "__cmp__");
+        return (eq_fun(rhs).cast<int>() == 0);
+    }
 }
 
 
@@ -132,12 +137,6 @@ PYBIND11_PLUGIN(word2vec) {
                 });
             return self.learn_embeddings(adapted_it, decltype(adapted_it)());
         });
-
-#ifdef VERSION_INFO
-    m.attr("__version__") = py::str(VERSION_INFO);
-#else
-    m.attr("__version__") = py::str("dev");
-#endif
 
     return m.ptr();
 }

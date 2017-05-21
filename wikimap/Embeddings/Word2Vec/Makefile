@@ -11,7 +11,7 @@ all: $(BIN) $(LIB)
 $(BIN): $(SOURCES)
 	$(CXX) $(CXXFLAGS) -o $@ word2vec.cpp
 
-$(LIB): CXXFLAGS += -shared -fPIC `python-config --cflags --ldflags` -UNDEBUG
+$(LIB): CXXFLAGS += -shared -fPIC `python-config --cflags --ldflags`
 $(LIB): INCLUDES += -I $(EXTERNAL)/pybind11/include
 $(LIB): $(SOURCES)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(LIB) py_word2vec.cpp
