@@ -20,7 +20,7 @@ typedef int32_t Id;
 typedef std::vector<Id> Sequence;
 typedef typename Sequence::const_iterator SequenceIterator;
 typedef std::pair<SequenceIterator, SequenceIterator> SequenceRange;
-
+typedef std::pair<Id, Id> Edge;
 
 // defaults defined here for consistency
 namespace def {
@@ -34,6 +34,9 @@ const int NEGATIVE_SAMPLES = 5;
 const bool VERBOSE = true;
 const double SUMBSAMPLING_FACTOR = 0.75;
 const bool BINARY = false;
+const double BACKTRACK_PROBABILITY = 0.5;
+const int WALK_LENGTH = 80;
+const int WALKS_PER_NODE = 10;
 
 } // namespace def
 

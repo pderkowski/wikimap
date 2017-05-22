@@ -6,6 +6,7 @@
 #include <pybind11/stl.h>
 
 #include "word2vec.hpp"
+#include "node2vec.hpp"
 #include "io.hpp"
 
 
@@ -53,7 +54,7 @@ public:
     typedef typename IteratorType::value_type source_type;
 
     casting_iterator()
-    :   it_(),cast_()
+    :   it_(), cast_()
     { }
 
     casting_iterator(
@@ -95,8 +96,8 @@ private:
 };
 
 
-PYBIND11_PLUGIN(word2vec) {
-    py::module m("word2vec");
+PYBIND11_PLUGIN(embeddings) {
+    py::module m("embeddings");
     m.def("word2vec", [] (
             const std::string& input_file,
             const std::string& output_file) {
@@ -134,6 +135,35 @@ PYBIND11_PLUGIN(word2vec) {
                             return h.cast<py::object>();
                         });
                     return sequence;
+                });
+            return self.learn_embeddings(adapted_it, decltype(adapted_it)());
+        });
+
+    py::class_<emb::Node2Vec>(m, "Node2Vec")
+        .def(py::init<double, int, int, int, int, double, int, bool, int, bool, double>(),
+            py::arg("backtrack_probability") = emb::def::BACKTRACK_PROBABILITY,
+            py::arg("walk_length") = emb::def::WALK_LENGTH,
+            py::arg("walks_per_node") = emb::def::WALKS_PER_NODE,
+            py::arg("dimension") = emb::def::DIMENSION,
+            py::arg("epochs") = emb::def::EPOCHS,
+            py::arg("learning_rate") = emb::def::LEARNING_RATE,
+            py::arg("context_size") = emb::def::CONTEXT_SIZE,
+            py::arg("dynamic_context") = emb::def::DYNAMIC_CONTEXT,
+            py::arg("negative_samples") = emb::def::NEGATIVE_SAMPLES,
+            py::arg("verbose") = emb::def::VERBOSE,
+            py::arg("subsampling_factor") = emb::def::SUMBSAMPLING_FACTOR)
+        .def("learn_embeddings", [] (
+                const emb::Node2Vec& self,
+                py::iterable iterable) {
+
+            py::iterator it = py::iter(iterable);
+            auto adapted_it = casting_iterator<py::iterator, emb::Edge>(
+                it,
+                [] (const py::handle& handle) {
+                    auto edge = handle.cast<py::tuple>();
+                    return emb::Edge(
+                        edge[0].cast<emb::Id>(),
+                        edge[1].cast<emb::Id>());
                 });
             return self.learn_embeddings(adapted_it, decltype(adapted_it)());
         });

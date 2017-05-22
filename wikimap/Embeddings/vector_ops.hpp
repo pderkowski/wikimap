@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <parallel/algorithm>
+
 
 namespace emb {
 
@@ -41,6 +43,11 @@ inline void normalize(Target&& target) {
     for (int i = 0; i < target.size(); ++i) {
         target[i] /= root;
     }
+}
+
+template<class Target>
+inline void shuffle(Target&& target) {
+    __gnu_parallel::random_shuffle(target.begin(), target.end());
 }
 
 

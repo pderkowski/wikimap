@@ -18,7 +18,7 @@
 namespace emb {
 
 
-struct Settings {
+struct W2VSettings {
     int dimension;
     int epochs;
     double starting_learning_rate;
@@ -45,13 +45,15 @@ public:
         bool verbose = def::VERBOSE,
         double subsampling_factor = def::SUMBSAMPLING_FACTOR);
 
+    explicit Word2Vec(const W2VSettings& settings);
+
     template<class Container>
     Embeddings<Word> learn_embeddings(const Container& sentences) const;
 
     template<class Iterator>
     Embeddings<Word> learn_embeddings(Iterator begin, Iterator end) const;
 
-    Settings settings;
+    W2VSettings settings;
 
 private:
     template<class Iterator>
@@ -69,7 +71,10 @@ private:
 
 class Training {
 public:
-    Training(const Settings& settings, const Corpus& corpus, Model& model);
+    Training(
+        const W2VSettings& settings,
+        const Corpus& corpus,
+        Model& model);
 
     void init_model();
     void train_model();
@@ -86,9 +91,9 @@ private:
     double get_gradient_for_negative_sample(Id word, Id context) const;
     int get_context_size() const;
 
-    static const int BATCH_SIZE = 50;
+    static const int BATCH_SIZE = 100;
 
-    const Settings& stg_;
+    const W2VSettings& stg_;
     const Corpus& corpus_;
     Model& model_;
 };
@@ -122,6 +127,11 @@ Word2Vec<Word>::Word2Vec(int dimension, int epochs, double learning_rate,
     settings.subsampling_factor = subsampling_factor;
     settings.verbose = verbose;
 }
+
+template<class Word>
+Word2Vec<Word>::Word2Vec(const W2VSettings& settings)
+:   settings(settings)
+{ }
 
 template<class Word>
 template<class Container>
@@ -189,7 +199,10 @@ void Word2Vec<Word>::process_sentence(
 }
 
 
-Training::Training(const Settings& settings, const Corpus& corpus, Model& model)
+Training::Training(
+        const W2VSettings& settings,
+        const Corpus& corpus,
+        Model& model)
 :   stg_(settings), corpus_(corpus), model_(model)
 { }
 
@@ -234,7 +247,9 @@ void Training::train_model() {
                     words_seen * 100. / words_expected);
             }
 
-            auto learning_rate = get_learning_rate(words_seen, words_expected);
+            auto learning_rate = get_learning_rate(
+                words_seen,
+                words_expected);
 
             SequenceIterator seq_start, seq_end;
             std::tie(seq_start, seq_end) = corpus_.get_sequence(index);

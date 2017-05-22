@@ -1,8 +1,8 @@
 SOURCES = $(wildcard *.hpp *.cpp)
 
-CXXFLAGS += -std=c++11 -fopenmp -O3 -funroll-loops -Wall -march=native
+CXXFLAGS += -std=c++11 -fopenmp -funroll-loops -Wall -march=native -O3
 BIN = word2vec
-LIB = word2vec.so
+LIB = embeddings.so
 
 .PHONY: clean all
 
@@ -14,7 +14,7 @@ $(BIN): $(SOURCES)
 $(LIB): CXXFLAGS += -shared -fPIC `python-config --cflags --ldflags`
 $(LIB): INCLUDES += -I $(EXTERNAL)/pybind11/include
 $(LIB): $(SOURCES)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(LIB) py_word2vec.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(LIB) py_embeddings.cpp
 
 clean:
 	rm -f *.o

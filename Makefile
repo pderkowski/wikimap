@@ -3,8 +3,7 @@ export PAGERANKDIR = $(realpath wikimap/Pagerank)
 export TSNEDIR = $(realpath external/bhtsne)
 export SNAPDIR = $(realpath external/snap)
 export GRAPHDIR = $(realpath wikimap/Graph)
-export NODE2VECDIR = $(realpath wikimap/Embeddings/Node2Vec)
-export WORD2VECDIR = $(realpath wikimap/Embeddings/)
+export EMBEDDINGS = $(realpath wikimap/Embeddings/)
 export EDGEARRAYDIR = $(realpath wikimap/Tables/EdgeArray)
 export TABLEIMPORTERDIR = $(realpath wikimap/Tables/TableImporter)
 
@@ -20,18 +19,15 @@ export CXXFLAGS = -O3
 
 .DEFAULT_GOAL := build
 
-.PHONY: test clean build tsne edgearray tableimporter node2vec pagerank word2vec
+.PHONY: test clean build tsne edgearray tableimporter pagerank embeddings
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-build: pagerank $(AGGREGATEBIN) tsne edgearray word2vec node2vec tableimporter
+build: pagerank $(AGGREGATEBIN) tsne edgearray tableimporter embeddings
 
-word2vec:
-	cd $(WORD2VECDIR) && $(MAKE)
-
-node2vec:
-	cd $(NODE2VECDIR) && $(MAKE)
+embeddings:
+	cd $(EMBEDDINGS) && $(MAKE)
 
 edgearray:
 	cd $(EDGEARRAYDIR) && $(MAKE)
@@ -58,9 +54,8 @@ clean:
 	find . -name '*.pyc' -delete
 	rm -f $(AGGREGATEOBJECTS) $(AGGREGATEBIN)
 	cd $(PAGERANKDIR) && $(MAKE) clean
-	cd $(NODE2VECDIR) && $(MAKE) clean
 	cd $(SNAPDIR) && $(MAKE) clean
 	cd $(EDGEARRAYDIR) && $(MAKE) clean
 	cd $(TSNEDIR) && $(MAKE) clean
 	cd $(TABLEIMPORTERDIR) && $(MAKE) clean
-	cd $(WORD2VECDIR) && $(MAKE) clean
+	cd $(EMBEDDINGS) && $(MAKE) clean

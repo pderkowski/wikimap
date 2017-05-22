@@ -1,5 +1,4 @@
-import Node2Vec
-import word2vec
+import embeddings
 
 import logging
 
@@ -10,10 +9,25 @@ def Word2Vec(sentences, dimensions, context_size, epochs_count, dynamic_window,
     logger = logging.getLogger(__name__)
     logger.info("Running word2vec...")
 
-    w2v = word2vec.Word2Vec(dimension=dimensions, epochs=epochs_count,
-                            context_size=context_size,
-                            dynamic_context=dynamic_window, verbose=verbose)
+    w2v = embeddings.Word2Vec(dimension=dimensions, epochs=epochs_count,
+                              context_size=context_size,
+                              dynamic_context=dynamic_window, verbose=verbose)
     return w2v.learn_embeddings(sentences).iteritems()
+
+
+def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
+             dimensions, context_size, epochs_count, dynamic_window, verbose):
+    """Run node2vec on provided sentences."""
+    logger = logging.getLogger(__name__)
+    logger.info("Running node2vec...")
+
+    n2v = embeddings.Node2Vec(backtrack_probability=backtrack_probability,
+                              walk_length=walk_length,
+                              walks_per_node=walks_per_node,
+                              dimension=dimensions, epochs=epochs_count,
+                              context_size=context_size,
+                              dynamic_context=dynamic_window, verbose=verbose)
+    return n2v.learn_embeddings(edges).iteritems()
 
 
 class Embeddings(object):
@@ -103,20 +117,20 @@ class Embeddings(object):
         `data` is the data to train on.
         """
         if self._method == 'node2vec':
-            return iter(Node2Vec.Node2Vec(
+            return iter(Node2Vec(
                 data,
-                self._dimensions,
-                self._context_size,
-                self._backtrack_probability,
-                self._walks_per_node,
-                self._walk_length,
-                self._epochs_count,
-                self._dynamic_window,
-                self._verbose))
+                backtrack_probability=self._backtrack_probability,
+                walk_length=self._walk_length,
+                walks_per_node=self._walks_per_node,
+                dimensions=self._dimensions,
+                epochs_count=self._epochs_count,
+                context_size=self._context_size,
+                dynamic_window=self._dynamic_window,
+                verbose=self._verbose))
         elif self._method == 'link_word2vec':
-            return iter(Word2Vec.Word2Vec(
+            return iter(Word2Vec(
                 data,
-                self._dimensions,
+                dimensions=self._dimensions,
                 context_size=1,
                 epochs_count=self._epochs_count,
                 dynamic_window=False,
