@@ -53,16 +53,18 @@ public:
     template<class Iterator>
     Embeddings<Word> learn_embeddings(Iterator begin, Iterator end) const;
 
+    Embeddings<Word> learn_embeddings(
+        const Vocabulary<Word>& vocab,
+        const Corpus& corpus) const;
+
+    template<class Iterator>
+    std::pair<Vocabulary<Word>, Corpus> prepare_training_data(
+        Iterator begin,
+        Iterator end) const;
+
     W2VSettings settings;
 
 private:
-    template<class Iterator>
-    void process_training_data(
-        Iterator begin,
-        Iterator end,
-        Vocabulary<Word>& vocab,
-        Corpus& corpus) const;
-
     void process_sentence(
         const Sentence& sentence,
         Vocabulary<Word>& vocab,
@@ -149,7 +151,15 @@ Embeddings<Word> Word2Vec<Word>::learn_embeddings(
 
     Vocabulary<Word> vocab;
     Corpus corpus;
-    process_training_data(begin, end, vocab, corpus);
+    std::tie(vocab, corpus) = prepare_training_data(begin, end);
+
+    return learn_embeddings(vocab, corpus);
+}
+
+template<class Word>
+Embeddings<Word> Word2Vec<Word>::learn_embeddings(
+        const Vocabulary<Word>& vocab,
+        const Corpus& corpus) const {
 
     Model model(vocab.size(), settings.dimension);
 
@@ -163,11 +173,12 @@ Embeddings<Word> Word2Vec<Word>::learn_embeddings(
 
 template<class Word>
 template<class Iterator>
-void Word2Vec<Word>::process_training_data(
+std::pair<Vocabulary<Word>, Corpus> Word2Vec<Word>::prepare_training_data(
         Iterator begin,
-        Iterator end,
-        Vocabulary<Word>& vocab,
-        Corpus& corpus) const {
+        Iterator end) const {
+
+    Vocabulary<Word> vocab;
+    Corpus corpus;
 
     if (settings.verbose) { logging::log("Preparing training data\n"); }
 
@@ -182,6 +193,8 @@ void Word2Vec<Word>::process_training_data(
     }
 
     corpus.set_unigram_distribution(settings.subsampling_factor);
+
+    return std::make_pair(vocab, corpus);
 }
 
 template<class Word>

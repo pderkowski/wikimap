@@ -181,20 +181,26 @@ Embeddings<Id> Node2Vec::learn_embeddings(
         Iterator begin,
         Iterator end) const {
 
-    RandomWalks walks;
+    Word2Vec<Id> w2v(settings);
+    Vocabulary<Id> vocab;
+    Corpus corpus;
 
     {
-        auto graph = read_graph(begin, end);
-        walks = generate_random_walks(graph);
-        // destroy graph to preserve memory
+        RandomWalks walks;
+        {
+            auto graph = read_graph(begin, end);
+            walks = generate_random_walks(graph);
+            // destroy graph to preserve memory
+        }
+        shuffle_walks(walks);
+
+        std::tie(vocab, corpus) = w2v.prepare_training_data(
+            walks.begin(),
+            walks.end());
+        // destroy walks to preserve memory
     }
 
-    Word2Vec<Id> w2v(settings);
-
-
-    shuffle_walks(walks);
-
-    return w2v.learn_embeddings(walks);
+    return w2v.learn_embeddings(vocab, corpus);
 }
 
 template<class Iterator>
