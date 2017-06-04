@@ -44,13 +44,13 @@ std::vector<double> compute_sigmoid_table() {
 // Tabularized values of sigmoid.
 std::vector<double> sigmoid_table = compute_sigmoid_table();
 
-double sigmoid(double x) {
+double sigmoid(float x) {
     if (x >= MAX_EXPONENT) {
         return 1.; // close enough to real value
     } else if (x < -MAX_EXPONENT) {
         return 0.; // close enough to real value
     } else {
-        double f = (x + MAX_EXPONENT) / (2. * MAX_EXPONENT); // this should be in [0, 1)
+        float f = (x + MAX_EXPONENT) / (2. * MAX_EXPONENT); // this should be in [0, 1)
         int index = static_cast<int>(f * TABLE_SIZE);
         index = std::min<int>(sigmoid_table.size() - 1, index); // not sure if f couldn't end up rounded to 1
         return sigmoid_table[index];
