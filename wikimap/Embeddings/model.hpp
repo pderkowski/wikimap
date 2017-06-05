@@ -17,7 +17,7 @@ class View;
 
 class ConstView {
 public:
-    ConstView(const Float* data, Int size, double multiplier);
+    ConstView(const Float* data, Int size, Float multiplier);
     ConstView(const Float* data, Int size);
     ConstView(const View& view);
 
@@ -25,8 +25,8 @@ public:
 
     Int size() const { return size_; }
 
-    friend ConstView operator * (double multiplier, const ConstView& v);
-    friend ConstView operator * (const ConstView& v, double multiplier);
+    friend ConstView operator * (Float multiplier, const ConstView& v);
+    friend ConstView operator * (const ConstView& v, Float multiplier);
     friend class View;
 
     explicit operator Embedding () const;
@@ -35,7 +35,7 @@ private:
     const Float* data_;
     Int size_;
 
-    double multiplier_;
+    Float multiplier_;
 };
 
 class View {
@@ -47,8 +47,8 @@ public:
 
     Int size() const { return size_; }
 
-    friend ConstView operator * (double multiplier, const View& v);
-    friend ConstView operator * (const View& v, double multiplier);
+    friend ConstView operator * (Float multiplier, const View& v);
+    friend ConstView operator * (const View& v, Float multiplier);
     friend class ConstView;
 
     explicit operator Embedding () const;
@@ -58,7 +58,7 @@ private:
     Int size_;
 };
 
-ConstView::ConstView(const Float* data, Int size, double multiplier)
+ConstView::ConstView(const Float* data, Int size, Float multiplier)
 :   data_(data), size_(size), multiplier_(multiplier)
 { }
 
@@ -90,19 +90,19 @@ View::operator Embedding () const {
     return res;
 }
 
-inline ConstView operator * (double multiplier, const View& v) {
+inline ConstView operator * (Float multiplier, const View& v) {
     return ConstView(v.data_, v.size_, multiplier);
 }
 
-inline ConstView operator * (const View& v, double multiplier) {
+inline ConstView operator * (const View& v, Float multiplier) {
     return ConstView(v.data_, v.size_, multiplier);
 }
 
-inline ConstView operator * (double multiplier, const ConstView& v) {
+inline ConstView operator * (Float multiplier, const ConstView& v) {
     return v * multiplier;
 }
 
-inline ConstView operator * (const ConstView& v, double multiplier) {
+inline ConstView operator * (const ConstView& v, Float multiplier) {
     ConstView copy(v);
     copy.multiplier_ *= multiplier;
     return copy;

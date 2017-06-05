@@ -21,11 +21,11 @@ namespace emb {
 struct W2VSettings {
     int dimension;
     int epochs;
-    double starting_learning_rate;
+    Float starting_learning_rate;
     int context_size;
     bool dynamic_context;
     int negative_samples;
-    double subsampling_factor;
+    Float subsampling_factor;
     bool verbose;
 };
 
@@ -38,12 +38,12 @@ public:
     Word2Vec(
         int dimension = def::DIMENSION,
         int epochs = def::EPOCHS,
-        double learning_rate = def::LEARNING_RATE,
+        Float learning_rate = def::LEARNING_RATE,
         int context_size = def::CONTEXT_SIZE,
         bool dynamic_context = def::DYNAMIC_CONTEXT,
         int negative_samples = def::NEGATIVE_SAMPLES,
         bool verbose = def::VERBOSE,
-        double subsampling_factor = def::SUMBSAMPLING_FACTOR);
+        Float subsampling_factor = def::SUMBSAMPLING_FACTOR);
 
     explicit Word2Vec(const W2VSettings& settings);
 
@@ -86,11 +86,11 @@ private:
     void train_on_sequence(
         const SequenceIterator& seq_start,
         const SequenceIterator& seq_end,
-        double learning_rate);
+        Float learning_rate);
 
-    double get_learning_rate(Int words_seen, Int words_expected) const;
-    double get_gradient_for_positive_sample(Id word, Id context) const;
-    double get_gradient_for_negative_sample(Id word, Id context) const;
+    Float get_learning_rate(Int words_seen, Int words_expected) const;
+    Float get_gradient_for_positive_sample(Id word, Id context) const;
+    Float get_gradient_for_negative_sample(Id word, Id context) const;
     int get_context_size() const;
 
     static const int BATCH_SIZE = 100;
@@ -116,9 +116,9 @@ Embeddings<Word> get_embeddings_from_model(
 
 
 template<class Word>
-Word2Vec<Word>::Word2Vec(int dimension, int epochs, double learning_rate,
+Word2Vec<Word>::Word2Vec(int dimension, int epochs, Float learning_rate,
         int context_size, bool dynamic_context, int negative_samples,
-        bool verbose, double subsampling_factor) {
+        bool verbose, Float subsampling_factor) {
 
     settings.dimension = dimension;
     settings.epochs = epochs;
@@ -245,7 +245,7 @@ void Training::train_model() {
                 stg_.epochs);
             logging::inline_log(
                 "* Progress: %.2f%%  ",
-                words_seen * 100. / words_expected);
+                words_seen * 100.0 / words_expected);
         }
 
         #pragma omp parallel for schedule(dynamic, BATCH_SIZE)
@@ -257,7 +257,7 @@ void Training::train_model() {
 
                 logging::inline_log(
                     "* Progress: %.2f%%  ",
-                    words_seen * 100. / words_expected);
+                    words_seen * 100.0 / words_expected);
             }
 
             auto learning_rate = get_learning_rate(
@@ -285,7 +285,7 @@ void Training::normalize_model() {
 void Training::train_on_sequence(
         const SequenceIterator& seq_start,
         const SequenceIterator& seq_end,
-        double learning_rate) {
+        Float learning_rate) {
 
     const auto seq_size = seq_end - seq_start;
     if (seq_size < 2) { return; } // nothing to do
@@ -321,7 +321,7 @@ void Training::train_on_sequence(
                 auto context = corpus_.sample();
                 if (word == context) { continue; }
 
-                double gradient =
+                Float gradient =
                     get_gradient_for_negative_sample(word, context)
                     * learning_rate;
 
@@ -338,32 +338,32 @@ void Training::train_on_sequence(
     }
 }
 
-inline double Training::get_learning_rate(
+inline Float Training::get_learning_rate(
         Int words_seen,
         Int words_expected) const {
 
-    double coef = std::max(1. - words_seen / (words_expected + 1.), 0.0001);
+    Float coef = std::max(1.0f - words_seen / (words_expected + 1.0f), 0.0001f);
     return coef * stg_.starting_learning_rate;
 }
 
-inline double Training::get_gradient_for_positive_sample(
+inline Float Training::get_gradient_for_positive_sample(
         Id word,
         Id context) const {
 
     auto product = vec::dot_product(
         model_.word_embedding(word),
         model_.context_embedding(context));
-    return 1. - math::sigmoid(product);
+    return 1.0f - math::sigmoid(product);
 }
 
-inline double Training::get_gradient_for_negative_sample(
+inline Float Training::get_gradient_for_negative_sample(
         Id word,
         Id context) const {
 
     auto product = vec::dot_product(
         model_.word_embedding(word),
         model_.context_embedding(context));
-    return math::sigmoid(-product) - 1.;
+    return math::sigmoid(-product) - 1.0f;
 }
 
 inline int Training::get_context_size() const {

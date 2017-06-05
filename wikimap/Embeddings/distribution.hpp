@@ -42,11 +42,7 @@ inline size_t DiscreteDistribution::operator()(Rng& rng) const {
     size_t roll = rng() % size_;
     double toss = static_cast<double>(rng()) / rng.max();
 
-    if (toss <= prob_[roll]) {
-        return roll;
-    } else {
-        return alias_[roll];
-    }
+    return (toss <= prob_[roll])? roll : alias_[roll];
 }
 
 void DiscreteDistribution::construct_tables(std::vector<double> weights) {

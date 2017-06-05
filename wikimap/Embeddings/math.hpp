@@ -6,22 +6,23 @@
 
 #include <omp.h>
 
+#include "defs.hpp"
 
 namespace emb {
 
 namespace math {
 
 
-const double MAX_EXPONENT = 6.;
+const Float MAX_EXPONENT = 6.0f;
 const int TABLE_SIZE = 10000;
 
 
-std::vector<double> compute_sigmoid_table() {
-    std::vector<double> table(TABLE_SIZE);
+std::vector<Float> compute_sigmoid_table() {
+    std::vector<Float> table(TABLE_SIZE);
 
     // There are TABLE_SIZE buckets, covering the range from -MAX_EXPONENT to
     // MAX_EXPONENT, so each one of them has the following span:
-    const double span = 2. * MAX_EXPONENT / TABLE_SIZE;
+    const double span = 2.0 * MAX_EXPONENT / TABLE_SIZE;
 
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < TABLE_SIZE; ++i) {
@@ -30,11 +31,11 @@ std::vector<double> compute_sigmoid_table() {
         exponent += 0.5 * span; // take the middle point of the bucket
 
         // use one of two formulas for sigmoid depending on the sign of exponent
-        if (exponent >= 0) {
-            table[i] = 1. / (1. + exp(-exponent));
+        if (exponent >= 0.0) {
+            table[i] = 1.0 / (1.0 + exp(-exponent));
         } else {
             double z = exp(exponent);
-            table[i] = z / (1. + z);
+            table[i] = z / (1.0 + z);
         }
     }
 
@@ -42,15 +43,15 @@ std::vector<double> compute_sigmoid_table() {
 }
 
 // Tabularized values of sigmoid.
-std::vector<double> sigmoid_table = compute_sigmoid_table();
+std::vector<Float> sigmoid_table = compute_sigmoid_table();
 
-double sigmoid(float x) {
+inline Float sigmoid(Float x) {
     if (x >= MAX_EXPONENT) {
-        return 1.; // close enough to real value
+        return 1.0f; // close enough to real value
     } else if (x < -MAX_EXPONENT) {
-        return 0.; // close enough to real value
+        return 0.0f; // close enough to real value
     } else {
-        float f = (x + MAX_EXPONENT) / (2. * MAX_EXPONENT); // this should be in [0, 1)
+        Float f = (x + MAX_EXPONENT) / (2.0f * MAX_EXPONENT); // this should be in [0, 1)
         int index = static_cast<int>(f * TABLE_SIZE);
         index = std::min<int>(sigmoid_table.size() - 1, index); // not sure if f couldn't end up rounded to 1
         return sigmoid_table[index];
