@@ -22,8 +22,8 @@ private:
 
     size_t size_;
 
-    std::vector<double> prob_;
-    std::vector<size_t> alias_;
+    // clumping both prob and alias together should help a little with memory locality
+    std::vector<std::pair<Float, size_t>> prob_alias_;
 };
 
 
@@ -42,12 +42,11 @@ inline size_t DiscreteDistribution::operator()(Rng& rng) const {
     size_t roll = rng() % size_;
     double toss = static_cast<double>(rng()) / rng.max();
 
-    return (toss <= prob_[roll])? roll : alias_[roll];
+    return (toss <= prob_alias_[roll].first)? roll : prob_alias_[roll].second;
 }
 
 void DiscreteDistribution::construct_tables(std::vector<double> weights) {
-    prob_ = decltype(prob_)(weights.size(), 0);
-    alias_ = decltype(alias_)(weights.size(), 0);
+    prob_alias_ = decltype(prob_alias_)(weights.size());
 
     scale(weights);
 
@@ -64,8 +63,8 @@ void DiscreteDistribution::construct_tables(std::vector<double> weights) {
         auto l = small.back(); small.pop_back();
         auto g = large.back(); large.pop_back();
 
-        prob_[l] = weights[l];
-        alias_[l] = g;
+        prob_alias_[l].first = weights[l];
+        prob_alias_[l].second = g;
 
         weights[g] = (weights[g] - 1.) + weights[l];
 
@@ -79,13 +78,13 @@ void DiscreteDistribution::construct_tables(std::vector<double> weights) {
     while (!large.empty()) {
         auto g = large.back(); large.pop_back();
 
-        prob_[g] = 1.;
+        prob_alias_[g].first = 1.;
     }
 
     while (!small.empty()) {
         auto l = small.back(); small.pop_back();
 
-        prob_[l] = 1.;
+        prob_alias_[l].first = 1.;
     }
 }
 
