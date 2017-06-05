@@ -25,6 +25,8 @@ public:
     typedef typename decltype(id2word_)::const_iterator const_iterator;
 
 public:
+    Vocabulary();
+
     void add(const Word& word);
 
     Id get_id(const Word& word) const { return word2id_.at(word); }
@@ -38,6 +40,12 @@ public:
     const_iterator end() const { return id2word_.end(); }
     iterator end() { return id2word_.end(); }
 };
+
+template<class Word>
+Vocabulary<Word>::Vocabulary() {
+    word2id_.max_load_factor(0.5);
+    word2id_.reserve(1000000);
+}
 
 template<class Word>
 void Vocabulary<Word>::add(const Word& word) {
