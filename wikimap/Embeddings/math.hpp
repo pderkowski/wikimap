@@ -58,6 +58,21 @@ double sigmoid(float x) {
 }
 
 
+template <class Iter>
+double kahan_sum(Iter begin, Iter end) {
+    double result = 0.;
+
+    double c = 0.;
+    for(;begin != end; ++begin) {
+        double y = *begin - c;
+        double t = result + y;
+        c = (t - result) - y;
+        result = t;
+    }
+    return result;
+}
+
+
 } // namespace math
 
 

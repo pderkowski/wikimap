@@ -8,6 +8,7 @@
 #include "defs.hpp"
 #include "utils.hpp"
 #include "logging.hpp"
+#include "distribution.hpp"
 
 
 namespace emb {
@@ -82,11 +83,7 @@ private:
     Sequence token_ids_;
     std::vector<Int> separators_;
     std::vector<Int> id2count_;
-    // The reason this is mutable is that its operator () is surprisingly
-    // not const. This may be because some distributions supposedly have state
-    // (normal distribution?). If discrete_distribution is also state dependend
-    // this needs to be changed.
-    mutable std::discrete_distribution<Id> unigrams_;
+    DiscreteDistribution unigrams_;
 };
 
 
@@ -120,7 +117,7 @@ void Corpus::set_unigram_distribution(double subsampling_factor) {
         weights[i] = pow(id2count_[i], subsampling_factor);
     }
 
-    unigrams_ = decltype(unigrams_)(weights.begin(), weights.end());
+    unigrams_ = decltype(unigrams_)(weights);
 }
 
 
