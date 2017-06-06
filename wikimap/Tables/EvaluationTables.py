@@ -1,4 +1,4 @@
-from ..DataHelpers import normalize_word
+from ..DataHelpers import normalize_word, pipe, NotBlankIt, NotCommentIt
 from ..Utils import make_table
 import csv
 import logging
@@ -39,19 +39,19 @@ class SimilarityDataset(object):
 
     def __iter__(self):
         with open(self.path, 'r') as dataset:
-            for line in dataset:
+            for line in pipe(dataset, NotBlankIt, NotCommentIt):
                 words = line.rstrip().split()
                 yield ((normalize_word(words[0]), normalize_word(words[1])), float(words[2]))
 
-class BlessRelationDataset(object):
+class TripletDataset(object):
     def __init__(self, name, path):
         self.name = name
         self.path = path
-        self.type = 'relation'
+        self.type = 'triplet'
 
     def __iter__(self):
         with open(self.path, 'r') as dataset:
-            for line in dataset:
+            for line in pipe(dataset, NotBlankIt, NotCommentIt):
                 words = line.rstrip().split()
                 yield map(normalize_word, words)
 

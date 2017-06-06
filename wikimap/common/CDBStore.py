@@ -32,7 +32,7 @@ class CDBStore(object):
         self._ensureLoaded()
         try:
             return self._valueConverter.decode(self._db.get(self._keyConverter.encode(key), pos))
-        except struct.error:
+        except:
             raise KeyError(key)
 
     def getall(self, key):

@@ -163,9 +163,11 @@ class Data(object):
             Tables.SimilarityDataset('Mturk-287', self.P.mturk_287),
             Tables.SimilarityDataset('SIMLEX-999', self.P.simlex_999)]
 
-    def get_relation_datasets(self):
-        return [Tables.BlessRelationDataset('BLESS-REL-RANDOM', self.P.bless_rel_random),
-            Tables.BlessRelationDataset('BLESS-REL-MERO', self.P.bless_rel_mero)]
+    def get_triplet_datasets(self):
+        return [Tables.TripletDataset('BLESS-REL-RANDOM', self.P.bless_rel_random),
+            Tables.TripletDataset('BLESS-REL-MERO', self.P.bless_rel_mero),
+            Tables.TripletDataset('WIKI-HAND', self.P.wiki_hand),
+            Tables.TripletDataset('WIKI-GEN', self.P.wiki_gen)]
 
     def get_title_index(self):
         return Tables.TitleIndex(self.P.title_index)

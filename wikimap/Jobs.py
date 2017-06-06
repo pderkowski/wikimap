@@ -261,7 +261,7 @@ class EvaluateEmbeddings(Job):
         word_mapping = self.data.get_word_mapping() if self.config['use_word_mapping'] else {}
         evaluation_results = []
         evaluation_results.extend([SimilarityEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in self.data.get_similarity_datasets()])
-        evaluation_results.extend([RelationEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in self.data.get_relation_datasets()])
+        evaluation_results.extend([RelationEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in self.data.get_triplet_datasets()])
         self.data.set_evaluation_results(evaluation_results)
         self.logs.append(self.data.get_evaluation_results_as_table())
 

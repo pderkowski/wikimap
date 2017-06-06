@@ -164,3 +164,17 @@ class NotEqualIt(object):
 
     def __iter__(self):
         return ifilter(lambda record: record[self.column] != self.val, self.iterator)
+
+class NotCommentIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return ifilter(lambda line: not line.startswith('#'), self.iterator)
+
+class NotBlankIt(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return ifilter(lambda line: not line.isspace(), self.iterator)
