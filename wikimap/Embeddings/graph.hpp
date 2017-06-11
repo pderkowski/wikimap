@@ -59,7 +59,7 @@ public:
     size_t node_count() const { return node_data_.size(); }
     size_t edge_count() const { return edge_data_.size(); }
 
-    std::vector<Node> get_nodes() const { return int2ext_; }
+    const std::vector<Node>& get_nodes() const { return int2ext_; }
 
 private:
     NodeData& get_node(Node node);

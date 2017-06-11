@@ -59,6 +59,8 @@ def main():
         help='Specify embedding methods to set as the method argument of the embed job.')
     parser.add_argument('--embed.node_count', type=Utils.parse_int_range,
         help='Specify the number of embedded nodes.')
+    parser.add_argument('--embed.epochs_count', type=Utils.parse_int_range,
+        help='Specify the number of epochs.')
     parser.add_argument('--verbose', '-v', action='store_true',
         help='Increase log verbosity.')
 
@@ -66,7 +68,7 @@ def main():
     grid_arg_names = ['ldnn.neighbors_count', 'embed.context_size',
                       'embed.backtrack_probability', 'embed.dimensions',
                       'embed.walks_per_node', 'embed.method',
-                      'embed.node_count']
+                      'embed.node_count', 'embed.epochs_count']
     grid_args = [(arg, val) for (arg, val) in vars(known_args).iteritems() if arg in grid_arg_names]
 
     Utils.config_logging(verbose=known_args.verbose)

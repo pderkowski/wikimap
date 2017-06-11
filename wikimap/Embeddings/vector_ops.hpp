@@ -2,9 +2,6 @@
 
 #include <cmath>
 
-#include <parallel/algorithm>
-
-
 namespace emb {
 
 namespace vec {
@@ -43,11 +40,6 @@ inline void normalize(Target&& target) {
     for (size_t i = 0; i < target.size(); ++i) {
         target[i] /= root;
     }
-}
-
-template<class Target>
-inline void shuffle(Target&& target) {
-    __gnu_parallel::random_shuffle(target.begin(), target.end());
 }
 
 

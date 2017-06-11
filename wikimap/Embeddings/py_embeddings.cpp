@@ -102,9 +102,11 @@ PYBIND11_PLUGIN(embeddings) {
             const std::string& input_file,
             const std::string& output_file) {
 
-        auto word2vec = emb::Word2Vec<>();
-        auto text_input = emb::read(input_file);
-        auto embeddings = word2vec.learn_embeddings(text_input);
+        auto w2v = emb::Word2Vec<>();
+        auto text = emb::read(input_file);
+        emb::MemoryCorpus<> corpus(text.begin(), text.end());
+        w2v.train(corpus);
+        auto embeddings = w2v.get_embeddings();
         emb::write(embeddings, output_file);
     });
 
@@ -121,7 +123,7 @@ PYBIND11_PLUGIN(embeddings) {
             py::arg("verbose") = emb::def::VERBOSE,
             py::arg("subsampling_factor") = emb::def::SUMBSAMPLING_FACTOR)
         .def("learn_embeddings", [] (
-                const Word2Vec& self,
+                Word2Vec& self,
                 py::iterable iterable) {
 
             py::iterator it = py::iter(iterable);
@@ -136,7 +138,13 @@ PYBIND11_PLUGIN(embeddings) {
                         });
                     return sequence;
                 });
-            return self.learn_embeddings(adapted_it, decltype(adapted_it)());
+
+            emb::MemoryCorpus<py::object> corpus(
+                adapted_it,
+                decltype(adapted_it)());
+
+            self.train(corpus);
+            return self.get_embeddings();
         });
 
     py::class_<emb::Node2Vec>(m, "Node2Vec")

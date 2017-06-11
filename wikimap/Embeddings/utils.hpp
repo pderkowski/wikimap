@@ -19,22 +19,33 @@ public:
 
     Random();
 
-    static Rng& get();
+    static Rng& global_rng();
+    Rng& rng();
+
+    void seed(Int seed);
 
 private:
-    std::vector<Rng> rnds_;
+    std::vector<Rng> rngs_;
 };
 
 Random::Random() {
     auto seed = std::random_device()();
     for (int i = 0; i < omp_get_max_threads(); ++i) {
-        rnds_.push_back(Rng(seed + i));
+        rngs_.push_back(Rng(seed + i));
     }
 }
 
-Random::Rng& Random::get() {
+inline Random::Rng& Random::global_rng() {
     static Random instance;
-    return instance.rnds_[omp_get_thread_num()];
+    return instance.rng();
+}
+
+inline Random::Rng& Random::rng() {
+    return rngs_[omp_get_thread_num()];
+}
+
+inline void Random::seed(Int s) {
+    rng().seed(s);
 }
 
 
@@ -184,6 +195,7 @@ int Args::arg_pos(std::initializer_list<std::string> names) const {
     }
     return -1;
 }
+
 
 
 } // namespace emb

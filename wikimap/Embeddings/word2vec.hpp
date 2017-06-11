@@ -4,18 +4,24 @@
 #include <algorithm>
 #include <tuple>
 #include <random>
+#include <stdexcept>
 
 #include <omp.h>
 
 #include "defs.hpp"
-#include "corpus.hpp"
 #include "model.hpp"
 #include "utils.hpp"
 #include "math.hpp"
 #include "logging.hpp"
+#include "vocab.hpp"
+#include "parallel.hpp"
 
 
 namespace emb {
+
+
+template<class Word>
+class Training;
 
 
 struct W2VSettings {
@@ -32,7 +38,7 @@ struct W2VSettings {
 template<class Word = std::string>
 class Word2Vec {
 public:
-    typedef std::vector<Word> Sentence;
+    typedef Word value_type;
 
 public:
     Word2Vec(
@@ -47,78 +53,56 @@ public:
 
     explicit Word2Vec(const W2VSettings& settings);
 
-    template<class Container>
-    Embeddings<Word> learn_embeddings(const Container& sentences) const;
+    Embeddings<Word> get_embeddings() const;
 
-    template<class Iterator>
-    Embeddings<Word> learn_embeddings(Iterator begin, Iterator end) const;
+    // Use this in a simple case, when you just want to put in some sentences
+    // and get embeddings.
+    //
+    // Just call train once.
+    //
+    template<class Corpus>
+    void train(const Corpus& corpus);
 
-    Embeddings<Word> learn_embeddings(
-        const Vocabulary<Word>& vocab,
-        const Corpus& corpus) const;
+    // Use this when you want to split training into multiple stages.
+    // Remember to do the following:
+    //
+    // 1. init_training
+    // 2. train_some (possibly many times)
+    // 3. finish_training
 
-    template<class Iterator>
-    std::pair<Vocabulary<Word>, Corpus> prepare_training_data(
-        Iterator begin,
-        Iterator end) const;
+    template<class Corpus>
+    void init_training(const Corpus& corpus);
 
+    template<class Corpus>
+    void train_some(const Corpus& corpus, Int total_expected_sentences);
+
+    void finish_training();
+
+private:
+    template<class Corpus>
+    void learn_vocab(const Corpus& corpus);
+
+    void resize_model();
+    void init_model();
+    void set_unigram_distribution();
+
+    void normalize_model();
+
+public:
     W2VSettings settings;
 
 private:
-    void process_sentence(
-        const Sentence& sentence,
-        Vocabulary<Word>& vocab,
-        Corpus& corpus) const;
+    Vocab<Word> vocab_;
+    Model model_;
+    Training<Word> training_;
 };
-
-class Training {
-public:
-    Training(
-        const W2VSettings& settings,
-        const Corpus& corpus,
-        Model& model);
-
-    void init_model();
-    void train_model();
-    void normalize_model();
-
-private:
-    void train_on_sequence(
-        const SequenceIterator& seq_start,
-        const SequenceIterator& seq_end,
-        Float learning_rate);
-
-    Float get_learning_rate(Int words_seen, Int words_expected) const;
-    Float get_gradient_for_positive_sample(Id word, Id context) const;
-    Float get_gradient_for_negative_sample(Id word, Id context) const;
-    int get_context_size() const;
-
-    static const int BATCH_SIZE = 100;
-
-    const W2VSettings& stg_;
-    const Corpus& corpus_;
-    Model& model_;
-};
-
-
-template<class Word>
-Embeddings<Word> get_embeddings_from_model(
-        const Vocabulary<Word>& vocab,
-        const Model& model) {
-
-    Embeddings<Word> embeddings;
-    for (const auto& word : vocab) {
-        embeddings[word] = static_cast<Embedding>(
-            model.word_embedding(vocab.get_id(word)));
-    }
-    return embeddings;
-}
-
 
 template<class Word>
 Word2Vec<Word>::Word2Vec(int dimension, int epochs, Float learning_rate,
-        int context_size, bool dynamic_context, int negative_samples,
-        bool verbose, Float subsampling_factor) {
+            int context_size, bool dynamic_context, int negative_samples,
+            bool verbose, Float subsampling_factor)
+
+:       settings(), vocab_(), model_(), training_(settings, vocab_, model_) {
 
     settings.dimension = dimension;
     settings.epochs = epochs;
@@ -131,181 +115,219 @@ Word2Vec<Word>::Word2Vec(int dimension, int epochs, Float learning_rate,
 }
 
 template<class Word>
-Word2Vec<Word>::Word2Vec(const W2VSettings& settings)
-:   settings(settings)
+Word2Vec<Word>::Word2Vec(const W2VSettings& stgs)
+:   settings(stgs), vocab_(), model_(), training_(settings, vocab_, model_)
 { }
 
 template<class Word>
-template<class Container>
-Embeddings<Word> Word2Vec<Word>::learn_embeddings(
-        const Container& sentences) const {
-
-    return learn_embeddings(sentences.begin(), sentences.end());
+Embeddings<Word> Word2Vec<Word>::get_embeddings() const {
+    Embeddings<Word> embeddings;
+    for (const auto& word : vocab_) {
+        embeddings[word] = static_cast<Embedding>(
+            model_.word_embedding(vocab_.get_id(word)));
+    }
+    return embeddings;
 }
 
 template<class Word>
-template<class Iterator>
-Embeddings<Word> Word2Vec<Word>::learn_embeddings(
-        Iterator begin,
-        Iterator end) const {
-
-    Vocabulary<Word> vocab;
-    Corpus corpus;
-    std::tie(vocab, corpus) = prepare_training_data(begin, end);
-
-    return learn_embeddings(vocab, corpus);
+template<class Corpus>
+void Word2Vec<Word>::train(const Corpus& corpus) {
+    init_training(corpus);
+    train_some(corpus, corpus.sentence_count());
+    finish_training();
 }
 
 template<class Word>
-Embeddings<Word> Word2Vec<Word>::learn_embeddings(
-        const Vocabulary<Word>& vocab,
-        const Corpus& corpus) const {
-
-    Model model(vocab.size(), settings.dimension);
-
-    Training training(settings, corpus, model);
-    training.init_model();
-    training.train_model();
-    training.normalize_model();
-
-    return get_embeddings_from_model(vocab, model);
+template<class Corpus>
+void Word2Vec<Word>::init_training(const Corpus& corpus) {
+    learn_vocab(corpus);
+    resize_model();
+    init_model();
+    set_unigram_distribution();
 }
 
 template<class Word>
-template<class Iterator>
-std::pair<Vocabulary<Word>, Corpus> Word2Vec<Word>::prepare_training_data(
-        Iterator begin,
-        Iterator end) const {
-
-    Vocabulary<Word> vocab;
-    Corpus corpus;
-
-    if (settings.verbose) { logging::log("Preparing training data\n"); }
-
-    std::for_each(begin, end, [this, &vocab, &corpus] (const Sentence& s) {
-        process_sentence(s, vocab, corpus);
-    });
+template<class Corpus>
+void Word2Vec<Word>::train_some(
+        const Corpus& corpus,
+        Int total_expected_sentences) {
 
     if (settings.verbose) {
-        logging::log("- sentences: %lld\n", corpus.sequence_count());
-        logging::log("- words: %lld\n", corpus.size());
-        logging::log("- unique words: %lld\n", vocab.size());
+        logging::log("Starting new training session\n");
+        logging::log("- corpus size (sentences): %lld\n", corpus.sentence_count());
+        logging::log("- epochs: %d\n", settings.epochs);
     }
-
-    corpus.set_unigram_distribution(settings.subsampling_factor);
-
-    return std::make_pair(vocab, corpus);
+    training_.train(corpus, total_expected_sentences);
 }
 
 template<class Word>
-void Word2Vec<Word>::process_sentence(
-        const Sentence& sentence,
-        Vocabulary<Word>& vocab,
-        Corpus& corpus) const {
+void Word2Vec<Word>::finish_training() {
+    normalize_model();
+}
 
-    for (const auto& word : sentence) {
-        vocab.add(word);
-        auto id = vocab.get_id(word);
-        corpus.add_token(id);
+template<class Word>
+template<class Corpus>
+void Word2Vec<Word>::learn_vocab(const Corpus& corpus) {
+    if (settings.verbose) {
+        logging::log("Learning vocabulary\n");
+        logging::log("- sentences in corpus: %lld\n", corpus.sentence_count());
     }
-    corpus.end_sequence();
+
+    auto word_counts = parallel::WordCount<Corpus>(corpus);
+
+    for (const auto& w_c : word_counts) {
+        vocab_.add(w_c.first, w_c.second);
+    }
+
+    if (settings.verbose) {
+        logging::log("- words in vocab: %lld\n", vocab_.size());
+    }
 }
 
 
-Training::Training(
+template<class Word>
+void Word2Vec<Word>::resize_model() {
+    Int rows = vocab_.size();
+    Int cols = settings.dimension;
+
+    if (settings.verbose) {
+        logging::log("Allocating model\n");
+        logging::log("- model dimensions: [2 x %d x %d]\n", rows, cols);
+        logging::log("- estimated size: %dMB\n", model_.estimate_size_mb(
+            rows,
+            cols));
+    }
+
+    try {
+        model_.resize(rows, cols);
+    } catch (const std::bad_alloc& e) {
+        logging::log("ERROR: not enough memory for model allocation.");
+        exit(1);
+    }
+}
+
+
+template<class Word>
+void Word2Vec<Word>::init_model() {
+    if (settings.verbose) { logging::log("Initializing model\n"); }
+    model_.init();
+}
+
+template<class Word>
+void Word2Vec<Word>::set_unigram_distribution() {
+    if (settings.verbose) { logging::log("Setting unigram distribution\n"); }
+    vocab_.init_sampling(settings.subsampling_factor);
+}
+
+template<class Word>
+void Word2Vec<Word>::normalize_model() {
+    if (settings.verbose) { logging::log("Normalizing model\n"); }
+    model_.normalize();
+}
+
+template<class Word>
+class Training {
+public:
+    Training(
         const W2VSettings& settings,
-        const Corpus& corpus,
+        const Vocab<Word>& vocab,
+        Model& model);
+
+    template<class Corpus>
+    void train(const Corpus& corpus, Int expected_sentences);
+
+private:
+    template<class Sentence>
+    void train_on_sequence(const Sentence& sentence, Float learning_rate);
+
+    Float get_learning_rate(Int expected_sentences) const;
+    Float get_progress_rate(Int expected_sentences) const;
+
+    Float get_gradient_for_positive_sample(Id word, Id context) const;
+    Float get_gradient_for_negative_sample(Id word, Id context) const;
+
+    int get_context_size() const;
+
+    static const int BATCH_SIZE = 100;
+    static constexpr const char* progress_str =
+        "* Progress: %6.2f%%    Learning rate: %10.8f%%";
+
+    const W2VSettings& stg_;
+    const Vocab<Word>& vocab_;
+    Model& model_;
+
+    // This is a member, to keep its value between possible multiple calls to
+    // train()
+    Int processed_sentences_;
+};
+
+template<class Word>
+Training<Word>::Training(
+        const W2VSettings& settings,
+        const Vocab<Word>& vocab,
         Model& model)
-:   stg_(settings), corpus_(corpus), model_(model)
+:   stg_(settings), vocab_(vocab), model_(model), processed_sentences_(0)
 { }
 
-void Training::init_model() {
-    if (stg_.verbose) {
-        logging::log("Initializing model\n");
-        logging::log(
-            "- model dimensions: [2 x %d x %d]\n",
-            model_.rows(),
-            model_.cols());
-        logging::log("- estimated size: %dMB\n", model_.estimate_size_mb());
-        model_.init();
-    }
-}
-
-void Training::train_model() {
-    if (stg_.verbose) { logging::log("Training model\n"); }
-
-    Int words_seen = 0;
-    Int words_expected = corpus_.size() * stg_.epochs;
-
+template<class Word>
+template<class Corpus>
+void Training<Word>::train(const Corpus& corpus, Int expected_sentences) {
     for (int epoch = 0; epoch < stg_.epochs; ++epoch) {
-        if (stg_.verbose) {
-            logging::inline_log(
-                "- Starting epoch (%d/%d)\n",
-                epoch + 1,
-                stg_.epochs);
-            logging::inline_log(
-                "* Progress: %.2f%%  ",
-                words_seen * 100.0 / words_expected);
-        }
-
         #pragma omp parallel for schedule(dynamic, BATCH_SIZE)
-        for (Int index = 0; index < corpus_.sequence_count(); ++index) {
+        for (Int index = 0; index < corpus.sentence_count(); ++index) {
+            auto learning_rate = get_learning_rate(expected_sentences);
+
             // only master thread reports progress
             if (    omp_get_thread_num() == 0
                     && stg_.verbose
                     && logging::time_since_last_log() > 0.1) {
 
-                logging::inline_log(
-                    "* Progress: %.2f%%  ",
-                    words_seen * 100.0 / words_expected);
+                auto progress_rate = get_progress_rate(expected_sentences);
+                logging::inline_log(progress_str, progress_rate, learning_rate);
             }
 
-            auto learning_rate = get_learning_rate(
-                words_seen,
-                words_expected);
-
-            SequenceIterator seq_start, seq_end;
-            std::tie(seq_start, seq_end) = corpus_.get_sequence(index);
-
-            train_on_sequence(seq_start, seq_end, learning_rate);
+            train_on_sequence(corpus.get_sentence(index), learning_rate);
 
             #pragma omp atomic
-            words_seen += (seq_end - seq_start);
+            processed_sentences_ += 1;
         }
     }
 
-    if (stg_.verbose) { logging::inline_log("- Progress: 100.00%% \n"); }
+    if (stg_.verbose) {
+        auto learning_rate = get_learning_rate(expected_sentences);
+        logging::inline_log(progress_str, 100., learning_rate);
+        logging::newline();
+    }
 }
 
-void Training::normalize_model() {
-    if (stg_.verbose) { logging::log("Normalizing model\n"); }
-    model_.normalize();
-}
-
-void Training::train_on_sequence(
-        const SequenceIterator& seq_start,
-        const SequenceIterator& seq_end,
+template<class Word>
+template<class Sentence>
+void Training<Word>::train_on_sequence(
+        const Sentence& sentence,
         Float learning_rate) {
 
-    const auto seq_size = seq_end - seq_start;
-    if (seq_size < 2) { return; } // nothing to do
+    auto start = sentence.begin();
+    auto end = sentence.end();
+
+    const auto size = end - start;
+    if (size < 2) { return; } // nothing to do
 
     Embedding word_embedding_delta(stg_.dimension, 0);
 
-    for (int word_pos = 0; word_pos < seq_size; ++word_pos) {
-        auto word = seq_start[word_pos];
+    for (int word_pos = 0; word_pos < size; ++word_pos) {
+        auto word = vocab_.get_id(start[word_pos]);
         // context_size may be vary if -dynamic is on
         auto context_size = get_context_size();
 
         for (int offset = -context_size; offset <= context_size; ++offset) {
             int context_pos = word_pos + offset;
-            if (offset == 0 || context_pos < 0 || context_pos >= seq_size) {
+            if (offset == 0 || context_pos < 0 || context_pos >= size) {
                 continue;
             }
 
             vec::fill_with_zeros(word_embedding_delta);
 
-            auto context = seq_start[context_pos];
+            auto context = vocab_.get_id(start[context_pos]);
             auto gradient =
                 get_gradient_for_positive_sample(word, context)
                 * learning_rate;
@@ -318,7 +340,8 @@ void Training::train_on_sequence(
                 model_.word_embedding(word) * gradient);
 
             for (int j = 0; j < stg_.negative_samples; ++j) {
-                auto context = corpus_.sample();
+                auto context = vocab_.sample(Random::global_rng());
+
                 if (word == context) { continue; }
 
                 Float gradient =
@@ -338,15 +361,21 @@ void Training::train_on_sequence(
     }
 }
 
-inline Float Training::get_learning_rate(
-        Int words_seen,
-        Int words_expected) const {
-
-    Float coef = std::max(1.0f - words_seen / (words_expected + 1.0f), 0.0001f);
+template<class Word>
+inline Float Training<Word>::get_learning_rate(Int expected_sentences) const {
+    Float coef = std::max(
+        1.0f - processed_sentences_ / (expected_sentences + 1.0f),
+        0.0001f);
     return coef * stg_.starting_learning_rate;
 }
 
-inline Float Training::get_gradient_for_positive_sample(
+template<class Word>
+inline Float Training<Word>::get_progress_rate(Int expected_sentences) const {
+    return processed_sentences_ * 100.0 / expected_sentences;
+}
+
+template<class Word>
+inline Float Training<Word>::get_gradient_for_positive_sample(
         Id word,
         Id context) const {
 
@@ -356,7 +385,8 @@ inline Float Training::get_gradient_for_positive_sample(
     return 1.0f - math::sigmoid(product);
 }
 
-inline Float Training::get_gradient_for_negative_sample(
+template<class Word>
+inline Float Training<Word>::get_gradient_for_negative_sample(
         Id word,
         Id context) const {
 
@@ -366,9 +396,12 @@ inline Float Training::get_gradient_for_negative_sample(
     return math::sigmoid(-product) - 1.0f;
 }
 
-inline int Training::get_context_size() const {
+template<class Word>
+inline int Training<Word>::get_context_size() const {
     static std::uniform_int_distribution<int> dist(1, stg_.context_size);
-    return stg_.dynamic_context ? dist(Random::get()) : stg_.context_size;
+    return stg_.dynamic_context ?
+        dist(Random::global_rng())
+        : stg_.context_size;
 }
 
 

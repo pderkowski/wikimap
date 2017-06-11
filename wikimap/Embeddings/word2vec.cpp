@@ -2,6 +2,7 @@
 
 #include "io.hpp"
 #include "word2vec.hpp"
+#include "corpus.hpp"
 
 const char* help_message = R"(
 word2vec
@@ -54,11 +55,15 @@ int main(int argc, const char* argv[]) {
     auto binary = args.get({"-b", "-binary"},   emb::def::BINARY);
     auto verbose = args.get({"-v", "-verbose"}, emb::def::VERBOSE);
 
-    auto word2vec = emb::Word2Vec<>(size, epochs, alpha, window, dynamic,
+    auto w2v = emb::Word2Vec<>(size, epochs, alpha, window, dynamic,
         negative, verbose);
 
-    auto text_input =   emb::read(input, verbose);
-    auto embeddings = word2vec.learn_embeddings(text_input);
+    auto text = emb::read(input, verbose);
+    emb::MemoryCorpus<decltype(w2v)::value_type> corpus(
+        text.begin(),
+        text.end());
+    w2v.train(corpus);
+    auto embeddings = w2v.get_embeddings();
     emb::write(embeddings, output, binary, verbose);
 
     return 0;

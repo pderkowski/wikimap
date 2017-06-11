@@ -7,22 +7,23 @@
 #include "graph.hpp"
 #include "vector_ops.hpp"
 #include "utils.hpp"
+#include "corpus.hpp"
 
 
 namespace emb {
 
 
 struct N2VSettings {
-    double backtrack_probability;
+    Float backtrack_probability;
     int walk_length;
     int walks_per_node;
     int dimension;
     int epochs;
-    double starting_learning_rate;
+    Float starting_learning_rate;
     int context_size;
     bool dynamic_context;
     int negative_samples;
-    double subsampling_factor;
+    Float subsampling_factor;
     bool verbose;
 
     operator W2VSettings() const {
@@ -42,21 +43,18 @@ struct N2VSettings {
 
 class Node2Vec {
 public:
-    typedef std::vector<std::vector<Id>> RandomWalks;
-
-public:
     Node2Vec(
-        double backtrack_probability = def::BACKTRACK_PROBABILITY,
+        Float backtrack_probability = def::BACKTRACK_PROBABILITY,
         int walk_length = def::WALK_LENGTH,
         int walks_per_node = def::WALKS_PER_NODE,
         int dimension = def::DIMENSION,
         int epochs = def::EPOCHS,
-        double learning_rate = def::LEARNING_RATE,
+        Float learning_rate = def::LEARNING_RATE,
         int context_size = def::CONTEXT_SIZE,
         bool dynamic_context = def::DYNAMIC_CONTEXT,
         int negative_samples = def::NEGATIVE_SAMPLES,
         bool verbose = def::VERBOSE,
-        double subsampling_factor = def::SUMBSAMPLING_FACTOR);
+        Float subsampling_factor = def::SUMBSAMPLING_FACTOR);
 
     template<class Container>
     Embeddings<Id> learn_embeddings(const Container& edges) const;
@@ -71,92 +69,31 @@ private:
 
     template<class Iterator>
     Graph<Id> read_graph(Iterator begin, Iterator end) const;
-
-    RandomWalks generate_random_walks(const Graph<Id>& graph) const;
-    void shuffle_walks(RandomWalks& walks) const;
 };
+
 
 class WalkGenerator {
 public:
-    typedef Random::Rng Rng;
     typedef std::vector<Id> Walk;
     typedef std::pair<Id, bool> OptionalNode;
 
     WalkGenerator(const Graph<Id>& graph, const N2VSettings& settings);
 
-    Walk generate(Id start, Rng& rng) const;
+    Walk generate(Int index, Int seed) const;
 
 private:
-    OptionalNode select_next_node(const Walk& walk, Rng& rng) const;
+    OptionalNode select_next_node(const Walk& walk) const;
 
-    const Graph<Id>& graph_;
+    Graph<Id> graph_;
     N2VSettings settings_;
+    mutable Random random_;
 };
 
-WalkGenerator::WalkGenerator(
-        const Graph<Id>& graph,
-        const N2VSettings& settings)
-:   graph_(graph), settings_(settings)
-{ }
 
-WalkGenerator::Walk WalkGenerator::generate(Id start, Rng& rng) const {
-    Walk walk;
-
-    if (settings_.walk_length > 0) {
-        walk.push_back(start);
-    }
-
-    while (walk.size() < static_cast<size_t>(settings_.walk_length)) {
-        auto optional_next = select_next_node(walk, rng);
-        if (optional_next.second) {
-            walk.push_back(optional_next.first);
-        } else {
-            break;
-        }
-    }
-
-    return walk;
-}
-
-WalkGenerator::OptionalNode WalkGenerator::select_next_node(
-        const Walk& walk,
-        Rng& rng) const {
-
-    static std::uniform_real_distribution<> dist;
-
-    if (walk.size() == 1) {
-        auto last = walk[0];
-        if (graph_.has_neighbor(last)) {
-            return std::make_pair(graph_.get_random_neighbor(last, rng), true);
-        } else {
-            return std::make_pair(-1, false);
-        }
-    } else {
-        auto last = walk[walk.size() - 1];
-        auto last_last = walk[walk.size() - 2];
-
-        auto sample = dist(rng);
-        if (sample >= settings_.backtrack_probability) {
-            if (graph_.has_neighbor(last)) {
-                return std::make_pair(graph_.get_random_neighbor(last, rng), true);
-            } else {
-                return std::make_pair(-1, false);
-            }
-        } else {
-            if (graph_.has_neighbor(last_last)) {
-                return std::make_pair(graph_.get_random_neighbor(last_last, rng), true);
-            } else {
-                return std::make_pair(-1, false);
-            }
-        }
-    }
-}
-
-
-Node2Vec::Node2Vec(double backtrack_probability, int walk_length,
-        int walks_per_node, int dimension, int epochs, double learning_rate,
+Node2Vec::Node2Vec(Float backtrack_probability, int walk_length,
+        int walks_per_node, int dimension, int epochs, Float learning_rate,
         int context_size, bool dynamic_context, int negative_samples,
-        bool verbose, double subsampling_factor) {
+        bool verbose, Float subsampling_factor) {
 
     settings.backtrack_probability = backtrack_probability;
     settings.walk_length = walk_length;
@@ -182,25 +119,16 @@ Embeddings<Id> Node2Vec::learn_embeddings(
         Iterator end) const {
 
     Word2Vec<Id> w2v(settings);
-    Vocabulary<Id> vocab;
-    Corpus corpus;
 
-    {
-        RandomWalks walks;
-        {
-            auto graph = read_graph(begin, end);
-            walks = generate_random_walks(graph);
-            // destroy graph to preserve memory
-        }
-        shuffle_walks(walks);
+    auto graph = read_graph(begin, end);
+    auto walk_count = graph.node_count() * settings.walks_per_node;
+    WalkGenerator generator(graph, settings);
+    GeneratingCorpus<Id> corpus([generator] (Int index, Int seed) {
+        return generator.generate(index, seed);
+    }, walk_count);
+    w2v.train(corpus);
 
-        std::tie(vocab, corpus) = w2v.prepare_training_data(
-            walks.begin(),
-            walks.end());
-        // destroy walks to preserve memory
-    }
-
-    return w2v.learn_embeddings(vocab, corpus);
+    return w2v.get_embeddings();
 }
 
 template<class Iterator>
@@ -221,50 +149,73 @@ Graph<Id> Node2Vec::read_graph(Iterator begin, Iterator end) const {
     return graph;
 }
 
-Node2Vec::RandomWalks Node2Vec::generate_random_walks(
-        const Graph<Id>& graph) const {
 
-    Int walks_expected = graph.node_count() * settings.walks_per_node;
+WalkGenerator::WalkGenerator(
+        const Graph<Id>& graph,
+        const N2VSettings& settings)
+:   graph_(graph), settings_(settings)
+{ }
 
-    RandomWalks walks(walks_expected);
-    WalkGenerator generator(graph, settings);
+WalkGenerator::Walk WalkGenerator::generate(Int index, Int seed) const {
+    random_.seed(seed);
 
-    if (settings.verbose) {
-        logging::log("Generating random walks\n");
-        logging::log("- walks per node: %d\n", settings.walks_per_node);
-        logging::log("- max walk length: %d\n", settings.walk_length);
-        logging::log("* Progress: 0.00%%  ");
+    Id start = graph_.get_nodes()[index % graph_.node_count()];
+    Walk walk;
+
+    if (settings_.walk_length > 0) {
+        walk.push_back(start);
     }
 
-    auto nodes = graph.get_nodes();
-
-    #pragma omp parallel for schedule(dynamic, BATCH_SIZE)
-    for (Int index = 0; index < walks_expected; ++index) {
-        // only master thread reports progress
-        if (    omp_get_thread_num() == 0
-                && settings.verbose
-                && logging::time_since_last_log() > 0.1) {
-
-            logging::inline_log(
-                "* Progress: %.2f%%  ",
-                index * 100. / walks_expected);
+    while (walk.size() < static_cast<size_t>(settings_.walk_length)) {
+        auto optional_next = select_next_node(walk);
+        if (optional_next.second) {
+            walk.push_back(optional_next.first);
+        } else {
+            break;
         }
-
-        auto start = nodes[index / settings.walks_per_node];
-        walks[index] = generator.generate(start, Random::get());
     }
 
-    if (settings.verbose) { logging::inline_log("- Progress: 100.00%% \n"); }
-
-    return walks;
+    return walk;
 }
 
-void Node2Vec::shuffle_walks(RandomWalks& walks) const {
-    if (settings.verbose) {
-        logging::log("Shuffling walks\n");
-    }
+WalkGenerator::OptionalNode WalkGenerator::select_next_node(
+        const Walk& walk) const {
 
-    vec::shuffle(walks);
+    static std::uniform_real_distribution<> dist;
+    auto& rng = random_.rng();
+
+    if (walk.size() == 1) {
+        auto last = walk[0];
+        if (graph_.has_neighbor(last)) {
+            return std::make_pair(
+                graph_.get_random_neighbor(last, rng),
+                true);
+        } else {
+            return std::make_pair(-1, false);
+        }
+    } else {
+        auto last = walk[walk.size() - 1];
+        auto last_last = walk[walk.size() - 2];
+
+        auto sample = dist(rng);
+        if (sample >= settings_.backtrack_probability) {
+            if (graph_.has_neighbor(last)) {
+                return std::make_pair(
+                    graph_.get_random_neighbor(last, rng),
+                    true);
+            } else {
+                return std::make_pair(-1, false);
+            }
+        } else {
+            if (graph_.has_neighbor(last_last)) {
+                return std::make_pair(
+                    graph_.get_random_neighbor(last_last, rng),
+                    true);
+            } else {
+                return std::make_pair(-1, false);
+            }
+        }
+    }
 }
 
 

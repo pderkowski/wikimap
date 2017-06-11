@@ -111,7 +111,11 @@ inline ConstView operator * (const ConstView& v, Float multiplier) {
 
 class Model {
 public:
-    Model(Int vocab_size, Int dimension);
+    Model();
+
+    void resize(Int rows, Int cols);
+    void init();
+    void normalize();
 
     View word_embedding(Int index);
     ConstView word_embedding(Int index) const;
@@ -119,13 +123,10 @@ public:
     View context_embedding(Int index);
     ConstView context_embedding(Int index) const;
 
-    void init();
-    void normalize();
-
     Int rows() const { return rows_; }
     Int cols() const { return cols_; }
 
-    Int estimate_size_mb() const { return 2L * size_ * sizeof(Float) / 1000000; }
+    Int estimate_size_mb(Int rows, Int cols) const;
 
 private:
     void init_word_embeddings();
@@ -134,39 +135,30 @@ private:
     View get_row(Int index, Float* matrix);
     ConstView get_row(Int index, const Float* matrix) const;
 
-    const Int rows_;
-    const Int cols_;
-    const Int size_;
+    Int rows_;
+    Int cols_;
+    Int size_;
 
     std::unique_ptr<Float[]> word_embeddings_;
     std::unique_ptr<Float[]> context_embeddings_;
 };
 
-Model::Model(Int vocab_size, Int dimension)
-:   rows_(vocab_size), cols_(dimension), size_(vocab_size * dimension),
+Model::Model()
+:   rows_(0), cols_(0), size_(0),
     word_embeddings_(nullptr), context_embeddings_(nullptr)
 { }
 
-void Model::init() {
+void Model::resize(Int rows, Int cols) {
+    rows_ = rows;
+    cols_ = cols;
+    size_ = rows * cols;
     word_embeddings_ = std::unique_ptr<Float[]>(new Float[size_]);
     context_embeddings_ = std::unique_ptr<Float[]>(new Float[size_]);
+}
+
+void Model::init() {
     init_word_embeddings();
     init_context_embeddings();
-}
-
-void Model::init_word_embeddings() {
-    std::uniform_real_distribution<Float> dist(-0.5, 0.5);
-    #pragma omp parallel for schedule(static)
-    for (Int i = 0; i < size_; ++i) {
-        word_embeddings_[i] = dist(Random::get()) / cols_;
-    }
-}
-
-void Model::init_context_embeddings() {
-    #pragma omp parallel for schedule(static)
-    for (Int i = 0; i < size_; ++i) {
-        context_embeddings_[i] = 0;
-    }
 }
 
 void Model::normalize() {
@@ -175,6 +167,10 @@ void Model::normalize() {
         vec::normalize(word_embedding(i));
         vec::normalize(context_embedding(i));
     }
+}
+
+Int Model::estimate_size_mb(Int rows, Int cols) const {
+    return 2L * rows * cols * sizeof(Float) / 1000000;
 }
 
 inline View Model::word_embedding(Int index) {
@@ -199,6 +195,21 @@ inline View Model::get_row(Int index, Float* matrix) {
 
 inline ConstView Model::get_row(Int index, const Float* matrix) const {
     return ConstView(matrix + index * cols_, cols_);
+}
+
+void Model::init_word_embeddings() {
+    std::uniform_real_distribution<Float> dist(-0.5, 0.5);
+    #pragma omp parallel for schedule(static)
+    for (Int i = 0; i < size_; ++i) {
+        word_embeddings_[i] = dist(Random::global_rng()) / cols_;
+    }
+}
+
+void Model::init_context_embeddings() {
+    #pragma omp parallel for schedule(static)
+    for (Int i = 0; i < size_; ++i) {
+        context_embeddings_[i] = 0;
+    }
 }
 
 

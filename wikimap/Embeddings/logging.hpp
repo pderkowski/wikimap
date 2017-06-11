@@ -16,6 +16,12 @@ inline void clear_line() {
     fprintf(stderr, "\r");
 }
 
+inline void newline() {
+    fprintf(stderr, "\n");
+    fflush(stderr);
+    last_log = std::clock();
+}
+
 inline void log_prefix() {
     static char time_buf[100];
     time_t rawtime;
@@ -30,7 +36,7 @@ inline void log(const char* format, ...) {
     va_start(arglist, format);
     vfprintf(stderr, format, arglist);
     va_end(arglist);
-    fflush(stdout);
+    fflush(stderr);
     last_log = std::clock();
 }
 
@@ -41,9 +47,11 @@ inline void inline_log(const char* format, ...) {
     va_start(arglist, format);
     vfprintf(stderr, format, arglist);
     va_end(arglist);
-    fflush(stdout);
+    fflush(stderr);
     last_log = std::clock();
 }
+
+
 
 //simple, not necessarily accurate
 inline double time_since_last_log() {
