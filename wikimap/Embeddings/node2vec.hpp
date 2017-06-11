@@ -84,7 +84,7 @@ public:
 private:
     OptionalNode select_next_node(const Walk& walk) const;
 
-    Graph<Id> graph_;
+    const Graph<Id>& graph_;
     N2VSettings settings_;
     mutable Random random_;
 };
@@ -123,7 +123,7 @@ Embeddings<Id> Node2Vec::learn_embeddings(
     auto graph = read_graph(begin, end);
     auto walk_count = graph.node_count() * settings.walks_per_node;
     WalkGenerator generator(graph, settings);
-    GeneratingCorpus<Id> corpus([generator] (Int index, Int seed) {
+    GeneratingCorpus<Id> corpus([&generator] (Int index, Int seed) {
         return generator.generate(index, seed);
     }, walk_count);
     w2v.train(corpus);

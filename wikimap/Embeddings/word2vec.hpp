@@ -157,7 +157,7 @@ void Word2Vec<Word>::train_some(
         logging::log("- corpus size (sentences): %lld\n", corpus.sentence_count());
         logging::log("- epochs: %d\n", settings.epochs);
     }
-    training_.train(corpus, total_expected_sentences);
+    training_.train(corpus, settings.epochs * total_expected_sentences);
 }
 
 template<class Word>
