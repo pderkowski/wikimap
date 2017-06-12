@@ -155,28 +155,44 @@ class Data(object):
         return ColumnIt(1, 2)(data), ColumnIt(0)(data)
 
     def get_similarity_datasets(self):
-        return [Tables.SimilarityDataset('WS-353-ALL', self.P.ws_353_all),
-            Tables.SimilarityDataset('WS-353-REL', self.P.ws_353_rel),
-            Tables.SimilarityDataset('WS-353-SIM', self.P.ws_353_sim),
-            Tables.SimilarityDataset('MC-30', self.P.mc_30),
-            Tables.SimilarityDataset('RG-65', self.P.rg_65),
-            Tables.SimilarityDataset('Mturk-287', self.P.mturk_287),
-            Tables.SimilarityDataset('SIMLEX-999', self.P.simlex_999)]
+        title_index = Tables.TitleIndex(self.P.title_index)
+
+        def normalize_and_map_to_id(title):
+            return title_index[Helpers.normalize_word(title)]
+
+        return [
+            Tables.SimilarityDataset('WS-353-ALL', self.P.ws_353_all,
+                                     word1_col=1, word2_col=4, score_col=6),
+            Tables.SimilarityDataset('WS-353-REL', self.P.ws_353_rel,
+                                     word1_col=1, word2_col=4, score_col=6),
+            Tables.SimilarityDataset('WS-353-SIM', self.P.ws_353_sim,
+                                     word1_col=1, word2_col=4, score_col=6),
+            Tables.SimilarityDataset('SIMLEX-999', self.P.simlex_999,
+                                     word_mapper=normalize_and_map_to_id)
+        ]
 
     def get_triplet_datasets(self):
-        return [Tables.TripletDataset('BLESS-REL-RANDOM', self.P.bless_rel_random),
-            Tables.TripletDataset('BLESS-REL-MERO', self.P.bless_rel_mero),
-            Tables.TripletDataset('WIKI-HAND', self.P.wiki_hand),
-            Tables.TripletDataset('WIKI-GEN', self.P.wiki_gen)]
+        title_index = Tables.TitleIndex(self.P.title_index)
 
-    def get_title_index(self):
-        return Tables.TitleIndex(self.P.title_index)
+        def normalize_and_map_to_id(title):
+            return title_index[Helpers.normalize_word(title)]
+
+        return [
+            Tables.TripletDataset('BLESS-REL-RANDOM', self.P.bless_rel_random,
+                                  word_mapper=normalize_and_map_to_id),
+            Tables.TripletDataset('BLESS-REL-MERO', self.P.bless_rel_mero,
+                                  word_mapper=normalize_and_map_to_id),
+            Tables.TripletDataset('WIKI-HAND', self.P.wiki_hand,
+                                  word_mapper=normalize_and_map_to_id),
+            Tables.TripletDataset('WIKI-GEN', self.P.wiki_gen,
+                                  word_mapper=normalize_and_map_to_id)
+        ]
+
+    def get_embeddings(self):
+        return Tables.EmbeddingsTable(self.P.embeddings)
 
     def get_indexed_embeddings(self):
         return Tables.IndexedEmbeddingsTable(self.P.embeddings, self.P.title_index)
-
-    def get_word_mapping(self):
-        return Tables.WordMapping(self.P.evaluation_word_mapping)
 
     def get_evaluation_results_as_table(self):
         return Tables.EvaluationReport(self.P.evaluation_report).get_pretty_table()

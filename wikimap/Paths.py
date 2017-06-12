@@ -57,17 +57,12 @@ class AbstractPaths(object):
     ws_353_all = AbstractPath('WS-353-ALL.txt', parent=evaluation_datasets_dir)
     ws_353_rel = AbstractPath('WS-353-REL.txt', parent=evaluation_datasets_dir)
     ws_353_sim = AbstractPath('WS-353-SIM.txt', parent=evaluation_datasets_dir)
-    mc_30 = AbstractPath('MC-30.txt', parent=evaluation_datasets_dir)
-    rg_65 = AbstractPath('RG-65.txt', parent=evaluation_datasets_dir)
-    mturk_287 = AbstractPath('MTurk-287.txt', parent=evaluation_datasets_dir)
     simlex_999 = AbstractPath('SIMLEX-999.txt', parent=evaluation_datasets_dir)
     bless_rel_random = AbstractPath('BLESS-REL-RANDOM.txt', parent=evaluation_datasets_dir)
     bless_rel_mero = AbstractPath('BLESS-REL-MERO.txt', parent=evaluation_datasets_dir)
     wiki_hand = AbstractPath('WIKI-HAND.txt', parent=evaluation_datasets_dir)
     wiki_gen = AbstractPath('WIKI-GEN.txt', parent=evaluation_datasets_dir)
-    evaluation_word_mapping = AbstractPath('word_mapping.txt', parent=evaluation_datasets_dir)
-    evaluation_datasets = AbstractPathGroup([ws_353_all, ws_353_rel, ws_353_sim, mc_30, rg_65, mturk_287, simlex_999, bless_rel_random, bless_rel_mero, wiki_hand, wiki_gen])
-    evaluation_files = AbstractPathGroup([evaluation_datasets, evaluation_word_mapping])
+    evaluation_datasets = AbstractPathGroup([ws_353_all, ws_353_rel, ws_353_sim, simlex_999, bless_rel_random, bless_rel_mero, wiki_hand, wiki_gen])
 
 class ConcretePaths(object):
     def __init__(self, base):

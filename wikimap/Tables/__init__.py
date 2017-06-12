@@ -4,6 +4,6 @@ from SQLTables import PageTable, LinksTable, CategoryLinksTable, PagePropertiesT
 from ..common.SQLTables import WikimapPointsTable, WikimapCategoriesTable
 from ..common.OtherTables import AggregatedLinksTable
 from EdgeArray import EdgeArray as EdgeTable
-from EvaluationTables import SimilarityDataset, TripletDataset, WordMapping, EvaluationReport
+from EvaluationTables import SimilarityDataset, TripletDataset, EvaluationReport
 from OtherTables import EmbeddingsTable, IndexedEmbeddingsTable, TitleIndex
 import TableImporter as Import

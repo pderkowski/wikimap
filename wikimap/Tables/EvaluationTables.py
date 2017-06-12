@@ -1,63 +1,64 @@
-from ..DataHelpers import normalize_word, pipe, NotBlankIt, NotCommentIt
+from ..DataHelpers import pipe, NotBlankIt, NotCommentIt
 from ..Utils import make_table
 import csv
 import logging
 
-class WordMapping(object):
-    def __init__(self, path):
-        self._mapping = self._read_mapping(path)
-
-    def __getitem__(self, key):
-        return self._mapping[key]
-
-    def __contains__(self, key):
-        return key in self._mapping
-
-    def __len__(self):
-        return len(self._mapping)
-
-    def __iter__(self):
-        return iter(self._mapping)
-
-    def iteritems(self):
-        return self._mapping.iteritems()
-
-    @staticmethod
-    def _read_mapping(path):
-        mapping = {}
-        with open(path, 'r') as infile:
-            for line in infile:
-                what, to = line.rstrip().split()
-                mapping[normalize_word(what)] = normalize_word(to)
-        return mapping
 
 class SimilarityDataset(object):
-    def __init__(self, name, path):
+    def __init__(self, name, path, word_mapper=int,
+                 word1_col=0, word2_col=1, score_col=2):
         self.name = name
         self.path = path
         self.type = 'similarity'
+        self._word_mapper = word_mapper
+        self._word1_col = word1_col
+        self._word2_col = word2_col
+        self._score_col = score_col
 
     def __iter__(self):
         with open(self.path, 'r') as dataset:
             for line in pipe(dataset, NotBlankIt, NotCommentIt):
                 words = line.rstrip().split()
-                yield ((normalize_word(words[0]), normalize_word(words[1])), float(words[2]))
+                yield (
+                    self._map(words[self._word1_col]),
+                    self._map(words[self._word2_col]),
+                    float(words[self._score_col])
+                )
+
+    def _map(self, word):
+        try:
+            return self._word_mapper(word)
+        except KeyError:
+            return None
+
 
 class TripletDataset(object):
-    def __init__(self, name, path):
+    def __init__(self, name, path, word_mapper=int):
         self.name = name
         self.path = path
         self.type = 'triplet'
+        self._word_mapper = word_mapper
 
     def __iter__(self):
         with open(self.path, 'r') as dataset:
             for line in pipe(dataset, NotBlankIt, NotCommentIt):
-                words = line.rstrip().split()
-                yield map(normalize_word, words)
+                try:
+                    words = line.rstrip().split()
+                    yield map(self._map, words)
+                except KeyError:
+                    pass
+
+    def _map(self, word):
+        try:
+            return self._word_mapper(word)
+        except KeyError:
+            return None
+
 
 class InvalidRecord(Exception):
     def __init__(self, message):
         super(InvalidRecord, self).__init__(message)
+
 
 class EvaluationReport(object):
     field_names = ['name', 'type', 'method', 'score', 'matched_examples', 'skipped_examples']

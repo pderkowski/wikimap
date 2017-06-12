@@ -5,7 +5,7 @@ import TSNE
 import NearestNeighbors
 import ZoomIndexer
 import Graph
-from Evaluation import SimilarityEvaluator, RelationEvaluator
+from Evaluation import SimilarityEvaluator, TripletEvaluator
 from Paths import AbstractPaths as P
 
 
@@ -95,7 +95,7 @@ class DownloadEvaluationDatasets(Job):
             'DOWNLOAD EVALUATION DATASETS',
             alias='dload_eval',
             inputs=[],
-            outputs=[P.evaluation_files])
+            outputs=[P.evaluation_datasets])
 
         self.config = {
             'url': url
@@ -251,19 +251,22 @@ class EvaluateEmbeddings(Job):
         super(EvaluateEmbeddings, self).__init__(
             'EVALUATE EMBEDDINGS',
             alias='eval',
-            inputs=[P.evaluation_files, P.embeddings, P.title_index],
+            inputs=[P.evaluation_datasets, P.embeddings, P.title_index],
             outputs=[P.evaluation_report])
 
-        self.config = {
-            'use_word_mapping': False
-        }
-
     def __call__(self):
-        indexed_embeddings = self.data.get_indexed_embeddings()
-        word_mapping = self.data.get_word_mapping() if self.config['use_word_mapping'] else {}
+        embeddings = self.data.get_embeddings()
         evaluation_results = []
-        evaluation_results.extend([SimilarityEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in self.data.get_similarity_datasets()])
-        evaluation_results.extend([RelationEvaluator(indexed_embeddings, word_mapping).evaluate(dataset) for dataset in self.data.get_triplet_datasets()])
+        evaluation_results.extend([
+            SimilarityEvaluator(embeddings).evaluate(dataset)
+            for dataset
+            in self.data.get_similarity_datasets()
+        ])
+        evaluation_results.extend([
+            TripletEvaluator(embeddings).evaluate(dataset)
+            for dataset
+            in self.data.get_triplet_datasets()
+        ])
         self.data.set_evaluation_results(evaluation_results)
         self.logs.append(self.data.get_evaluation_results_as_table())
 
