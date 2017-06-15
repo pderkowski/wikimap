@@ -1,6 +1,5 @@
 from Builder.Job import Job
 from Embeddings import Embeddings
-import Pagerank
 import TSNE
 import NearestNeighbors
 import ZoomIndexer
@@ -180,7 +179,7 @@ class CreateLinkEdgesTable(Job):
             outputs=[P.link_edges])
 
     def __call__(self):
-        link_edges = self.data.get_link_edges()
+        link_edges = self.data.select_link_edges()
         self.data.set_link_edges(link_edges)
 
 
@@ -193,8 +192,8 @@ class ComputePagerank(Job):
             outputs=[P.pagerank])
 
     def __call__(self):
-        edges = self.data.get_link_edges_as_strings()
-        pagerank = Pagerank.pagerank(edges, stringified=True)
+        edges = self.data.get_link_edges()
+        pagerank = Graph.pagerank(edges)
         self.data.set_pagerank(pagerank)
 
 
@@ -369,7 +368,10 @@ class CreateWikimapCategoriesTable(Job):
     def __call__(self):
         ids_category_names = self.data.get_ids_category_names_of_tsne_points()
         edges = self.data.get_edges_between_categories()
-        categories = Graph.aggregate(ids_category_names, edges, depth=self.config['depth'])
+        categories = Graph.aggregate(
+            ids_category_names,
+            edges,
+            depth=self.config['depth'])
         self.data.set_wikimap_categories(categories)
 
 

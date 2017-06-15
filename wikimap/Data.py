@@ -47,13 +47,20 @@ class Data(object):
         joined_table = Tables.Join(self.P.pages, self.P.page_properties)
         return frozenset(ColumnIt(0)(joined_table.selectHiddenCategories()))
 
-    def get_link_edges(self):
+    def select_link_edges(self):
         joined_table = Tables.Join(self.P.pages, self.P.links)
         return joined_table.selectLinkEdges()
 
-    def get_link_edges_as_strings(self):
-        edge_table = Tables.EdgeTable(self.P.link_edges, stringify=True)
+    def get_link_edges(self):
+        edge_table = Tables.EdgeTable(self.P.link_edges)
         return edge_table
+
+    def get_link_edges_between_highest_ranked_nodes(self, node_count):
+        edges_table = Tables.EdgeTable(self.P.link_edges)
+        pagerank_table = Tables.PagerankTable(self.P.pagerank)
+        ids = list(ColumnIt(0)(pagerank_table.selectIdsByDescendingRank(node_count)))
+        edges_table.filterByNodes(ids)
+        return edges_table
 
     def get_ids_of_articles(self):
         pages_table = Tables.PageTable(self.P.pages)
@@ -70,13 +77,6 @@ class Data(object):
     def get_redirects(self):
         joined_table = Tables.Join(self.P.redirects, self.P.pages)
         return joined_table.selectRedirectEdges()
-
-    def get_link_edges_between_highest_ranked_nodes(self, node_count):
-        edges_table = Tables.EdgeTable(self.P.link_edges)
-        pagerank_table = Tables.PagerankTable(self.P.pagerank)
-        ids = list(ColumnIt(0)(pagerank_table.selectIdsByDescendingRank(node_count)))
-        edges_table.filterByNodes(ids)
-        return LogIt(1000000, start="Reading edges...")(edges_table)
 
     def get_id_2_redirected_id(self):
         ids_of_articles = self.get_ids_of_articles()
@@ -235,7 +235,12 @@ class Data(object):
     def set_pagerank(self, pagerank):
         pagerank_table = Tables.PagerankTable(self.P.pagerank)
         pagerank_table.create()
-        pagerank_table.populate(pagerank)
+        pagerank_table.populate(
+            imap(
+                lambda (order, (page, rank)): (page, rank, order),
+                enumerate(pagerank)
+            )
+        )
 
     def set_embeddings(self, embeddings):
         embeddings_table = Tables.EmbeddingsTable(self.P.embeddings)

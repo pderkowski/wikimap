@@ -4,7 +4,7 @@
 
 #include "defs.hpp"
 #include "word2vec.hpp"
-#include "graph.hpp"
+#include "Graph/graph.hpp"
 #include "vector_ops.hpp"
 #include "utils.hpp"
 #include "corpus.hpp"
@@ -138,7 +138,7 @@ Graph<Id> Node2Vec::read_graph(Iterator begin, Iterator end) const {
     if (settings.verbose) { logging::log("Reading graph\n"); }
 
     std::for_each(begin, end, [this, &graph] (const Edge& e) {
-        graph.add_edge(e.first, e.second);
+        graph.checked_add_edge(e.first, e.second);
     });
 
     if (settings.verbose) {
