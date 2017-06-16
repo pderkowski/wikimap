@@ -122,10 +122,7 @@ PYBIND11_PLUGIN(embeddings) {
             py::arg("negative_samples") = emb::def::NEGATIVE_SAMPLES,
             py::arg("verbose") = emb::def::VERBOSE,
             py::arg("subsampling_factor") = emb::def::SUMBSAMPLING_FACTOR)
-        .def("learn_embeddings", [] (
-                Word2Vec& self,
-                py::iterable iterable) {
-
+        .def("train", [] (Word2Vec& self, py::iterable iterable) {
             py::iterator it = py::iter(iterable);
             auto adapted_it = casting_iterator<py::iterator, std::vector<py::object>>(
                 it,
@@ -144,8 +141,10 @@ PYBIND11_PLUGIN(embeddings) {
                 decltype(adapted_it)());
 
             self.train(corpus);
-            return self.get_embeddings();
-        });
+        })
+        .def("__iter__", [] (const Word2Vec& self) {
+            return py::make_iterator(self.begin(), self.end());
+        }, py::keep_alive<0, 1>());
 
     py::class_<emb::Node2Vec>(m, "Node2Vec")
         .def(py::init<double, int, int, int, int, double, int, bool, int, bool, double>(),
@@ -160,10 +159,7 @@ PYBIND11_PLUGIN(embeddings) {
             py::arg("negative_samples") = emb::def::NEGATIVE_SAMPLES,
             py::arg("verbose") = emb::def::VERBOSE,
             py::arg("subsampling_factor") = emb::def::SUMBSAMPLING_FACTOR)
-        .def("learn_embeddings", [] (
-                const emb::Node2Vec& self,
-                py::iterable iterable) {
-
+        .def("train", [] (emb::Node2Vec& self, py::iterable iterable) {
             py::iterator it = py::iter(iterable);
             auto adapted_it = casting_iterator<py::iterator, emb::Edge>(
                 it,
@@ -173,8 +169,11 @@ PYBIND11_PLUGIN(embeddings) {
                         edge[0].cast<emb::Id>(),
                         edge[1].cast<emb::Id>());
                 });
-            return self.learn_embeddings(adapted_it, decltype(adapted_it)());
-        });
+            self.train(adapted_it, decltype(adapted_it)());
+        })
+        .def("__iter__", [] (const emb::Node2Vec& self) {
+            return py::make_iterator(self.begin(), self.end());
+        }, py::keep_alive<0, 1>());
 
     return m.ptr();
 }

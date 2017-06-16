@@ -12,7 +12,8 @@ def Word2Vec(sentences, dimensions, context_size, epochs_count, dynamic_window,
     w2v = embeddings.Word2Vec(dimension=dimensions, epochs=epochs_count,
                               context_size=context_size,
                               dynamic_context=dynamic_window, verbose=verbose)
-    return w2v.learn_embeddings(sentences).iteritems()
+    w2v.train(sentences)
+    return iter(w2v)
 
 
 def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
@@ -27,7 +28,8 @@ def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
                               dimension=dimensions, epochs=epochs_count,
                               context_size=context_size,
                               dynamic_context=dynamic_window, verbose=verbose)
-    return n2v.learn_embeddings(edges).iteritems()
+    n2v.train(edges)
+    return iter(n2v)
 
 
 class Embeddings(object):
