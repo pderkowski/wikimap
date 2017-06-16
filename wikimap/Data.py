@@ -51,8 +51,22 @@ class Data(object):
         joined_table = Tables.Join(self.P.pages, self.P.links)
         return joined_table.selectLinkEdges()
 
-    def get_link_edges(self):
+    def get_link_edges(self, min_count=1):
+        """
+        Get the EdgeTable.
+
+        `min_count` is a minimum number of times a node has to occur as an
+        endpoint of an edge to be included in the returned table.
+        """
         edge_table = Tables.EdgeTable(self.P.link_edges)
+        if min_count > 1:
+            counts = edge_table.countNodes()
+            edge_table.filterByNodes([
+                n
+                for (n, c)
+                in counts.iteritems()
+                if c >= min_count
+            ])
         return edge_table
 
     def get_link_edges_between_highest_ranked_nodes(self, node_count):

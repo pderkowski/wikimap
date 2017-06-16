@@ -192,7 +192,7 @@ class ComputePagerank(Job):
             outputs=[P.pagerank])
 
     def __call__(self):
-        edges = self.data.get_link_edges()
+        edges = self.data.get_link_edges(min_count=10)
         pagerank = Graph.pagerank(edges)
         self.data.set_pagerank(pagerank)
 

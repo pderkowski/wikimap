@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -O3 -std=c++11 -fopenmp
+CXXFLAGS += -fopenmp
 
 .DEFAULT_GOAL := lib
 .PHONY: test lib clean

@@ -1,13 +1,12 @@
 from edgearrayext import *
 import logging
+import collections
 
 class EdgeArray(object):
-    def __init__(self, path=None, shuffle=False, log=True, stringify=False):
+    def __init__(self, path=None, log=True):
         self._path = path
         self._array = EdgeArrayExt()
-        self._shuffle = shuffle
         self._log = log
-        self._stringify = stringify
 
     def populate(self, iterator):
         logger = logging.getLogger(__name__)
@@ -89,23 +88,30 @@ class EdgeArray(object):
 
     def __iter__(self):
         self._ensureLoaded()
-
-        logger = logging.getLogger(__name__)
-        if self._shuffle:
-            if self._log:
-                logger.info("EdgeArray: shuffling...")
-            self._array.shuffle()
-
-        if self._stringify:
-            return self._array.iterStrings()
-        else:
-            return iter(self._array)
+        return iter(self._array)
 
     def getStartNodes(self):
+        self._ensureLoaded()
+
         return [s for (s, _) in self]
 
     def getEndNodes(self):
+        self._ensureLoaded()
+
         return [e for (_, e) in self]
+
+    def countNodes(self):
+        self._ensureLoaded()
+
+        logger = logging.getLogger(__name__)
+        if self._log:
+            logger.info("EdgeArray: counting nodes...")
+
+        counts = collections.defaultdict(int)
+        for (s, e) in self:
+            counts[s] += 1
+            counts[e] += 1
+        return counts
 
     def _ensureLoaded(self):
         logger = logging.getLogger(__name__)
