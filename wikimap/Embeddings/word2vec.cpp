@@ -26,8 +26,6 @@ Options:
         Set the starting learning rate. [Default: 0.025]
     -d, -dynamic <int>
         Use sampling to determine actual window for each word. [Default: 1 (on)]
-    -b, -binary <int>
-        Save the resulting vectors in binary mode. [Default: 0 (off)]
     -v, -verbose <int>
         Enable info prints. [Default: 1 (on)]
 
@@ -52,7 +50,6 @@ int main(int argc, const char* argv[]) {
     auto negative = args.get({"-n", "-negative"},   emb::def::NEGATIVE_SAMPLES);
     auto alpha = args.get({"-a", "-alpha"}, emb::def::LEARNING_RATE);
     auto dynamic = args.get({"-d", "-dynamic"}, emb::def::DYNAMIC_CONTEXT);
-    auto binary = args.get({"-b", "-binary"},   emb::def::BINARY);
     auto verbose = args.get({"-v", "-verbose"}, emb::def::VERBOSE);
 
     auto w2v = emb::Word2Vec<>(size, epochs, alpha, window, dynamic,
@@ -64,7 +61,6 @@ int main(int argc, const char* argv[]) {
         text.end());
     w2v.train(corpus);
     auto embeddings = w2v.get_embeddings();
-    emb::write(embeddings, output, binary, verbose);
-
+    embeddings.save(output);
     return 0;
 }

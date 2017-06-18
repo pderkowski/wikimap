@@ -1,7 +1,7 @@
 import embeddings
-
 import logging
 
+from embeddings import Embeddings
 
 def Word2Vec(sentences, dimensions, context_size, epochs_count, dynamic_window,
              verbose):
@@ -12,8 +12,7 @@ def Word2Vec(sentences, dimensions, context_size, epochs_count, dynamic_window,
     w2v = embeddings.Word2Vec(dimension=dimensions, epochs=epochs_count,
                               context_size=context_size,
                               dynamic_context=dynamic_window, verbose=verbose)
-    w2v.train(sentences)
-    return iter(w2v)
+    return w2v.train(sentences)
 
 
 def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
@@ -28,11 +27,10 @@ def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
                               dimension=dimensions, epochs=epochs_count,
                               context_size=context_size,
                               dynamic_context=dynamic_window, verbose=verbose)
-    n2v.train(edges)
-    return iter(n2v)
+    return n2v.train(edges)
 
 
-class Embeddings(object):
+class EmbeddingMethods(object):
     """Unified interface for running all types of word embedding algorithms."""
 
     def __init__(self, method='node2vec', dimensions=128, epochs_count=1,
@@ -119,7 +117,7 @@ class Embeddings(object):
         `data` is the data to train on.
         """
         if self._method == 'node2vec':
-            return iter(Node2Vec(
+            return Node2Vec(
                 data,
                 backtrack_probability=self._backtrack_probability,
                 walk_length=self._walk_length,
@@ -128,14 +126,14 @@ class Embeddings(object):
                 epochs_count=self._epochs_count,
                 context_size=self._context_size,
                 dynamic_window=self._dynamic_window,
-                verbose=self._verbose))
+                verbose=self._verbose)
         elif self._method == 'link_word2vec':
-            return iter(Word2Vec(
+            return Word2Vec(
                 data,
                 dimensions=self._dimensions,
                 context_size=1,
                 epochs_count=self._epochs_count,
                 dynamic_window=False,
-                verbose=self._verbose))
+                verbose=self._verbose)
         else:
             raise ValueError('Unrecognized method.')

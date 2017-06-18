@@ -128,6 +128,10 @@ public:
 
     Int estimate_size_mb(Int rows, Int cols) const;
 
+    void free_context_embeddings();
+
+    std::vector<Float> copy_word_embeddings() const;
+
 private:
     void init_word_embeddings();
     void init_context_embeddings();
@@ -152,8 +156,8 @@ void Model::resize(Int rows, Int cols) {
     rows_ = rows;
     cols_ = cols;
     size_ = rows * cols;
-    word_embeddings_ = std::unique_ptr<Float[]>(new Float[size_]);
-    context_embeddings_ = std::unique_ptr<Float[]>(new Float[size_]);
+    word_embeddings_.reset(new Float[size_]);
+    context_embeddings_.reset(new Float[size_]);
 }
 
 void Model::init() {
@@ -210,6 +214,16 @@ void Model::init_context_embeddings() {
     for (Int i = 0; i < size_; ++i) {
         context_embeddings_[i] = 0;
     }
+}
+
+void Model::free_context_embeddings() {
+    context_embeddings_.reset();
+}
+
+std::vector<Float> Model::copy_word_embeddings() const {
+    return std::vector<Float>(
+        word_embeddings_.get() + 0,
+        word_embeddings_.get() + size_);
 }
 
 

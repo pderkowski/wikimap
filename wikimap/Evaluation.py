@@ -41,9 +41,8 @@ class SimilarityEvaluator(object):
         }
 
     def _score(self, id1, id2):
-        vec1, vec2 = self._embeddings.get(id1), self._embeddings.get(id2)
+        vec1, vec2 = self._embeddings[id1], self._embeddings[id2]
         return dot(vec1, vec2) / (linalg.norm(vec1) * linalg.norm(vec2))
-
 
 class TripletEvaluator(object):
     def __init__(self, embeddings):
@@ -83,8 +82,8 @@ class TripletEvaluator(object):
         }
 
     def _score(self, id1, id2, id3):
-        vec_word = normalize(self._embeddings.get(id1))
-        vec_pos = normalize(self._embeddings.get(id2))
-        vec_neg = normalize(self._embeddings.get(id3))
+        vec_word = normalize(self._embeddings[id1])
+        vec_pos = normalize(self._embeddings[id2])
+        vec_neg = normalize(self._embeddings[id3])
 
         return dot(vec_word, vec_pos) > dot(vec_word, vec_neg)

@@ -1,6 +1,6 @@
 SOURCES = $(wildcard *.hpp *.cpp)
 
-CXXFLAGS += -std=c++11 -fopenmp -funroll-loops -Wall -march=native -O3
+CXXFLAGS += -std=c++11 -fopenmp -funroll-loops -march=native -O3
 # -ggdb -g -fno-inline
 BIN = word2vec
 LIB = embeddings.so

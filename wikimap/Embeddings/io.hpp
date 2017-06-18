@@ -17,12 +17,78 @@ const int MAX_WORD_SIZE = 100;
 const int MAX_SENTENCE_SIZE = 1000;
 
 
-std::ifstream::pos_type estimate_file_size_mb(const std::string& fname)
-{
+FILE* open_out_file(const std::string& fname) {
+    FILE* out = (fname == "stdout")? stdout : fopen(fname.c_str(), "w");
+    if (out == NULL) {
+        logging::log("Could not open `%s`\n", fname.c_str());
+        exit(1);
+    }
+    return out;
+}
+
+FILE* open_in_file(const std::string& fname) {
+    FILE* in = (fname == "stdin")? stdin : fopen(fname.c_str(), "r");
+    if (in == NULL) {
+        logging::log("Could not open `%s`\n", fname.c_str());
+        exit(1);
+    }
+    return in;
+}
+
+void close_file(FILE* out) {
+    fclose(out);
+}
+
+void write_header(size_t size, int dimension, FILE* out) {
+    fprintf(out, "%lu %d\n", size, dimension);
+}
+
+void read_header(FILE* in, size_t& size, int& dimension) {
+    fscanf(in, "%lu %d\n", &size, &dimension);
+}
+
+inline void write_word(const std::string& word, FILE* out) {
+    fprintf(out, "%s ", word.c_str());
+}
+
+inline void write_word(Id word, FILE* out) {
+    fprintf(out, "%d ", word);
+}
+
+inline void read_word(FILE* in, std::string& word) {
+    static char buf[MAX_WORD_SIZE + 1];
+    fscanf(in, "%s", buf);
+    fgetc(in); // skip EXACTLY ONE space
+    word = buf;
+}
+
+inline void read_word(FILE* in, Id& word) {
+    fscanf(in, "%d", &word);
+    fgetc(in); // skip EXACTLY ONE space
+}
+
+inline void read_embedding(FILE* in, int dimension, Embedding& embedding) {
+    embedding.clear();
+    embedding.resize(dimension);
+    auto value_size = sizeof(Embedding::value_type);
+    fread((void*)embedding.data(), value_size, dimension, in);
+}
+
+inline void write_embedding(const Embedding& embedding, FILE* out) {
+    auto value_size = sizeof(Embedding::value_type);
+    fwrite((void*)embedding.data(), value_size, embedding.size(), out);
+    fprintf(out, "\n");
+}
+
+std::ifstream::pos_type estimate_file_size_mb(const std::string& fname) {
     std::ifstream in(fname.c_str(), std::ifstream::ate | std::ifstream::binary);
     auto fsize =in.tellg();
     return fsize / 1000000;
 }
+
+
+} // namespace io
+
 
 bool read_newline(FILE* in) {
     while (true) {
@@ -45,8 +111,8 @@ void skip_chars_over_limit(FILE* in) {
 }
 
 int read_word(FILE* in, std::string& word) {
-    static char buffer[MAX_WORD_SIZE + 1];
-    static std::string fmt = " %" + std::to_string(MAX_WORD_SIZE) + "s";
+    static char buffer[io::MAX_WORD_SIZE + 1];
+    static std::string fmt = " %" + std::to_string(io::MAX_WORD_SIZE) + "s";
 
     int ret = fscanf(in, fmt.c_str(), buffer);
     if (ret == 1) {
@@ -60,7 +126,7 @@ int read_sentence(FILE* in, std::vector<std::string>& sentence) {
     sentence.clear();
     std::string word;
 
-    for (int words = 0; words < MAX_SENTENCE_SIZE; ++words) {
+    for (int words = 0; words < io::MAX_SENTENCE_SIZE; ++words) {
         // if there is a newline next in stream, end sentence
         if (read_newline(in)) {
             return 1;
@@ -85,9 +151,6 @@ int read_sentence(FILE* in, std::vector<std::string>& sentence) {
     // maximum number of words reached
     return 1;
 }
-
-
-} // namespace io
 
 
 class TextInput {
@@ -129,7 +192,7 @@ public:
         const value_type* operator->() const { return &value_; }
 
         iterator& operator++() {
-            if (in_ && io::read_sentence(in_, value_) == EOF) {
+            if (in_ && read_sentence(in_, value_) == EOF) {
                 in_ = NULL;
             }
             return *this;
@@ -172,59 +235,6 @@ TextInput read(const std::string& fname, bool verbose = def::VERBOSE) {
     return TextInput(fname);
 }
 
-void write(
-        const Embeddings<std::string>& embeddings,
-        const std::string& fname,
-        bool binary = def::BINARY,
-        bool verbose = def::VERBOSE) {
-
-    if (verbose) {
-        std::string message("Writing embeddings to `" + fname + "`\n");
-        logging::log(message.c_str());
-    }
-
-    FILE* out = (fname == "stdout")? stdout : fopen(fname.c_str(), "w");
-    if (out == NULL) {
-        logging::log("Could not open `%s`\n", fname.c_str());
-        exit(1);
-    }
-
-    size_t dimension;
-    if (!embeddings.empty()) {
-        dimension = embeddings.begin()->second.size();
-
-        fprintf(out, "%lu %lu\n", embeddings.size(), dimension);
-
-        for (const auto& word_embedding : embeddings) {
-            const auto& word = word_embedding.first;
-            const auto& embedding = word_embedding.second;
-
-            fprintf(out, "%s ", word.c_str());
-            if (binary) {
-                typedef Embedding::value_type value_type;
-                fwrite(embedding.data(), sizeof(value_type), dimension, out);
-            } else {
-                for (size_t i = 0; i < dimension; ++i) {
-                    fprintf(out, "%f ", embedding[i]);
-                }
-            }
-            fprintf(out, "\n");
-        }
-    } else {
-        dimension = 0;
-        fprintf(out, "0 0\n");
-    }
-
-    if (verbose) {
-        logging::log("- saved %d embeddings\n", embeddings.size());
-        if (binary) {
-            logging::log("- binary format\n");
-        } else {
-            logging::log("- text format\n");
-        }
-        logging::log("- file size %dMB\n", io::estimate_file_size_mb(fname));
-    }
-}
 
 
 } // namespace emb

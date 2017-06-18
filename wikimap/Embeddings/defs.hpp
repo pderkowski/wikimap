@@ -13,9 +13,6 @@ typedef float Float;
 typedef std::vector<Float> Embedding;
 
 template<class Word>
-using Embeddings = std::unordered_map<Word, Embedding>;
-
-template<class Word>
 using Sentence = std::vector<Word>;
 
 template<class Word>

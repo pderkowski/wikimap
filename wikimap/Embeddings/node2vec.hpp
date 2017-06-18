@@ -8,6 +8,7 @@
 #include "vector_ops.hpp"
 #include "utils.hpp"
 #include "corpus.hpp"
+#include "embeddings.hpp"
 
 
 namespace emb {
@@ -75,8 +76,7 @@ public:
     template<class Iterator>
     void train(Iterator begin, Iterator end);
 
-    typename Word2Vec<Id>::iterator begin() const { return w2v_.begin(); }
-    typename Word2Vec<Id>::iterator end() const { return w2v_.end(); }
+    Embeddings<Id> get_embeddings() const { return w2v_.get_embeddings(); }
 
 private:
     static const int BATCH_SIZE = 1000;
@@ -144,11 +144,20 @@ Graph<Id> Node2Vec::read_graph(Iterator begin, Iterator end) const {
 
     std::for_each(begin, end, [this, &graph] (const Edge& e) {
         graph.checked_add_edge(e.first, e.second);
+
+        if (settings_.verbose && logging::time_since_last_log() > 0.5) {
+            logging::inline_log(
+                "- nodes: %lld   edges: %lld",
+                graph.node_count(),
+                graph.edge_count());
+        }
     });
 
     if (settings_.verbose) {
-        logging::log("- nodes: %lld\n", graph.node_count());
-        logging::log("- edges: %lld\n", graph.edge_count());
+        logging::inline_log(
+            "- nodes: %lld   edges: %lld\n",
+            graph.node_count(),
+            graph.edge_count());
     }
 
     return graph;

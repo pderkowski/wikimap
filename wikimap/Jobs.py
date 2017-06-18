@@ -1,5 +1,5 @@
 from Builder.Job import Job
-from Embeddings import Embeddings
+from Embeddings import EmbeddingMethods
 import TSNE
 import NearestNeighbors
 import ZoomIndexer
@@ -219,7 +219,7 @@ class ComputeEmbeddings(Job):
     def __call__(self):
         edges = self.data.get_link_edges_between_highest_ranked_nodes(
             self.config['node_count'])
-        model = Embeddings(
+        model = EmbeddingMethods(
             method=self.config['method'],
             dimensions=self.config['dimensions'],
             context_size=self.config['context_size'],

@@ -15,6 +15,7 @@
 #include "logging.hpp"
 #include "vocab.hpp"
 #include "parallel.hpp"
+#include "embeddings.hpp"
 
 
 namespace emb {
@@ -40,69 +41,6 @@ class Word2Vec {
 public:
     typedef Word value_type;
 
-    class iterator {
-    public:
-        typedef ptrdiff_t difference_type;
-        typedef std::pair<Word, Embedding> value_type;
-        typedef const value_type& reference;
-        typedef const value_type* pointer;
-        typedef std::input_iterator_tag iterator_category;
-
-    public:
-        iterator(
-                const Word2Vec<Word>* parent,
-                typename Vocab<Word>::const_iterator word_iterator)
-        :   parent_(parent), word_iterator_(word_iterator)
-        { }
-
-        iterator()
-        :   parent_(nullptr), word_iterator_()
-        { }
-
-        iterator& operator++() {
-            ++word_iterator_;
-            return *this;
-        }
-
-        iterator operator++(int) {
-            auto self = *this;
-            ++*this;
-            return self;
-        }
-
-        reference operator*() const {
-            value_ = get_value();
-            return value_;
-        }
-        pointer operator->() const {
-            value_ = get_value();
-            return &value_;
-        }
-
-        friend bool operator==(const iterator& lhs, const iterator& rhs) {
-            return lhs.parent_ == rhs.parent_
-                && lhs.word_iterator_ == rhs.word_iterator_;
-        }
-
-        friend bool operator!=(const iterator& lhs, const iterator& rhs) {
-            return !(lhs == rhs);
-        }
-
-    private:
-        value_type get_value() const {
-            auto word = *word_iterator_;
-            auto word_id = parent_->vocab_.get_id(word);
-            auto embedding = static_cast<Embedding>(
-                parent_->model_.word_embedding(word_id));
-            return std::make_pair(word, embedding);
-        }
-
-        const Word2Vec<Word>* parent_;
-        typename Vocab<Word>::const_iterator word_iterator_;
-        mutable value_type value_;
-    };
-
-public:
     Word2Vec(
         int dimension = def::DIMENSION,
         int epochs = def::EPOCHS,
@@ -114,9 +52,6 @@ public:
         Float subsampling_factor = def::SUMBSAMPLING_FACTOR);
 
     explicit Word2Vec(const W2VSettings& settings);
-
-    iterator begin() const;
-    iterator end() const;
 
     // Use this in a simple case, when you just want to put in some sentences
     // and get embeddings.
@@ -151,8 +86,6 @@ private:
     void init_model();
     void set_unigram_distribution();
 
-    void normalize_model();
-
 public:
     W2VSettings settings;
 
@@ -185,31 +118,11 @@ Word2Vec<Word>::Word2Vec(const W2VSettings& stgs)
 { }
 
 template<class Word>
-Embeddings<Word> Word2Vec<Word>::get_embeddings() const {
-    Embeddings<Word> embeddings;
-    for (const auto& word : vocab_) {
-        embeddings[word] = static_cast<Embedding>(
-            model_.word_embedding(vocab_.get_id(word)));
-    }
-    return embeddings;
-}
-
-template<class Word>
 template<class Corpus>
 void Word2Vec<Word>::train(const Corpus& corpus) {
     init_training(corpus);
     train_some(corpus, corpus.sentence_count());
     finish_training();
-}
-
-template<class Word>
-typename Word2Vec<Word>::iterator Word2Vec<Word>::begin() const {
-    return iterator(this, vocab_.begin());
-}
-
-template<class Word>
-typename Word2Vec<Word>::iterator Word2Vec<Word>::end() const {
-    return iterator(this, vocab_.end());
 }
 
 template<class Word>
@@ -237,7 +150,13 @@ void Word2Vec<Word>::train_some(
 
 template<class Word>
 void Word2Vec<Word>::finish_training() {
-    normalize_model();
+    if (settings.verbose) { logging::log("Normalizing model\n"); }
+    model_.normalize();
+
+    if (settings.verbose) {
+        logging::log("Freeing parts of model\n");
+        model_.free_context_embeddings();
+    }
 }
 
 template<class Word>
@@ -295,10 +214,13 @@ void Word2Vec<Word>::set_unigram_distribution() {
 }
 
 template<class Word>
-void Word2Vec<Word>::normalize_model() {
-    if (settings.verbose) { logging::log("Normalizing model\n"); }
-    model_.normalize();
+Embeddings<Word> Word2Vec<Word>::get_embeddings() const {
+    return Embeddings<Word>(
+        vocab_.word2id(),
+        model_.copy_word_embeddings(),
+        settings.dimension);
 }
+
 
 template<class Word>
 class Training {

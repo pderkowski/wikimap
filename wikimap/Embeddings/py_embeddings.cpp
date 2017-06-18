@@ -8,39 +8,9 @@
 #include "word2vec.hpp"
 #include "node2vec.hpp"
 #include "io.hpp"
-
+#include "defs.hpp"
 
 namespace py = pybind11;
-
-namespace std {
-
-template<>
-struct hash<py::object> {
-    typedef py::object argument_type;
-    typedef size_t result_type;
-
-    result_type operator()(const argument_type& obj) const {
-        static std::hash<result_type> cpp_hash;
-        py::object hash_fun = obj.attr("__hash__");
-        py::object hash_value = hash_fun();
-        // python hash value is signed int, so we hash it to unsigned
-        return cpp_hash(hash_value.cast<long long>());
-    }
-};
-
-bool operator ==(const py::object& lhs, const py::object& rhs) {
-    py::object eq_fun;
-    if (py::hasattr(lhs, "__eq__")) {
-        eq_fun = py::getattr(lhs, "__eq__");
-        return eq_fun(rhs).cast<bool>();
-    } else {
-        eq_fun = py::getattr(lhs, "__cmp__");
-        return (eq_fun(rhs).cast<int>() == 0);
-    }
-}
-
-
-}
 
 template<class IteratorType, class TargetType>
 class casting_iterator {
@@ -97,22 +67,55 @@ private:
 
 
 PYBIND11_PLUGIN(embeddings) {
+    using emb::Word2Vec;
+    using emb::Node2Vec;
+    using emb::Embeddings;
+    using emb::Id;
+    using emb::Edge;
+
     py::module m("embeddings");
     m.def("word2vec", [] (
             const std::string& input_file,
             const std::string& output_file) {
 
-        auto w2v = emb::Word2Vec<>();
+        auto w2v = Word2Vec<>();
         auto text = emb::read(input_file);
         emb::MemoryCorpus<> corpus(text.begin(), text.end());
         w2v.train(corpus);
         auto embeddings = w2v.get_embeddings();
-        emb::write(embeddings, output_file);
+        embeddings.save(output_file);
     });
 
-    typedef emb::Word2Vec<py::object> Word2Vec;
 
-    py::class_<Word2Vec>(m, "Word2Vec")
+
+    py::class_<Embeddings<Id>>(m, "Embeddings")
+        .def(py::init<>())
+        .def("__iter__", [] (const Embeddings<Id>& self) {
+            return py::make_iterator(self.begin(), self.end());
+        }, py::keep_alive<0, 1>())
+        .def("__getitem__", [] (const Embeddings<Id>& self, py::handle handle) {
+            try {
+                auto word = handle.cast<Id>();
+                return self[word];
+            } catch (const std::out_of_range& e) {
+                throw py::key_error();
+            } catch (const py::cast_error& e) {
+                throw py::key_error();
+            }
+        })
+        .def("__contains__", [] (const Embeddings<Id>& self, py::handle h) {
+            try {
+                auto word = h.cast<Id>();
+                return self.has(word);
+            } catch (const py::cast_error& e) {
+                throw py::key_error();
+            }
+        })
+        .def("save", &Embeddings<Id>::save)
+        .def("load", &Embeddings<Id>::load)
+        .def("words", &Embeddings<Id>::words);
+
+    py::class_<Word2Vec<Id>>(m, "Word2Vec")
         .def(py::init<int, int, double, int, bool, int, bool, double>(),
             py::arg("dimension") = emb::def::DIMENSION,
             py::arg("epochs") = emb::def::EPOCHS,
@@ -122,31 +125,26 @@ PYBIND11_PLUGIN(embeddings) {
             py::arg("negative_samples") = emb::def::NEGATIVE_SAMPLES,
             py::arg("verbose") = emb::def::VERBOSE,
             py::arg("subsampling_factor") = emb::def::SUMBSAMPLING_FACTOR)
-        .def("train", [] (Word2Vec& self, py::iterable iterable) {
+        .def("train", [] (Word2Vec<Id>& self, py::iterable iterable) {
             py::iterator it = py::iter(iterable);
-            auto adapted_it = casting_iterator<py::iterator, std::vector<py::object>>(
+            auto adapted_it = casting_iterator<py::iterator, std::vector<Id>>(
                 it,
                 [] (const py::handle& handle) {
                     auto sentence = handle.cast<py::iterable>();
-                    std::vector<py::object> sequence;
+                    std::vector<Id> sequence;
                     std::transform(py::iter(sentence), py::iterator::sentinel(),
                         std::back_inserter(sequence), [] (const py::handle& h) {
-                            return h.cast<py::object>();
+                            return h.cast<Id>();
                         });
                     return sequence;
                 });
 
-            emb::MemoryCorpus<py::object> corpus(
-                adapted_it,
-                decltype(adapted_it)());
-
+            emb::MemoryCorpus<Id> corpus(adapted_it, decltype(adapted_it)());
             self.train(corpus);
-        })
-        .def("__iter__", [] (const Word2Vec& self) {
-            return py::make_iterator(self.begin(), self.end());
-        }, py::keep_alive<0, 1>());
+            return self.get_embeddings();
+        });
 
-    py::class_<emb::Node2Vec>(m, "Node2Vec")
+    py::class_<Node2Vec>(m, "Node2Vec")
         .def(py::init<double, int, int, int, int, double, int, bool, int, bool, double>(),
             py::arg("backtrack_probability") = emb::def::BACKTRACK_PROBABILITY,
             py::arg("walk_length") = emb::def::WALK_LENGTH,
@@ -159,21 +157,17 @@ PYBIND11_PLUGIN(embeddings) {
             py::arg("negative_samples") = emb::def::NEGATIVE_SAMPLES,
             py::arg("verbose") = emb::def::VERBOSE,
             py::arg("subsampling_factor") = emb::def::SUMBSAMPLING_FACTOR)
-        .def("train", [] (emb::Node2Vec& self, py::iterable iterable) {
+        .def("train", [] (Node2Vec& self, py::iterable iterable) {
             py::iterator it = py::iter(iterable);
-            auto adapted_it = casting_iterator<py::iterator, emb::Edge>(
+            auto adapted_it = casting_iterator<py::iterator, Edge>(
                 it,
                 [] (const py::handle& handle) {
                     auto edge = handle.cast<py::tuple>();
-                    return emb::Edge(
-                        edge[0].cast<emb::Id>(),
-                        edge[1].cast<emb::Id>());
+                    return Edge(edge[0].cast<Id>(), edge[1].cast<Id>());
                 });
             self.train(adapted_it, decltype(adapted_it)());
-        })
-        .def("__iter__", [] (const emb::Node2Vec& self) {
-            return py::make_iterator(self.begin(), self.end());
-        }, py::keep_alive<0, 1>());
+            return self.get_embeddings();
+        });
 
     return m.ptr();
 }

@@ -48,7 +48,7 @@ class AbstractPaths(object):
     metadata = AbstractPath('metadata.db')
     zoom_index = AbstractPath('zoom_index.idx')
     link_edges = AbstractPath('link_edges.bin')
-    embeddings = AbstractPath('embeddings.cdb')
+    embeddings = AbstractPath('embeddings.bin')
     aggregated_inlinks = AbstractPath('aggregated_inlinks.cdb')
     aggregated_outlinks = AbstractPath('aggregated_outlinks.cdb')
     title_index = AbstractPath('title_index.idx')

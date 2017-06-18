@@ -43,6 +43,7 @@ public:
     template<class Rng>
     Id sample(Rng& rng) const { return unigrams_(rng); }
 
+    std::unordered_map<Word, Id> word2id() const { return word2id_; }
 };
 
 template<class Word>

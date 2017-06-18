@@ -81,8 +81,9 @@ class Data(object):
         return ColumnIt(0)(pages_table.select_id_of_articles())
 
     def get_ids_of_embeddings(self):
-        embeddings_table = Tables.EmbeddingsTable(self.P.embeddings)
-        return embeddings_table.keys()
+        embeddings_table = Tables.EmbeddingsTable()
+        embeddings_table.load(self.P.embeddings)
+        return embeddings_table.words()
 
     def get_ids_of_disambiguations(self):
         joined_table = Tables.Join(self.P.pages, self.P.category_links)
@@ -116,16 +117,18 @@ class Data(object):
     def get_ids_embeddings_of_highest_ranked_points(self, point_count):
         pagerank_table = Tables.PagerankTable(self.P.pagerank)
         ids = pipe(pagerank_table.selectIdsByDescendingRank(point_count), ColumnIt(0), list)
-        embeddings_table = Tables.EmbeddingsTable(self.P.embeddings)
-        embeddings = imap(embeddings_table.get, ids)
+        embeddings_table = Tables.EmbeddingsTable()
+        embeddings_table.load(self.P.embeddings)
+        embeddings = imap(embeddings_table.__getitem__, ids)
         return ids, embeddings
 
     def get_ids_titles_embeddings_of_tsne_points(self):
         joined_table = Tables.Join(self.P.tsne, self.P.pages)
         data = list(joined_table.select_id_title_tsneX_tsneY())
         ids, titles = list(ColumnIt(0)(data)), list(ColumnIt(1)(data))
-        embeddings_table = Tables.EmbeddingsTable(self.P.embeddings)
-        embeddings = imap(embeddings_table.get, ids)
+        embeddings_table = Tables.EmbeddingsTable()
+        embeddings_table.load(self.P.embeddings)
+        embeddings = imap(embeddings_table.__getitem__, ids)
         return ids, titles, embeddings
 
     def get_ids_titles_tsne_points(self):
@@ -203,7 +206,9 @@ class Data(object):
         ]
 
     def get_embeddings(self):
-        return Tables.EmbeddingsTable(self.P.embeddings)
+        table = Tables.EmbeddingsTable()
+        table.load(self.P.embeddings)
+        return table
 
     def get_indexed_embeddings(self):
         return Tables.IndexedEmbeddingsTable(self.P.embeddings, self.P.title_index)
@@ -257,8 +262,7 @@ class Data(object):
         )
 
     def set_embeddings(self, embeddings):
-        embeddings_table = Tables.EmbeddingsTable(self.P.embeddings)
-        embeddings_table.create(embeddings)
+        embeddings.save(self.P.embeddings)
 
     def set_title_index(self, titles, ids):
         title_index = Tables.TitleIndex(self.P.title_index)
