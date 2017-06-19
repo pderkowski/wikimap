@@ -2,7 +2,7 @@ from ..DataHelpers import pipe, NotBlankIt, NotCommentIt
 from ..Utils import make_table
 import csv
 import logging
-
+import codecs
 
 class SimilarityDataset(object):
     def __init__(self, name, path, word_mapper=int,
@@ -16,7 +16,7 @@ class SimilarityDataset(object):
         self._score_col = score_col
 
     def __iter__(self):
-        with open(self.path, 'r') as dataset:
+        with codecs.open(self.path, 'r', 'utf8') as dataset:
             for line in pipe(dataset, NotBlankIt, NotCommentIt):
                 words = line.rstrip().split()
                 yield (
@@ -40,7 +40,7 @@ class TripletDataset(object):
         self._word_mapper = word_mapper
 
     def __iter__(self):
-        with open(self.path, 'r') as dataset:
+        with codecs.open(self.path, 'r', 'utf8') as dataset:
             for line in pipe(dataset, NotBlankIt, NotCommentIt):
                 try:
                     words = line.rstrip().split()
