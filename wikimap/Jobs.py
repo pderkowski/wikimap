@@ -217,8 +217,13 @@ class ComputeEmbeddings(Job):
         }
 
     def __call__(self):
-        edges = self.data.get_link_edges_between_highest_ranked_nodes(
-            self.config['node_count'])
+        if self.config['method'] == 'neighbor_list':
+            data = self.data.get_link_lists_for_highest_ranked_nodes(
+                self.config['node_count'])
+        else:
+            data = self.data.get_link_edges_between_highest_ranked_nodes(
+                self.config['node_count'])
+
         model = EmbeddingMethods(
             method=self.config['method'],
             dimensions=self.config['dimensions'],
@@ -227,7 +232,7 @@ class ComputeEmbeddings(Job):
             walks_per_node=self.config['walks_per_node'],
             epochs_count=self.config['epochs_count']
         )
-        embeddings = model.train(data=edges)
+        embeddings = model.train(data)
 
         self.data.set_embeddings(embeddings)
 

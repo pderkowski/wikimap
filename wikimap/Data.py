@@ -3,7 +3,8 @@ import shelve
 import Utils
 import DataHelpers as Helpers
 from common.Zoom import ZoomIndex
-from DataHelpers import pipe, ColumnIt, LogIt, NotEqualIt, GroupIt, NotInIt, FlipIt, InIt
+from DataHelpers import pipe, ColumnIt, LogIt, NotEqualIt, GroupIt, NotInIt, \
+    FlipIt, InIt, LongerThanIt
 from itertools import imap, izip
 
 class Data(object):
@@ -72,9 +73,16 @@ class Data(object):
     def get_link_edges_between_highest_ranked_nodes(self, node_count):
         edges_table = Tables.EdgeTable(self.P.link_edges)
         pagerank_table = Tables.PagerankTable(self.P.pagerank)
-        ids = list(ColumnIt(0)(pagerank_table.selectIdsByDescendingRank(node_count)))
+        ids = list(ColumnIt(0)(pagerank_table.selectIdsByDescendingRank(
+            node_count)))
         edges_table.filterByNodes(ids)
         return edges_table
+
+    def get_link_lists_for_highest_ranked_nodes(self, node_count):
+        edges_table = self.get_link_edges_between_highest_ranked_nodes(
+            node_count)
+        edges_table.sortByStartNode()
+        return pipe(edges_table, GroupIt, ColumnIt(1), LongerThanIt(1))
 
     def get_ids_of_articles(self):
         pages_table = Tables.PageTable(self.P.pages)

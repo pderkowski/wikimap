@@ -178,3 +178,15 @@ class NotBlankIt(object):
 
     def __iter__(self):
         return ifilter(lambda line: not line.isspace(), self.iterator)
+
+class LongerThanIt(object):
+    def __init__(self, length):
+        self.length = length
+        self.iterator = None
+
+    def __call__(self, iterator):
+        self.iterator = iterator
+        return self
+
+    def __iter__(self):
+        return ifilter(lambda record: len(record) > self.length, self.iterator)

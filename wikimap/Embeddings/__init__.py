@@ -42,7 +42,7 @@ class EmbeddingMethods(object):
         Some parameters may only be used in some models.
 
         `method` is the model type to use. Possible choices are:
-        'node2vec', 'link_word2vec'.
+        'node2vec', 'bag_of_links', 'neighbor_list'.
 
         `dimensions` specifies the size of embeddings. It has to be a positive
         integer.
@@ -66,7 +66,7 @@ class EmbeddingMethods(object):
 
         `verbose` - choose whether or not print additional info
         """
-        if method in ['node2vec', 'link_word2vec']:
+        if method in ['node2vec', 'bag_of_links', 'neighbor_list']:
             self._method = method
         else:
             raise ValueError('`method` has to be one of available choices.')
@@ -127,13 +127,21 @@ class EmbeddingMethods(object):
                 context_size=self._context_size,
                 dynamic_window=self._dynamic_window,
                 verbose=self._verbose)
-        elif self._method == 'link_word2vec':
+        elif self._method == 'bag_of_links':
             return Word2Vec(
                 data,
                 dimensions=self._dimensions,
                 context_size=1,
                 epochs_count=self._epochs_count,
                 dynamic_window=False,
+                verbose=self._verbose)
+        elif self._method == 'neighbor_list':
+            return Word2Vec(
+                data,
+                dimensions=self._dimensions,
+                context_size=self._context_size,
+                epochs_count=self._epochs_count,
+                dynamic_window=True,
                 verbose=self._verbose)
         else:
             raise ValueError('Unrecognized method.')
