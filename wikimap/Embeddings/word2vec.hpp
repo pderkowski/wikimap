@@ -162,22 +162,21 @@ void Word2Vec<Word>::finish_training() {
 template<class Word>
 template<class Corpus>
 void Word2Vec<Word>::learn_vocab(const Corpus& corpus) {
-    if (settings.verbose) {
-        logging::log("Learning vocabulary\n");
-        logging::log("- sentences in corpus: %lld\n", corpus.sentence_count());
-    }
-
-    logging::log("- counting words\n");
+    logging::log("Learning vocabulary\n");
+    logging::log("- sentences in corpus: %lld\n", corpus.sentence_count());
+    logging::log("- scanning sentences\n");
     auto word_counts = parallel::WordCount<Corpus>(corpus);
 
     logging::log("- creating vocab\n");
+
+    Int words_in_corpus = 0;
     for (const auto& w_c : word_counts) {
         vocab_.add(w_c.first, w_c.second);
+        words_in_corpus += w_c.second;
     }
 
-    if (settings.verbose) {
-        logging::log("- words in vocab: %lld\n", vocab_.size());
-    }
+    logging::log("- words in vocab: %lld\n", vocab_.size());
+    logging::log("- words in corpus: %lld\n", words_in_corpus);
 }
 
 
