@@ -167,8 +167,10 @@ void Word2Vec<Word>::learn_vocab(const Corpus& corpus) {
         logging::log("- sentences in corpus: %lld\n", corpus.sentence_count());
     }
 
+    logging::log("- counting words\n");
     auto word_counts = parallel::WordCount<Corpus>(corpus);
 
+    logging::log("- creating vocab\n");
     for (const auto& w_c : word_counts) {
         vocab_.add(w_c.first, w_c.second);
     }

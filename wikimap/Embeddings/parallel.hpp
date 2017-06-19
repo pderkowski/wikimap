@@ -177,6 +177,10 @@ void WordCount<Corpus>::count_words(const Corpus& corpus) {
     const Int max_batch_size = 10000;
 
     for (Int i = 0; i < corpus.sentence_count(); i += max_batch_size) {
+        logging::inline_log(
+            "* progress: %6.2f%%",
+            100.0 * static_cast<double>(i) / corpus.sentence_count());
+
         auto batch_size = std::min(
             max_batch_size,
             corpus.sentence_count() - i);
@@ -190,6 +194,8 @@ void WordCount<Corpus>::count_words(const Corpus& corpus) {
 
         count_words_in_batch();
     }
+
+    logging::inline_log("- progress: 100.00%%\n");
 }
 
 template<class Corpus>
