@@ -213,7 +213,8 @@ class ComputeEmbeddings(Job):
             'backtrack_probability': 0.5,
             'walks_per_node': 10,
             'dynamic_window': True,
-            'epochs_count': 1
+            'epochs_count': 1,
+            'walk_length': 80
         }
 
     def __call__(self):
@@ -230,7 +231,8 @@ class ComputeEmbeddings(Job):
             context_size=self.config['context_size'],
             backtrack_probability=self.config['backtrack_probability'],
             walks_per_node=self.config['walks_per_node'],
-            epochs_count=self.config['epochs_count']
+            epochs_count=self.config['epochs_count'],
+            walk_length=self.config['walk_length']
         )
         embeddings = model.train(data)
 
