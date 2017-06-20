@@ -140,6 +140,8 @@ class ImportCategoryLinksTable(Job):
 
     def __call__(self):
         category_links = self.data.import_category_links()
+        category_links = self.data.map_category_links_to_link_edges(
+            category_links)
         category_links = self.data.filter_not_hidden_category_links(
             category_links)
         self.data.set_category_links(category_links)

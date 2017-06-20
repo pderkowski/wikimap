@@ -105,6 +105,14 @@ class Data(object):
             lambda (from_, to_): (from_, title_2_id[to_]),
             valid_links)
 
+    def map_category_links_to_link_edges(self, category_links):
+        """Map category links from (id_from, title_to) to (id_from, id_to)."""
+        title_2_id = self.get_category_title_2_id()
+        valid_links = pipe(category_links, InIt(title_2_id, 1))
+        return imap(
+            lambda (from_, to_): (from_, title_2_id[to_]),
+            valid_links)
+
     def get_link_edges(self):
         """Get (load) the EdgeTable."""
         edge_table = Tables.EdgeTable(self.P.link_edges)
@@ -174,7 +182,7 @@ class Data(object):
 
     def get_ids_of_disambiguations(self):
         joined_table = Tables.Join(self.P.pages, self.P.category_links)
-        return ColumnIt(0)(joined_table.selectDisambiguationPages())
+        return ColumnIt(0)(joined_table.select_disambiguation_pages())
 
     def get_redirects(self):
         joined_table = Tables.Join(self.P.redirects, self.P.pages)
@@ -242,16 +250,30 @@ class Data(object):
         return edges_table
 
     def get_wikimap_points(self):
-        joined_table = Tables.Join(self.P.tsne, self.P.pages, self.P.high_dimensional_neighbors, self.P.low_dimensional_neighbors, self.P.pagerank)
+        joined_table = Tables.Join(
+            self.P.tsne,
+            self.P.pages,
+            self.P.high_dimensional_neighbors,
+            self.P.low_dimensional_neighbors,
+            self.P.pagerank)
         return joined_table.selectWikimapPoints()
 
     def get_ids_category_names_of_tsne_points(self):
-        joined_table = Tables.Join(self.P.category_links, self.P.tsne)
-        return joined_table.select_id_category()
+        joined_table = Tables.Join(
+            self.P.category_links,
+            self.P.tsne,
+            self.P.pages)
+        return joined_table.select_id_category_name()
 
-    def get_edges_between_categories(self):
+    def get_links_between_categories(self):
+        """Get links between only categories."""
         joined_table = Tables.Join(self.P.category_links, self.P.pages)
-        return joined_table.selectCategoryLinks()
+        return joined_table.select_links_between_categories()
+
+    def get_links_between_articles_and_categories(self):
+        """Get links only from pages to categories."""
+        joined_table = Tables.Join(self.P.category_links, self.P.pages)
+        return joined_table.select_links_between_articles_and_categories()
 
     def get_coords_ids_of_points(self):
         joined_table = Tables.Join(self.P.wikimap_points, self.P.pagerank)
@@ -379,9 +401,14 @@ class Data(object):
         wikimap_points_table.populate(points)
 
     def set_wikimap_categories(self, categories):
-        category_table = Tables.WikimapCategoriesTable(self.P.wikimap_categories)
+        category_table = Tables.WikimapCategoriesTable(
+            self.P.wikimap_categories)
         category_table.create()
-        category_table.populate(pipe(imap(lambda (title, ids): (title, ids, len(ids)), categories), NotEqualIt(0, 2), LogIt(100000)))
+        category_table.populate(
+            pipe(
+                imap(lambda (title, ids): (title, ids, len(ids)), categories),
+                NotEqualIt(0, 2),
+                LogIt(100000)))
 
     def set_zoom_index(self, indexer):
         zoom_index = ZoomIndex(self.P.zoom_index)

@@ -42,7 +42,7 @@ class CategoryLinksTable(TableProxy):
         self.execute(Query("""
             CREATE TABLE categorylinks (
                 cl_from      INTEGER     NOT NULL    DEFAULT '0',
-                cl_to        TEXT        NOT NULL    DEFAULT ''
+                cl_to        INTEGER     NOT NULL    DEFAULT ''
             );"""))
 
     def populate(self, values):
@@ -228,7 +228,7 @@ class Join(TableProxy):
     def select_hidden_categories(self):
         query = Query("""
             SELECT
-                page_title
+                page_id
             FROM
                 page,
                 pageprops
@@ -237,24 +237,26 @@ class Join(TableProxy):
             AND pp_propname = 'hiddencat'""", "selecting hidden categories", logStart=True, logProgress=True)
         return self.select(query)
 
-    def select_id_category(self):
+    def select_id_category_name(self):
         query = Query("""
             SELECT
                 cl_from,
-                cl_to
+                page_title
             FROM
                 categorylinks,
-                tsne
+                tsne,
+                page
             WHERE
-                tsne_id = cl_from""", "selecting nodes for wikicategories")
+                tsne_id = cl_from
+            AND cl_to = page_id""", "selecting nodes for wikicategories")
 
         return self.select(query)
 
     # ONLY LINKS BETWEEN CATEGORIES, NOT BETWEEN A PAGE AND A CATEGORY
-    def selectCategoryLinks(self):
+    def select_links_between_categories(self):
         query = Query("""
             SELECT
-                page_title,
+                cl_from,
                 cl_to
             FROM
                 categorylinks,
@@ -262,6 +264,20 @@ class Join(TableProxy):
             WHERE
                 cl_from = page_id
             AND page_namespace = 14""", "selecting links for wikicategories")
+
+        return self.select(query)
+
+    def select_links_between_articles_and_categories(self):
+        query = Query("""
+            SELECT
+                cl_from,
+                cl_to
+            FROM
+                categorylinks,
+                page NOT INDEXED
+            WHERE
+                cl_from = page_id
+            AND page_namespace = 0""")
 
         return self.select(query)
 
@@ -297,16 +313,16 @@ class Join(TableProxy):
 
         return self.select(query)
 
-    def selectDisambiguationPages(self):
+    def select_disambiguation_pages(self):
         query = Query("""
             SELECT
-                page_id
+                cl_from
             FROM
                 page,
                 categorylinks
             WHERE
-                page_id = cl_from
-            AND cl_to = 'Disambiguation_pages'
+                page_id = cl_to
+            AND page_title = 'Category:Disambiguation_pages'
             """, logProgress=True)
 
         return self.select(query)
