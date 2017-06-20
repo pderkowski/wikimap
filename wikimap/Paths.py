@@ -35,7 +35,6 @@ class AbstractPaths(object):
     page_properties_dump = AbstractPath('page_props.sql.gz')
     redirects_dump = AbstractPath('redirect.sql.gz')
     pages = AbstractPath('pages.db')
-    links = AbstractPath('links.db')
     category_links = AbstractPath('category_links.db')
     page_properties = AbstractPath('page_properties.db')
     redirects = AbstractPath('redirects.db')

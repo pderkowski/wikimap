@@ -16,40 +16,23 @@ class PageTable(TableProxy):
         self.executemany(Query("INSERT INTO page VALUES (?,?,?)", "populating page table", logStart=True), values)
         self.execute(Query("CREATE UNIQUE INDEX ns_title_idx ON page(page_namespace, page_title)", "creating index ns_title_idx in page table", logStart=True, logProgress=True))
 
-    def select_id_title_of_articles(self, ids=None):
-        if ids:
-            ids = '(' + ','.join(map(str, ids)) + ')'
-            return self.select(Query("""
-                SELECT page_id, page_title
-                FROM page
-                WHERE page_id IN {}
-                AND page_namespace=0""".format(ids)))
-        else:
-            return self.select(Query("""
-                SELECT page_id, page_title
-                FROM page
-                WHERE page_namespace=0"""))
+    def select_id_title_of_articles(self):
+        return self.select(Query("""
+            SELECT page_id, page_title
+            FROM page
+            WHERE page_namespace=0"""))
+
+    def select_id_title_of_categories(self):
+        return self.select(Query("""
+            SELECT page_id, page_title
+            FROM page
+            WHERE page_namespace=14"""))
 
     def select_id_of_articles(self):
-        return self.select(Query("SELECT page_id FROM page WHERE page_namespace = 0"))
-
-class LinksTable(TableProxy):
-    def __init__(self, linksTablePath):
-        super(LinksTable, self).__init__(linksTablePath)
-
-    def create(self):
-        self.execute(Query("""
-            CREATE TABLE links (
-                pl_from             INTEGER    NOT NULL  DEFAULT '0',
-                pl_namespace        INTEGER    NOT NULL  DEFAULT '0',
-                pl_title            TEXT       NOT NULL  DEFAULT '',
-                pl_from_namespace   INTEGER    NOT NULL  DEFAULT '0'
-            );"""))
-
-    def populate(self, values):
-        self.executemany(Query("INSERT INTO links VALUES (?,?,?,?)", "populating links table", logStart=True), values)
-        self.execute(Query("CREATE INDEX from_id_idx ON links(pl_from);", "creating index from_id_idx in links table", logStart=True, logProgress=True))
-        self.execute(Query("CREATE INDEX ns_title_idx ON links(pl_namespace, pl_title);", "creating index ns_title_idx in links table", logStart=True, logProgress=True))
+        return self.select(Query("""
+            SELECT page_id
+            FROM page
+            WHERE page_namespace = 0"""))
 
 class CategoryLinksTable(TableProxy):
     def __init__(self, categoryLinksTablePath):

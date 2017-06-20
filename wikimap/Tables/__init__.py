@@ -1,4 +1,4 @@
-from SQLTables import PageTable, LinksTable, CategoryLinksTable, PagePropertiesTable, \
+from SQLTables import PageTable, CategoryLinksTable, PagePropertiesTable, \
     HighDimensionalNeighborsTable, LowDimensionalNeighborsTable, PagerankTable, \
     TSNETable, Join, RedirectsTable
 from ..common.SQLTables import WikimapPointsTable, WikimapCategoriesTable

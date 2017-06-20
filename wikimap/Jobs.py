@@ -117,19 +117,6 @@ class ImportPageTable(Job):
         self.data.set_pages(pages)
 
 
-class ImportLinksTable(Job):
-    def __init__(self):
-        super(ImportLinksTable, self).__init__(
-            'IMPORT LINKS TABLE',
-            alias='links',
-            inputs=[P.links_dump],
-            outputs=[P.links])
-
-    def __call__(self):
-        links = self.data.import_links()
-        self.data.set_links(links)
-
-
 class ImportPagePropertiesTable(Job):
     def __init__(self):
         super(ImportPagePropertiesTable, self).__init__(
@@ -176,12 +163,13 @@ class CreateLinkEdgesTable(Job):
         super(CreateLinkEdgesTable, self).__init__(
             'CREATE LINK EDGES TABLE',
             alias='edges',
-            inputs=[P.links, P.pages],
+            inputs=[P.links_dump, P.pages],
             outputs=[P.link_edges])
 
     def __call__(self):
-        edges = self.data.select_link_edges()
-        self.data.set_link_edges(edges)
+        links = self.data.import_links()
+        links = self.data.map_links_to_link_edges(links)
+        self.data.set_link_edges(links)
 
 
 class ComputePagerank(Job):

@@ -31,33 +31,33 @@ class Data(object):
         Utils.download_and_extract(url, self.P.evaluation_datasets_dir)
 
     def import_pages(self):
+        """Import pages table from compressed dump."""
         return Tables.Import.PageTable(self.P.pages_dump).read()
 
     def import_links(self):
+        """Import links table from compressed dump."""
         return Tables.Import.LinksTable(self.P.links_dump).read()
 
     def import_category_links(self):
+        """Import category links table from compressed dump."""
         return Tables.Import.CategoryLinksTable(
             self.P.category_links_dump
         ).read()
 
     def import_page_properties(self):
+        """Import page properties table from compressed dump."""
         return Tables.Import.PagePropertiesTable(
             self.P.page_properties_dump
         ).read()
 
     def import_redirects(self):
+        """Import redirects table from compressed dump."""
         return Tables.Import.RedirectsTable(self.P.redirects_dump).read()
 
     def select_hidden_categories(self):
         """Select hidden categories by joining other tables."""
         joined_table = Tables.Join(self.P.pages, self.P.page_properties)
         return frozenset(ColumnIt(0)(joined_table.select_hidden_categories()))
-
-    def select_link_edges(self):
-        """Select link edges by joining other tables."""
-        joined_table = Tables.Join(self.P.pages, self.P.links)
-        return joined_table.select_link_edges()
 
     def filter_not_hidden_category_links(self, category_links):
         """
@@ -74,6 +74,36 @@ class Data(object):
             category_links,
             NotInIt(hidden_categories, 0),
             NotInIt(hidden_categories, 1))
+
+    def get_article_title_2_id(self):
+        """Get a dict mapping title to id for articles (namespace 0)."""
+        pages_table = Tables.PageTable(self.P.pages)
+        return dict(FlipIt(pages_table.select_id_title_of_articles()))
+
+    def get_category_title_2_id(self):
+        """Get a dict mapping title to id for categories (namespace 14)."""
+        pages_table = Tables.PageTable(self.P.pages)
+        return dict(FlipIt(pages_table.select_id_title_of_categories()))
+
+    def map_links_to_link_edges(self, links):
+        """
+        Map tuples from dump to edges.
+
+        Original links are tuples consisting of 4 fields:
+        - id of a page where link originates
+        - namespace of said page
+        - title of a linked page
+        - its namespace
+        This function replaces it with simple (id_from, id_to) pairs that are
+        easy to store and operate on.
+
+        `links` - links in dump format
+        """
+        title_2_id = self.get_article_title_2_id()
+        valid_links = pipe(links, ColumnIt(0, 2), InIt(title_2_id, 1))
+        return imap(
+            lambda (from_, to_): (from_, title_2_id[to_]),
+            valid_links)
 
     def get_link_edges(self):
         """Get (load) the EdgeTable."""
@@ -283,11 +313,6 @@ class Data(object):
         pages_table = Tables.PageTable(self.P.pages)
         pages_table.create()
         pages_table.populate(LogIt(1000000)(pages))
-
-    def set_links(self, links):
-        links_table = Tables.LinksTable(self.P.links)
-        links_table.create()
-        links_table.populate(LogIt(1000000)(links))
 
     def set_category_links(self, category_links):
         category_links_table = Tables.CategoryLinksTable(self.P.category_links)
