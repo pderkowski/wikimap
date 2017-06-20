@@ -152,9 +152,10 @@ class ImportCategoryLinksTable(Job):
             outputs=[P.category_links])
 
     def __call__(self):
-        hidden_categories = self.data.get_hidden_categories()
         category_links = self.data.import_category_links()
-        self.data.set_category_links(category_links, hidden_categories)
+        category_links = self.data.filter_not_hidden_category_links(
+            category_links)
+        self.data.set_category_links(category_links)
 
 
 class ImportRedirectsTable(Job):
@@ -179,8 +180,8 @@ class CreateLinkEdgesTable(Job):
             outputs=[P.link_edges])
 
     def __call__(self):
-        link_edges = self.data.select_link_edges()
-        self.data.set_link_edges(link_edges)
+        edges = self.data.select_link_edges()
+        self.data.set_link_edges(edges)
 
 
 class ComputePagerank(Job):
@@ -192,7 +193,8 @@ class ComputePagerank(Job):
             outputs=[P.pagerank])
 
     def __call__(self):
-        edges = self.data.get_link_edges(min_count=10)
+        edges = self.data.get_link_edges()
+        edges = self.data.filter_link_edges_by_node_count(edges, min_count=10)
         pagerank = Graph.pagerank(edges)
         self.data.set_pagerank(pagerank)
 
@@ -218,12 +220,13 @@ class ComputeEmbeddings(Job):
         }
 
     def __call__(self):
+        data = self.data.get_link_edges()
+        data = self.data.filter_link_edges_by_highest_pagerank(
+            data,
+            self.config['node_count'])
+
         if self.config['method'] == 'neighbor_list':
-            data = self.data.get_link_lists_for_highest_ranked_nodes(
-                self.config['node_count'])
-        else:
-            data = self.data.get_link_edges_between_highest_ranked_nodes(
-                self.config['node_count'])
+            data = self.data.get_link_lists(data)
 
         model = EmbeddingMethods(
             method=self.config['method'],

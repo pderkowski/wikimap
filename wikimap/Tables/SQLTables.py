@@ -144,7 +144,7 @@ class PagerankTable(TableProxy):
         self.execute(Query('CREATE INDEX rank_idx ON pagerank(pr_rank);', "creating index rank_idx in pagerank table", logStart=True, logProgress=True))
         self.execute(Query('CREATE UNIQUE INDEX order_idx ON pagerank(pr_order);', "creating index order_idx in pagerank table", logStart=True, logProgress=True))
 
-    def selectIdsByDescendingRank(self, idsNo):
+    def select_ids_by_descending_rank(self, idsNo):
         query = Query("""
             SELECT
                 pr_id
@@ -183,7 +183,7 @@ class Join(TableProxy):
     def __init__(self, *tables):
         super(Join, self).__init__(*tables)
 
-    def selectLinkEdges(self):
+    def select_link_edges(self):
         query = Query("""
             SELECT
                 pl_from, page_id
@@ -242,7 +242,7 @@ class Join(TableProxy):
 
         return self.select(query)
 
-    def selectHiddenCategories(self):
+    def select_hidden_categories(self):
         query = Query("""
             SELECT
                 page_title

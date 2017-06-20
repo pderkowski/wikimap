@@ -7,6 +7,7 @@ from DataHelpers import pipe, ColumnIt, LogIt, NotEqualIt, GroupIt, NotInIt, \
     FlipIt, InIt, LongerThanIt
 from itertools import imap, izip
 
+
 class Data(object):
     def __init__(self, paths):
         self.P = paths
@@ -36,30 +37,61 @@ class Data(object):
         return Tables.Import.LinksTable(self.P.links_dump).read()
 
     def import_category_links(self):
-        return Tables.Import.CategoryLinksTable(self.P.category_links_dump).read()
+        return Tables.Import.CategoryLinksTable(
+            self.P.category_links_dump
+        ).read()
 
     def import_page_properties(self):
-        return Tables.Import.PagePropertiesTable(self.P.page_properties_dump).read()
+        return Tables.Import.PagePropertiesTable(
+            self.P.page_properties_dump
+        ).read()
 
     def import_redirects(self):
         return Tables.Import.RedirectsTable(self.P.redirects_dump).read()
 
-    def get_hidden_categories(self):
+    def select_hidden_categories(self):
+        """Select hidden categories by joining other tables."""
         joined_table = Tables.Join(self.P.pages, self.P.page_properties)
-        return frozenset(ColumnIt(0)(joined_table.selectHiddenCategories()))
+        return frozenset(ColumnIt(0)(joined_table.select_hidden_categories()))
 
     def select_link_edges(self):
+        """Select link edges by joining other tables."""
         joined_table = Tables.Join(self.P.pages, self.P.links)
-        return joined_table.selectLinkEdges()
+        return joined_table.select_link_edges()
 
-    def get_link_edges(self, min_count=1):
+    def filter_not_hidden_category_links(self, category_links):
         """
-        Get the EdgeTable.
+        Remove irrelevant category links.
+
+        Filter the category links so that mostly 'real' links remain. Hidden
+        categories are used mainly for maintenance purposes, so they do not
+        provide useful info.
+
+        `category_links` links to filter.
+        """
+        hidden_categories = self.select_hidden_categories()
+        return pipe(
+            category_links,
+            NotInIt(hidden_categories, 0),
+            NotInIt(hidden_categories, 1))
+
+    def get_link_edges(self):
+        """Get (load) the EdgeTable."""
+        edge_table = Tables.EdgeTable(self.P.link_edges)
+        return edge_table
+
+    def filter_link_edges_by_node_count(self, edge_table, min_count=1):
+        """
+        Filter the EdgeTable.
+
+        Filter the EdgeTable so that it only contains edges between nodes that
+        occur at least the specified number of times.
+
+        `edge_table` is an EdgeTable to filter
 
         `min_count` is a minimum number of times a node has to occur as an
         endpoint of an edge to be included in the returned table.
         """
-        edge_table = Tables.EdgeTable(self.P.link_edges)
         if min_count > 1:
             counts = edge_table.countNodes()
             edge_table.filterByNodes([
@@ -70,19 +102,36 @@ class Data(object):
             ])
         return edge_table
 
-    def get_link_edges_between_highest_ranked_nodes(self, node_count):
-        edges_table = Tables.EdgeTable(self.P.link_edges)
-        pagerank_table = Tables.PagerankTable(self.P.pagerank)
-        ids = list(ColumnIt(0)(pagerank_table.selectIdsByDescendingRank(
-            node_count)))
-        edges_table.filterByNodes(ids)
-        return edges_table
+    def filter_link_edges_by_highest_pagerank(self, edge_table, node_count):
+        """
+        Filter the EdgeTable.
 
-    def get_link_lists_for_highest_ranked_nodes(self, node_count):
-        edges_table = self.get_link_edges_between_highest_ranked_nodes(
-            node_count)
-        edges_table.sortByStartNode()
-        return pipe(edges_table, GroupIt, ColumnIt(1), LongerThanIt(1))
+        Filter the EdgeTable so that only edges between highest ranked (by
+        pagerank) nodes are left.
+
+        `edge_table` is an EdgeTable to filter
+
+        `node_count` is a number of highest ranked nodes to include
+        """
+        pagerank_table = Tables.PagerankTable(self.P.pagerank)
+        ids = pipe(
+            pagerank_table.select_ids_by_descending_rank(node_count),
+            ColumnIt(0))
+        edge_table.filterByNodes(ids)
+        return edge_table
+
+    def get_link_lists(self, edge_table):
+        """
+        Group links into link lists.
+
+        Group links into link lists - one per node. Each link list is a list of
+        neighbors (made by following outbound links). Only lists longer than 1
+        are returned.
+
+        `edge_table` is an EdgeTable containing links.
+        """
+        edge_table.sortByStartNode()
+        return pipe(edge_table, GroupIt, ColumnIt(1), LongerThanIt(1))
 
     def get_ids_of_articles(self):
         pages_table = Tables.PageTable(self.P.pages)
@@ -124,7 +173,7 @@ class Data(object):
 
     def get_ids_embeddings_of_highest_ranked_points(self, point_count):
         pagerank_table = Tables.PagerankTable(self.P.pagerank)
-        ids = pipe(pagerank_table.selectIdsByDescendingRank(point_count), ColumnIt(0), list)
+        ids = pipe(pagerank_table.select_ids_by_descending_rank(point_count), ColumnIt(0), list)
         embeddings_table = Tables.EmbeddingsTable()
         embeddings_table.load(self.P.embeddings)
         embeddings = imap(embeddings_table.__getitem__, ids)
@@ -240,10 +289,10 @@ class Data(object):
         links_table.create()
         links_table.populate(LogIt(1000000)(links))
 
-    def set_category_links(self, category_links, hidden_categories):
+    def set_category_links(self, category_links):
         category_links_table = Tables.CategoryLinksTable(self.P.category_links)
         category_links_table.create()
-        category_links_table.populate(pipe(category_links, NotInIt(hidden_categories, 1), LogIt(1000000)))
+        category_links_table.populate(LogIt(1000000)(category_links))
 
     def set_page_properties(self, page_properties):
         page_properties_table = Tables.PagePropertiesTable(self.P.page_properties)
