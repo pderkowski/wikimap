@@ -7,7 +7,8 @@ from ArgumentParser import BuildArgumentParser
 from Config import BuildConfig
 
 class BuildCreator(BuildExplorer):
-    def __init__(self, builds_dir, build_prefix, base_build_index, language, target_jobs, forced_jobs, config):
+    def __init__(self, builds_dir, build_prefix, base_build_index, language,
+                 target_jobs, forced_jobs, config):
         super(BuildCreator, self).__init__(builds_dir, build_prefix)
 
         self._base_build_index = base_build_index
@@ -20,7 +21,12 @@ class BuildCreator(BuildExplorer):
         forced_jobs = parser.parse_job_ranges(forced_jobs)
         self._manager.plan(target_jobs, forced_jobs)
 
-        self._manager.configure(BuildConfig.from_string(config))
+        if isinstance(config, basestring):
+            build_config = BuildConfig.from_string(config)
+        else:
+            build_config = BuildConfig(config)
+
+        self._manager.configure(build_config)
 
     def run(self):
         self._manager.run(prev_config=self._get_base_config(),

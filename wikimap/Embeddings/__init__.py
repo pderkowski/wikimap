@@ -30,6 +30,9 @@ def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
     return n2v.train(edges)
 
 
+EMBEDDING_METHODS = ['node2vec', 'bag_of_links', 'neighbor_list']
+
+
 class EmbeddingMethods(object):
     """Unified interface for running all types of word embedding algorithms."""
 
@@ -66,7 +69,7 @@ class EmbeddingMethods(object):
 
         `verbose` - choose whether or not print additional info
         """
-        if method in ['node2vec', 'bag_of_links', 'neighbor_list']:
+        if method in EmbeddingMethods.methods:
             self._method = method
         else:
             raise ValueError('`method` has to be one of available choices.')
