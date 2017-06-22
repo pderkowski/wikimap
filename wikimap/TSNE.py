@@ -2,6 +2,8 @@ import logging
 import numpy as np
 import bhtsne
 
+DEFAULT_POINT_COUNT = 100000
+
 def train(embeddings):
     logger = logging.getLogger(__name__)
 

@@ -1,6 +1,8 @@
 import logging
 import vptree
 
+DEFAULT_NEAREST_NEIGHBORS_COUNT = 10
+
 def computeNearestNeighbors(data, neighborsNo):
     logger = logging.getLogger(__name__)
 

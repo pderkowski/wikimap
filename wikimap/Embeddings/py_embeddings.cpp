@@ -85,8 +85,14 @@ PYBIND11_PLUGIN(embeddings) {
         auto embeddings = w2v.get_embeddings();
         embeddings.save(output_file);
     });
-
-
+    m.attr("DEFAULT_DIMENSION") = emb::def::DIMENSION;
+    m.attr("DEFAULT_EPOCH_COUNT") = emb::def::EPOCHS;
+    m.attr("DEFAULT_CONTEXT_SIZE") = emb::def::CONTEXT_SIZE;
+    m.attr("DEFAULT_BACKTRACK_PROBABILITY") = emb::def::BACKTRACK_PROBABILITY;
+    m.attr("DEFAULT_WALKS_PER_NODE") = emb::def::WALKS_PER_NODE;
+    m.attr("DEFAULT_WALK_LENGTH") = emb::def::WALK_LENGTH;
+    m.attr("DEFAULT_DYNAMIC_WINDOW") = emb::def::DYNAMIC_CONTEXT;
+    m.attr("DEFAULT_VERBOSE") = emb::def::VERBOSE;
 
     py::class_<Embeddings<Id>>(m, "Embeddings")
         .def(py::init<>())

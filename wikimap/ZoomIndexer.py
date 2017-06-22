@@ -1,6 +1,8 @@
 from math import floor, ceil
 import logging
 
+DEFAULT_BUCKET_SIZE = 100
+
 class Indexer(object):
     def __init__(self, points, data, bucketSize):
         logger = logging.getLogger(__name__)

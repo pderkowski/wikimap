@@ -1,5 +1,5 @@
 from Builder.Job import Job
-from Embeddings import EmbeddingMethods
+import Embeddings
 import TSNE
 import NearestNeighbors
 import ZoomIndexer
@@ -9,7 +9,7 @@ from Paths import AbstractPaths as P
 
 
 class DownloadPagesDump(Job):
-    def __init__(self, url):
+    def __init__(self, lang):
         super(DownloadPagesDump, self).__init__(
             'DOWNLOAD PAGES DUMP',
             alias='dload_pages',
@@ -17,7 +17,7 @@ class DownloadPagesDump(Job):
             outputs=[P.pages_dump])
 
         self.config = {
-            'url': url
+            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-page.sql.gz'.format(lang, lang)
         }
 
     def __call__(self):
@@ -25,7 +25,7 @@ class DownloadPagesDump(Job):
 
 
 class DownloadLinksDump(Job):
-    def __init__(self, url):
+    def __init__(self, lang):
         super(DownloadLinksDump, self).__init__(
             'DOWNLOAD LINKS DUMP',
             alias='dload_links',
@@ -33,7 +33,7 @@ class DownloadLinksDump(Job):
             outputs=[P.links_dump])
 
         self.config = {
-            'url': url
+            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-pagelinks.sql.gz'.format(lang, lang)
         }
 
     def __call__(self):
@@ -41,7 +41,7 @@ class DownloadLinksDump(Job):
 
 
 class DownloadCategoryLinksDump(Job):
-    def __init__(self, url):
+    def __init__(self, lang):
         super(DownloadCategoryLinksDump, self).__init__(
             'DOWNLOAD CATEGORY LINKS DUMP',
             alias='dload_clinks',
@@ -49,7 +49,7 @@ class DownloadCategoryLinksDump(Job):
             outputs=[P.category_links_dump])
 
         self.config = {
-            'url': url
+            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-categorylinks.sql.gz'.format(lang, lang)
         }
 
     def __call__(self):
@@ -57,7 +57,7 @@ class DownloadCategoryLinksDump(Job):
 
 
 class DownloadPagePropertiesDump(Job):
-    def __init__(self, url):
+    def __init__(self, lang):
         super(DownloadPagePropertiesDump, self).__init__(
             'DOWNLOAD PAGE PROPERTIES DUMP',
             alias='dload_props',
@@ -65,7 +65,7 @@ class DownloadPagePropertiesDump(Job):
             outputs=[P.page_properties_dump])
 
         self.config = {
-            'url': url
+            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-page_props.sql.gz'.format(lang, lang)
         }
 
     def __call__(self):
@@ -73,7 +73,7 @@ class DownloadPagePropertiesDump(Job):
 
 
 class DownloadRedirectsDump(Job):
-    def __init__(self, url):
+    def __init__(self, lang):
         super(DownloadRedirectsDump, self).__init__(
             'DOWNLOAD REDIRECTS DUMP',
             alias='dload_reds',
@@ -81,7 +81,7 @@ class DownloadRedirectsDump(Job):
             outputs=[P.redirects_dump])
 
         self.config = {
-            'url': url
+            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-redirect.sql.gz'.format(lang, lang)
         }
 
     def __call__(self):
@@ -89,7 +89,7 @@ class DownloadRedirectsDump(Job):
 
 
 class DownloadEvaluationDatasets(Job):
-    def __init__(self, url):
+    def __init__(self):
         super(DownloadEvaluationDatasets, self).__init__(
             'DOWNLOAD EVALUATION DATASETS',
             alias='dload_eval',
@@ -97,7 +97,7 @@ class DownloadEvaluationDatasets(Job):
             outputs=[P.evaluation_datasets])
 
         self.config = {
-            'url': url
+            'url': 'https://www.dropbox.com/s/d61802lo5n3gdra/datasets.tar.gz?dl=1'
         }
 
     def __call__(self):
@@ -198,15 +198,15 @@ class ComputeEmbeddings(Job):
             outputs=[P.embeddings])
 
         self.config = {
-            'method': 'node2vec',
-            'node_count': 1000000,
-            'dimensions': 128,
-            'context_size': 10,
-            'backtrack_probability': 0.5,
-            'walks_per_node': 10,
-            'dynamic_window': True,
-            'epochs_count': 1,
-            'walk_length': 80
+            'method': Embeddings.DEFAULT_EMBEDDING_METHOD,
+            'node_count': Embeddings.DEFAULT_EMBEDDING_NODE_COUNT,
+            'dimension': Embeddings.DEFAULT_DIMENSION,
+            'context_size': Embeddings.DEFAULT_CONTEXT_SIZE,
+            'backtrack_probability': Embeddings.DEFAULT_BACKTRACK_PROBABILITY,
+            'walks_per_node': Embeddings.DEFAULT_WALKS_PER_NODE,
+            'dynamic_window': Embeddings.DEFAULT_DYNAMIC_WINDOW,
+            'epoch_count': Embeddings.DEFAULT_EPOCH_COUNT,
+            'walk_length': Embeddings.DEFAULT_WALK_LENGTH
         }
 
     def __call__(self):
@@ -218,19 +218,18 @@ class ComputeEmbeddings(Job):
         if self.config['method'] == 'neighbor_list':
             data = self.data.get_link_lists(data)
 
-        model = EmbeddingMethods(
+        model = Embeddings.EmbeddingMethods(
             method=self.config['method'],
-            dimensions=self.config['dimensions'],
+            dimension=self.config['dimension'],
             context_size=self.config['context_size'],
             backtrack_probability=self.config['backtrack_probability'],
             walks_per_node=self.config['walks_per_node'],
-            epochs_count=self.config['epochs_count'],
+            epoch_count=self.config['epoch_count'],
             walk_length=self.config['walk_length']
         )
         embeddings = model.train(data)
 
         self.data.set_embeddings(embeddings)
-
 
 class CreateTitleIndex(Job):
     def __init__(self):
@@ -279,7 +278,7 @@ class ComputeTSNE(Job):
             outputs=[P.tsne])
 
         self.config = {
-            'point_count': 100000
+            'point_count': TSNE.DEFAULT_POINT_COUNT
         }
 
     def __call__(self):
@@ -297,7 +296,7 @@ class ComputeHighDimensionalNeighbors(Job):
             outputs=[P.high_dimensional_neighbors])
 
         self.config = {
-            'neighbors_count': 10
+            'neighbors_count': NearestNeighbors.DEFAULT_NEAREST_NEIGHBORS_COUNT
         }
 
     def __call__(self):
@@ -315,7 +314,7 @@ class ComputeLowDimensionalNeighbors(Job):
             outputs=[P.low_dimensional_neighbors])
 
         self.config = {
-            'neighbors_count': 10
+            'neighbors_count': NearestNeighbors.DEFAULT_NEAREST_NEIGHBORS_COUNT
         }
 
     def __call__(self):
@@ -362,7 +361,7 @@ class CreateWikimapCategoriesTable(Job):
             outputs=[P.wikimap_categories])
 
         self.config = {
-            'depth': 1
+            'depth': Graph.DEFAULT_AGGREGATION_DEPTH
         }
 
     def __call__(self):
@@ -384,7 +383,7 @@ class CreateZoomIndex(Job):
             outputs=[P.zoom_index, P.wikimap_points, P.metadata])
 
         self.config = {
-            'bucket_size': 100
+            'bucket_size': ZoomIndexer.DEFAULT_BUCKET_SIZE
         }
 
     def __call__(self):

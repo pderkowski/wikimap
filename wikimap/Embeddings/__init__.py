@@ -1,22 +1,28 @@
 import embeddings
 import logging
 
-from embeddings import Embeddings
+from embeddings import Embeddings, DEFAULT_DIMENSION, DEFAULT_EPOCH_COUNT,\
+DEFAULT_CONTEXT_SIZE, DEFAULT_BACKTRACK_PROBABILITY, DEFAULT_WALKS_PER_NODE,\
+DEFAULT_WALK_LENGTH, DEFAULT_DYNAMIC_WINDOW, DEFAULT_VERBOSE
 
-def Word2Vec(sentences, dimensions, context_size, epochs_count, dynamic_window,
+EMBEDDING_METHODS = ['node2vec', 'bag_of_links', 'neighbor_list']
+DEFAULT_EMBEDDING_METHOD = 'node2vec'
+DEFAULT_EMBEDDING_NODE_COUNT = 1000000
+
+def Word2Vec(sentences, dimension, context_size, epoch_count, dynamic_window,
              verbose):
     """Run word2vec on provided sentences."""
     logger = logging.getLogger(__name__)
     logger.info("Running word2vec...")
 
-    w2v = embeddings.Word2Vec(dimension=dimensions, epochs=epochs_count,
+    w2v = embeddings.Word2Vec(dimension=dimension, epochs=epoch_count,
                               context_size=context_size,
                               dynamic_context=dynamic_window, verbose=verbose)
     return w2v.train(sentences)
 
 
 def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
-             dimensions, context_size, epochs_count, dynamic_window, verbose):
+             dimension, context_size, epoch_count, dynamic_window, verbose):
     """Run node2vec on provided sentences."""
     logger = logging.getLogger(__name__)
     logger.info("Running node2vec...")
@@ -24,21 +30,25 @@ def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
     n2v = embeddings.Node2Vec(backtrack_probability=backtrack_probability,
                               walk_length=walk_length,
                               walks_per_node=walks_per_node,
-                              dimension=dimensions, epochs=epochs_count,
+                              dimension=dimension, epochs=epoch_count,
                               context_size=context_size,
                               dynamic_context=dynamic_window, verbose=verbose)
     return n2v.train(edges)
 
 
-EMBEDDING_METHODS = ['node2vec', 'bag_of_links', 'neighbor_list']
-
-
 class EmbeddingMethods(object):
     """Unified interface for running all types of word embedding algorithms."""
 
-    def __init__(self, method='node2vec', dimensions=128, epochs_count=1,
-                 context_size=10, backtrack_probability=0.5, walks_per_node=10,
-                 walk_length=80, dynamic_window=True, verbose=True):
+    def __init__(self,
+                 method=DEFAULT_EMBEDDING_METHOD,
+                 dimension=DEFAULT_DIMENSION,
+                 epoch_count=DEFAULT_EPOCH_COUNT,
+                 context_size=DEFAULT_CONTEXT_SIZE,
+                 backtrack_probability=DEFAULT_BACKTRACK_PROBABILITY,
+                 walks_per_node=DEFAULT_WALKS_PER_NODE,
+                 walk_length=DEFAULT_WALK_LENGTH,
+                 dynamic_window=DEFAULT_DYNAMIC_WINDOW,
+                 verbose=DEFAULT_VERBOSE):
         """
         Choose and validate the model.
 
@@ -47,10 +57,10 @@ class EmbeddingMethods(object):
         `method` is the model type to use. Possible choices are:
         'node2vec', 'bag_of_links', 'neighbor_list'.
 
-        `dimensions` specifies the size of embeddings. It has to be a positive
+        `dimension` specifies the size of embeddings. It has to be a positive
         integer.
 
-        `epochs_count` - number of training passes over the data
+        `epoch_count` - number of training passes over the data
 
         `context_size` is the maximum context around the target word (this
         means that the size of the window around this word is
@@ -69,17 +79,18 @@ class EmbeddingMethods(object):
 
         `verbose` - choose whether or not print additional info
         """
-        if method in EmbeddingMethods.methods:
+        if method in EMBEDDING_METHODS:
             self._method = method
         else:
             raise ValueError('`method` has to be one of available choices.')
 
-        if isinstance(dimensions, int) and dimensions > 0:
-            self._dimensions = dimensions
+        if isinstance(dimension, (int, long)) and dimension > 0:
+            self._dimension = dimension
         else:
-            raise ValueError('`dimensions` has to be a positive integer.')
+            raise ValueError(('`dimension` has to be a positive integer, is '
+                              '{}.'.format(dimension)))
 
-        if isinstance(context_size, int) and context_size > 0:
+        if isinstance(context_size, (int, long)) and context_size > 0:
             self._context_size = context_size
         else:
             raise ValueError('`context_size` has to be a positive integer.')
@@ -92,17 +103,17 @@ class EmbeddingMethods(object):
             raise ValueError('`backtrack_probability` has to be a float in \
                 range of [0., 1.].')
 
-        if isinstance(walks_per_node, int) and walks_per_node > 0:
+        if isinstance(walks_per_node, (int, long)) and walks_per_node > 0:
             self._walks_per_node = walks_per_node
         else:
             raise ValueError('`walks_per_node` has to be a positive integer.')
 
-        if isinstance(epochs_count, int) and epochs_count > 0:
-            self._epochs_count = epochs_count
+        if isinstance(epoch_count, (int, long)) and epoch_count > 0:
+            self._epoch_count = epoch_count
         else:
-            raise ValueError('`epochs_count` has to be a positive integer.')
+            raise ValueError('`epoch_count` has to be a positive integer.')
 
-        if isinstance(walk_length, int) and walk_length > 0:
+        if isinstance(walk_length, (int, long)) and walk_length > 0:
             self._walk_length = walk_length
         else:
             raise ValueError('`walk_length` has to be a positive integer.')
@@ -125,26 +136,26 @@ class EmbeddingMethods(object):
                 backtrack_probability=self._backtrack_probability,
                 walk_length=self._walk_length,
                 walks_per_node=self._walks_per_node,
-                dimensions=self._dimensions,
-                epochs_count=self._epochs_count,
+                dimension=self._dimension,
+                epoch_count=self._epoch_count,
                 context_size=self._context_size,
                 dynamic_window=self._dynamic_window,
                 verbose=self._verbose)
         elif self._method == 'bag_of_links':
             return Word2Vec(
                 data,
-                dimensions=self._dimensions,
+                dimension=self._dimension,
                 context_size=1,
-                epochs_count=self._epochs_count,
+                epoch_count=self._epoch_count,
                 dynamic_window=False,
                 verbose=self._verbose)
         elif self._method == 'neighbor_list':
             return Word2Vec(
                 data,
-                dimensions=self._dimensions,
+                dimension=self._dimension,
                 context_size=self._context_size,
-                epochs_count=self._epochs_count,
-                dynamic_window=True,
+                epoch_count=self._epoch_count,
+                dynamic_window=False,
                 verbose=self._verbose)
         else:
             raise ValueError('Unrecognized method.')
