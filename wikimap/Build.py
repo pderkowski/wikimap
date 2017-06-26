@@ -54,7 +54,10 @@ class Build(object):
         self._manager.print_config()
 
     def _get_build_template(self, config):
-        embedding_job = J.ComputeEmbeddings()
+        if config['embed.categories']:
+            embedding_job = J.ComputeEmbeddingsUsingLinksAndCategories()
+        else:
+            embedding_job = J.ComputeEmbeddingsUsingLinks()
 
         if config['meta.language'] == 'en':
             return Builder.Build([

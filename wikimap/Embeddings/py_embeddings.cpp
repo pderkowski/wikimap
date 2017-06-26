@@ -93,6 +93,7 @@ PYBIND11_PLUGIN(embeddings) {
     m.attr("DEFAULT_WALK_LENGTH") = emb::def::WALK_LENGTH;
     m.attr("DEFAULT_DYNAMIC_WINDOW") = emb::def::DYNAMIC_CONTEXT;
     m.attr("DEFAULT_VERBOSE") = emb::def::VERBOSE;
+    m.attr("DEFAULT_NEGATIVE_SAMPLES") = emb::def::NEGATIVE_SAMPLES;
 
     py::class_<Embeddings<Id>>(m, "Embeddings")
         .def(py::init<>())

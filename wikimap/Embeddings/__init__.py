@@ -3,26 +3,31 @@ import logging
 
 from embeddings import Embeddings, DEFAULT_DIMENSION, DEFAULT_EPOCH_COUNT,\
 DEFAULT_CONTEXT_SIZE, DEFAULT_BACKTRACK_PROBABILITY, DEFAULT_WALKS_PER_NODE,\
-DEFAULT_WALK_LENGTH, DEFAULT_DYNAMIC_WINDOW, DEFAULT_VERBOSE
+DEFAULT_WALK_LENGTH, DEFAULT_DYNAMIC_WINDOW, DEFAULT_VERBOSE,\
+DEFAULT_NEGATIVE_SAMPLES
 
 EMBEDDING_METHODS = ['node2vec', 'bag_of_links', 'neighbor_list']
 DEFAULT_EMBEDDING_METHOD = 'node2vec'
 DEFAULT_EMBEDDING_NODE_COUNT = 1000000
+DEFAULT_USE_CATEGORIES = 0
 
 def Word2Vec(sentences, dimension, context_size, epoch_count, dynamic_window,
-             verbose):
+             negative_samples, verbose):
     """Run word2vec on provided sentences."""
     logger = logging.getLogger(__name__)
     logger.info("Running word2vec...")
 
     w2v = embeddings.Word2Vec(dimension=dimension, epochs=epoch_count,
                               context_size=context_size,
-                              dynamic_context=dynamic_window, verbose=verbose)
+                              dynamic_context=dynamic_window,
+                              negative_samples=negative_samples,
+                              verbose=verbose)
     return w2v.train(sentences)
 
 
 def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
-             dimension, context_size, epoch_count, dynamic_window, verbose):
+             dimension, context_size, epoch_count, dynamic_window,
+             negative_samples, verbose):
     """Run node2vec on provided sentences."""
     logger = logging.getLogger(__name__)
     logger.info("Running node2vec...")
@@ -32,7 +37,9 @@ def Node2Vec(edges, backtrack_probability, walks_per_node, walk_length,
                               walks_per_node=walks_per_node,
                               dimension=dimension, epochs=epoch_count,
                               context_size=context_size,
-                              dynamic_context=dynamic_window, verbose=verbose)
+                              dynamic_context=dynamic_window,
+                              negative_samples=negative_samples,
+                              verbose=verbose)
     return n2v.train(edges)
 
 
@@ -48,6 +55,7 @@ class EmbeddingMethods(object):
                  walks_per_node=DEFAULT_WALKS_PER_NODE,
                  walk_length=DEFAULT_WALK_LENGTH,
                  dynamic_window=DEFAULT_DYNAMIC_WINDOW,
+                 negative_samples=DEFAULT_NEGATIVE_SAMPLES,
                  verbose=DEFAULT_VERBOSE):
         """
         Choose and validate the model.
@@ -76,6 +84,9 @@ class EmbeddingMethods(object):
 
         `dynamic_window` controls whether the actual context_size is sampled
         with context_size being the max possible choice, or fixed to its value
+
+        `negative_samples` controls the number of noise samples that are drawn
+        for each real sample
 
         `verbose` - choose whether or not print additional info
         """
@@ -118,6 +129,11 @@ class EmbeddingMethods(object):
         else:
             raise ValueError('`walk_length` has to be a positive integer.')
 
+        if isinstance(negative_samples, (int, long)) and negative_samples > 0:
+            self._negative_samples = negative_samples
+        else:
+            raise ValueError('`negative_samples` has to be a positive integer.')
+
         self._dynamic_window = dynamic_window
         self._verbose = verbose
 
@@ -140,6 +156,7 @@ class EmbeddingMethods(object):
                 epoch_count=self._epoch_count,
                 context_size=self._context_size,
                 dynamic_window=self._dynamic_window,
+                negative_samples=self._negative_samples,
                 verbose=self._verbose)
         elif self._method == 'bag_of_links':
             return Word2Vec(
@@ -148,6 +165,7 @@ class EmbeddingMethods(object):
                 context_size=1,
                 epoch_count=self._epoch_count,
                 dynamic_window=False,
+                negative_samples=self._negative_samples,
                 verbose=self._verbose)
         elif self._method == 'neighbor_list':
             return Word2Vec(
@@ -156,6 +174,7 @@ class EmbeddingMethods(object):
                 context_size=self._context_size,
                 epoch_count=self._epoch_count,
                 dynamic_window=False,
+                negative_samples=self._negative_samples,
                 verbose=self._verbose)
         else:
             raise ValueError('Unrecognized method.')

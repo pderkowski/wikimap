@@ -26,7 +26,7 @@ class GridSearch(object):
             (arg_name, self._maybe_wrap_with_list(arg_values))
             for (arg_name, arg_values)
             in grid_args
-            if arg_values]
+            if arg_values is not None]
 
         self.max_config_num = max(sum(1 for _ in self), 1)
 
@@ -156,7 +156,7 @@ def main():
         help=("Choose a number of embedded nodes (wikipedia titles). Can also "
               "be a comma-separated list of ints."))
     parser.add_argument(
-        '--embed.epochs_count',
+        '--embed.epoch_count',
         type=wikimap.Utils.parse_comma_separated_ints,
         default=wikimap.DEFAULT_EPOCH_COUNT,
         help=("Choose a number of epochs to use during training. Can also be "
@@ -167,6 +167,18 @@ def main():
         default=wikimap.DEFAULT_WALK_LENGTH,
         help=("Choose a maximum walk length of random walks during embedding. "
               "Can also be a comma-separated list of ints."))
+    parser.add_argument(
+        '--embed.categories',
+        type=wikimap.Utils.parse_comma_separated_ints,
+        default=wikimap.DEFAULT_USE_CATEGORIES,
+        help=("Train also on links from pages to categories. Use 0 (off) and "
+              "1 (on). Can also be a comma-separated list of ints."))
+    parser.add_argument(
+        '--embed.negative_samples',
+        type=wikimap.Utils.parse_comma_separated_ints,
+        default=wikimap.DEFAULT_NEGATIVE_SAMPLES,
+        help=("Number of noise samples drawn for each real sample coming from "
+              "data. Can also be a comma-separated list of ints."))
 
     args = parser.parse_args()
 
@@ -180,13 +192,13 @@ def main():
     grid_arg_names = [
         'ldnn.neighbors_count', 'embed.context_size', 'embed.walks_per_node',
         'embed.backtrack_probability', 'embed.dimension', 'embed.node_count',
-        'embed.method', 'embed.epochs_count', 'embed.walk_length',
-        'meta.language']
+        'embed.method', 'embed.epoch_count', 'embed.walk_length',
+        'embed.categories', 'embed.negative_samples', 'meta.language']
     grid_args = [
-        (arg_name, value_list)
-        for (arg_name, value_list)
-        in vars(args).iteritems()
-        if arg_name in grid_arg_names]
+        (arg_name, vars(args)[arg_name])
+        for arg_name
+        in grid_arg_names]
+
     build_configs = GridSearch(grid_args)
 
     for config_no, config in enumerate(build_configs):

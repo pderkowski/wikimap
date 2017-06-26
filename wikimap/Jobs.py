@@ -184,14 +184,14 @@ class ComputePagerank(Job):
 
     def __call__(self):
         edges = self.data.get_link_edges()
-        edges = self.data.filter_link_edges_by_node_count(edges, min_count=10)
+        edges = self.data.filter_edges_by_node_count(edges, min_count=10)
         pagerank = Graph.pagerank(edges)
         self.data.set_pagerank(pagerank)
 
 
-class ComputeEmbeddings(Job):
+class ComputeEmbeddingsUsingLinks(Job):
     def __init__(self):
-        super(ComputeEmbeddings, self).__init__(
+        super(ComputeEmbeddingsUsingLinks, self).__init__(
             'COMPUTE EMBEDDINGS',
             alias='embed',
             inputs=[P.link_edges, P.pagerank],
@@ -205,13 +205,15 @@ class ComputeEmbeddings(Job):
             'backtrack_probability': Embeddings.DEFAULT_BACKTRACK_PROBABILITY,
             'walks_per_node': Embeddings.DEFAULT_WALKS_PER_NODE,
             'dynamic_window': Embeddings.DEFAULT_DYNAMIC_WINDOW,
+            'negative_samples': Embeddings.DEFAULT_NEGATIVE_SAMPLES,
             'epoch_count': Embeddings.DEFAULT_EPOCH_COUNT,
-            'walk_length': Embeddings.DEFAULT_WALK_LENGTH
+            'walk_length': Embeddings.DEFAULT_WALK_LENGTH,
+            'categories': Embeddings.DEFAULT_USE_CATEGORIES
         }
 
     def __call__(self):
         data = self.data.get_link_edges()
-        data = self.data.filter_link_edges_by_highest_pagerank(
+        data = self.data.filter_edges_by_highest_pagerank(
             data,
             self.config['node_count'])
 
@@ -225,9 +227,67 @@ class ComputeEmbeddings(Job):
             backtrack_probability=self.config['backtrack_probability'],
             walks_per_node=self.config['walks_per_node'],
             epoch_count=self.config['epoch_count'],
-            walk_length=self.config['walk_length']
+            walk_length=self.config['walk_length'],
+            negative_samples=self.config['negative_samples']
         )
         embeddings = model.train(data)
+
+        self.data.set_embeddings(embeddings)
+
+class ComputeEmbeddingsUsingLinksAndCategories(Job):
+    def __init__(self):
+        super(ComputeEmbeddingsUsingLinksAndCategories, self).__init__(
+            'COMPUTE EMBEDDINGS',
+            alias='embed',
+            inputs=[P.link_edges, P.pagerank, P.category_links],
+            outputs=[P.embeddings])
+
+        self.config = {
+            'method': Embeddings.DEFAULT_EMBEDDING_METHOD,
+            'node_count': Embeddings.DEFAULT_EMBEDDING_NODE_COUNT,
+            'dimension': Embeddings.DEFAULT_DIMENSION,
+            'context_size': Embeddings.DEFAULT_CONTEXT_SIZE,
+            'backtrack_probability': Embeddings.DEFAULT_BACKTRACK_PROBABILITY,
+            'walks_per_node': Embeddings.DEFAULT_WALKS_PER_NODE,
+            'dynamic_window': Embeddings.DEFAULT_DYNAMIC_WINDOW,
+            'negative_samples': Embeddings.DEFAULT_NEGATIVE_SAMPLES,
+            'epoch_count': Embeddings.DEFAULT_EPOCH_COUNT,
+            'walk_length': Embeddings.DEFAULT_WALK_LENGTH,
+            'categories': Embeddings.DEFAULT_USE_CATEGORIES
+        }
+
+    def __call__(self):
+        edges = self.data.get_link_edges()
+        edges = self.data.filter_edges_by_highest_pagerank(
+            edges,
+            self.config['node_count'])
+
+        category_edges = self.data.get_edges_between_articles_and_categories()
+        category_edges = self.data.filter_edges_by_highest_pagerank(
+            category_edges,
+            self.config['node_count'],
+            endpoints='start')
+
+        # Add links between articles and categories to normal links and then
+        # inverse them and add them again to make a bidirectional connection.
+        edges.extend(category_edges)
+        category_edges.inverseEdges()
+        edges.extend(category_edges)
+
+        if self.config['method'] == 'neighbor_list':
+            edges = self.data.get_link_lists(edges)
+
+        model = Embeddings.EmbeddingMethods(
+            method=self.config['method'],
+            dimension=self.config['dimension'],
+            context_size=self.config['context_size'],
+            backtrack_probability=self.config['backtrack_probability'],
+            walks_per_node=self.config['walks_per_node'],
+            epoch_count=self.config['epoch_count'],
+            walk_length=self.config['walk_length'],
+            negative_samples=self.config['negative_samples']
+        )
+        embeddings = model.train(edges)
 
         self.data.set_embeddings(embeddings)
 

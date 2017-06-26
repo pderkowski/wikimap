@@ -24,6 +24,9 @@ public:
     void append(const T& val);
 
     template<class InputIterator>
+    void extend(InputIterator begin, InputIterator end);
+
+    template<class InputIterator>
     void assign(InputIterator begin, InputIterator end);
 
     void save(const std::string& path) const;
@@ -69,6 +72,12 @@ template<class T>
 template<class InputIterator>
 void Array<T>::assign(InputIterator begin, InputIterator end) {
     data_.assign(begin, end);
+}
+
+template<class T>
+template<class InputIterator>
+void Array<T>::extend(InputIterator begin, InputIterator end) {
+    data_.insert(data_.end(), begin, end);
 }
 
 template<class T>

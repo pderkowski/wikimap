@@ -118,7 +118,8 @@ class Data(object):
         edge_table = Tables.EdgeTable(self.P.link_edges)
         return edge_table
 
-    def filter_link_edges_by_node_count(self, edge_table, min_count=1):
+    def filter_edges_by_node_count(self, edge_table, min_count=1,
+                                   endpoints='both'):
         """
         Filter the EdgeTable.
 
@@ -129,18 +130,26 @@ class Data(object):
 
         `min_count` is a minimum number of times a node has to occur as an
         endpoint of an edge to be included in the returned table.
+
+        `endpoints` allows to apply filtering conditions only to start/end/both
+        endpoints of an edge.
         """
         if min_count > 1:
             counts = edge_table.countNodes()
-            edge_table.filterByNodes([
-                n
-                for (n, c)
-                in counts.iteritems()
-                if c >= min_count
-            ])
+            nodes = [n for (n, c) in counts.iteritems() if c >= min_count]
+            if endpoints == 'both':
+                edge_table.filterByNodes(nodes)
+            elif endpoints == 'start':
+                edge_table.filterByStartNodes(nodes)
+            elif endpoints == 'end':
+                edge_table.filterByEndNodes(nodes)
+            else:
+                raise ValueError(('`endpoints` argument should be one of '
+                                  'these: `start`, `end`, `both`.'))
         return edge_table
 
-    def filter_link_edges_by_highest_pagerank(self, edge_table, node_count):
+    def filter_edges_by_highest_pagerank(self, edge_table, node_count,
+                                         endpoints='both'):
         """
         Filter the EdgeTable.
 
@@ -150,12 +159,24 @@ class Data(object):
         `edge_table` is an EdgeTable to filter
 
         `node_count` is a number of highest ranked nodes to include
+
+        `endpoints` allows to apply filtering conditions only to start/end/both
+        endpoints of an edge.
         """
         pagerank_table = Tables.PagerankTable(self.P.pagerank)
         ids = pipe(
             pagerank_table.select_ids_by_descending_rank(node_count),
             ColumnIt(0))
-        edge_table.filterByNodes(ids)
+
+        if endpoints == 'both':
+            edge_table.filterByNodes(ids)
+        elif endpoints == 'start':
+            edge_table.filterByStartNodes(ids)
+        elif endpoints == 'end':
+            edge_table.filterByEndNodes(ids)
+        else:
+            raise ValueError(('`endpoints` argument should be one of '
+                              'these: `start`, `end`, `both`.'))
         return edge_table
 
     def get_link_lists(self, edge_table):
@@ -265,15 +286,20 @@ class Data(object):
             self.P.pages)
         return joined_table.select_id_category_name()
 
-    def get_links_between_categories(self):
-        """Get links between only categories."""
+    def get_edges_between_categories(self):
+        """Get links category -> category."""
         joined_table = Tables.Join(self.P.category_links, self.P.pages)
-        return joined_table.select_links_between_categories()
+        edges = Tables.EdgeTable()
+        edges.populate(joined_table.select_links_between_categories())
+        return edges
 
-    def get_links_between_articles_and_categories(self):
-        """Get links only from pages to categories."""
+    def get_edges_between_articles_and_categories(self):
+        """Get links article -> category."""
         joined_table = Tables.Join(self.P.category_links, self.P.pages)
-        return joined_table.select_links_between_articles_and_categories()
+        edges = Tables.EdgeTable()
+        edges.populate(
+            joined_table.select_links_between_articles_and_categories())
+        return edges
 
     def get_coords_ids_of_points(self):
         joined_table = Tables.Join(self.P.wikimap_points, self.P.pagerank)
@@ -361,9 +387,7 @@ class Data(object):
         pagerank_table.populate(
             imap(
                 lambda (order, (page, rank)): (page, rank, order),
-                enumerate(pagerank)
-            )
-        )
+                enumerate(pagerank)))
 
     def set_embeddings(self, embeddings):
         embeddings.save(self.P.embeddings)

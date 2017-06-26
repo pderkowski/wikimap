@@ -17,6 +17,16 @@ class EdgeArray(object):
         if self._path:
             self._array.save(self._path)
 
+    def append(self, edge):
+        self._ensureLoaded()
+
+        self._array.append(edge)
+
+    def extend(self, edges):
+        self._ensureLoaded()
+
+        self._array.extend(edges)
+
     def sortByStartNode(self):
         self._ensureLoaded()
 

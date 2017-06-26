@@ -36,7 +36,10 @@ public:
 public:
     explicit EdgeArrayExt();
 
-    void populate(py::object iterator);
+    void populate(py::object iterable);
+
+    void append(py::tuple edge);
+    void extend(py::object iterable);
 
     void save(py::str path);
     void load(py::str path);
@@ -60,11 +63,22 @@ EdgeArrayExt::EdgeArrayExt()
 : array_()
 { }
 
-void EdgeArrayExt::populate(py::object iterator) {
-    py::stl_input_iterator<py::tuple> pybegin(iterator), pyend;
+void EdgeArrayExt::populate(py::object iterable) {
+    py::stl_input_iterator<py::tuple> pybegin(iterable), pyend;
     auto begin = boost::make_transform_iterator(pybegin, PyTupleToEdge);
     auto end = boost::make_transform_iterator(pyend, PyTupleToEdge);
     array_.assign(begin, end);
+}
+
+void EdgeArrayExt::append(py::tuple edge) {
+    array_.append(PyTupleToEdge(edge));
+}
+
+void EdgeArrayExt::extend(py::object iterable) {
+    py::stl_input_iterator<py::tuple> pybegin(iterable), pyend;
+    auto begin = boost::make_transform_iterator(pybegin, PyTupleToEdge);
+    auto end = boost::make_transform_iterator(pyend, PyTupleToEdge);
+    array_.extend(begin, end);
 }
 
 EdgeArrayExt::iterator EdgeArrayExt::begin() {
@@ -135,6 +149,8 @@ BOOST_PYTHON_MODULE(edgearrayext)
 {
     py::class_<EdgeArrayExt>("EdgeArrayExt")
         .def("populate", &EdgeArrayExt::populate)
+        .def("append", &EdgeArrayExt::append)
+        .def("extend", &EdgeArrayExt::extend)
         .def("__iter__", py::iterator<EdgeArrayExt>())
         .def("iterStrings", py::range(&EdgeArrayExt::strBegin, &EdgeArrayExt::strEnd))
         .def("sortByColumn", &EdgeArrayExt::sortByColumn)
