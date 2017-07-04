@@ -72,11 +72,14 @@ class BuildRunner(object):
         Utils.make_links(zip(job.outputs(self._prev_build_dir), job.outputs(self._new_build_dir)))
 
     def _should_run(self, job):
-        return job.is_forced()\
-            or not job.is_skipped()\
-            or self._inputs_changed(job)\
-            or self._config_changed(job)\
-            or not self._outputs_computed(job)
+        if job.is_skipped():
+            return False
+        elif job.is_forced():
+            return True
+        else:
+            return self._inputs_changed(job)\
+                or self._config_changed(job)\
+                or not self._outputs_computed(job)
 
     def _outputs_computed(self, job):
         return self._prev_build_dir and all(os.path.exists(o) for o in job.outputs(self._prev_build_dir))

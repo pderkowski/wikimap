@@ -23,7 +23,11 @@ class BuildPlanner(object):
             build[alias].properties.append(Properties.Forced)
 
         for alias in skipped_jobs_aliases:
-            build[alias].properties.append(Properties.Skipped)
+            if Properties.Forced in build[alias].properties:
+                raise ValueError(("A job cannot be forced and skipped at the "
+                                  "same time."))
+            else:
+                build[alias].properties.append(Properties.Skipped)
 
         return build
 

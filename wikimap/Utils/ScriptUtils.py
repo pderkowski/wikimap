@@ -5,7 +5,7 @@ class ParseException(Exception):
 def parse_comma_separated_ints(string):
     """Parse list of ints from string."""
     try:
-        string = string.split()
+        string = string.strip()
         if string:
             return [int(num) for num in string.split(',')]
         else:
