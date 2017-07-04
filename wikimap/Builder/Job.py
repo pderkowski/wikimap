@@ -9,6 +9,7 @@ class InvalidConfig(Exception):
 
 class Properties(object):
     Forced = 1
+    Skipped = 2
 
 class CompletionGuard(object):
     def __init__(self, files):
@@ -101,3 +102,6 @@ class Job(object):
 
     def is_forced(self):
         return Properties.Forced in self.properties
+
+    def is_skipped(self):
+        return Properties.Skipped in self.properties

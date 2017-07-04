@@ -9,7 +9,8 @@ class BuildPlanner(object):
         self._jobs = jobs
         self._dep_graph = self._build_dependency_graph()
 
-    def plan(self, target_job_aliases, forced_job_aliases):
+    def plan(self, target_job_aliases, forced_job_aliases,
+             skipped_jobs_aliases):
         target_job_nums = set(self._resolve_job_aliases(target_job_aliases))
         forced_job_nums = set(self._resolve_job_aliases(forced_job_aliases))
 
@@ -20,6 +21,9 @@ class BuildPlanner(object):
 
         for alias in forced_job_aliases:
             build[alias].properties.append(Properties.Forced)
+
+        for alias in skipped_jobs_aliases:
+            build[alias].properties.append(Properties.Skipped)
 
         return build
 

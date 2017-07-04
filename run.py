@@ -77,6 +77,13 @@ def main():
               "recomputation, even if their results could be copied from "
               "previous runs."))
     parser.add_argument(
+        '--skip', '-s',
+        dest='skipped_jobs',
+        default=wikimap.DEFAULT_SKIPPED_JOBS,
+        type=wikimap.Utils.parse_comma_separated_strings,
+        help=("Choose jobs to skip unconditionally. Can't conflict with "
+              "forced jobs."))
+    parser.add_argument(
         '--buildpath', '-b',
         type=str,
         default=os.environ.get("WIKIMAP_BUILDPATH", None),
@@ -208,6 +215,7 @@ def main():
             base_build_index=args.base_build_index,
             target_jobs=args.target_jobs,
             forced_jobs=args.forced_jobs,
+            skipped_jobs=args.skipped_jobs,
             config=config)
 
         if args.print_jobs:

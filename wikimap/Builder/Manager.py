@@ -7,9 +7,10 @@ from ..Paths import AbstractPaths as Paths
 
 
 class BuildManager(object):
-    def __init__(self, jobs, target_jobs, forced_jobs):
+    def __init__(self, jobs, target_jobs, forced_jobs, skipped_jobs):
         self._logger = Utils.get_logger(__name__)
-        self._build = BuildPlanner(jobs).plan(target_jobs, forced_jobs)
+        self._build = BuildPlanner(jobs).plan(target_jobs, forced_jobs,
+                                              skipped_jobs)
 
     def configure(self, config):
         for job in self._build:
@@ -72,6 +73,7 @@ class BuildRunner(object):
 
     def _should_run(self, job):
         return job.is_forced()\
+            or not job.is_skipped()\
             or self._inputs_changed(job)\
             or self._config_changed(job)\
             or not self._outputs_computed(job)
