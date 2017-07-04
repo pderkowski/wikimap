@@ -28,6 +28,11 @@ class Build(object):
 
         self._manager = Builder.BuildManager(jobs, target_jobs, forced_jobs,
                                              skipped_jobs)
+
+        for job in jobs:
+            if 'language' in job.config:
+                job.config['language'] = config['meta.language']
+
         self._manager.configure(build_config)
 
     def run(self):
