@@ -1,4 +1,5 @@
-from Builder.Job import Job
+import inspect
+import sys
 import Embeddings
 import TSNE
 import NearestNeighbors
@@ -6,10 +7,20 @@ import ZoomIndexer
 import Graph
 from Evaluation import SimilarityEvaluator, TripletEvaluator
 from Paths import AbstractPaths as P
+from Builder.Job import Job
+
+
+def get_jobs():
+    module = sys.modules[__name__]
+    return [
+        obj()
+        for _, obj
+        in inspect.getmembers(module)
+        if hasattr(obj, "__bases__") and Job in obj.__bases__]
 
 
 class DownloadPagesDump(Job):
-    def __init__(self, lang):
+    def __init__(self):
         super(DownloadPagesDump, self).__init__(
             'DOWNLOAD PAGES DUMP',
             alias='dload_pages',
@@ -17,15 +28,18 @@ class DownloadPagesDump(Job):
             outputs=[P.pages_dump])
 
         self.config = {
-            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-page.sql.gz'.format(lang, lang)
+            'language': 'en'
         }
 
     def __call__(self):
-        self.data.download_pages_dump(self.config['url'])
+        url = 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-page.sql.gz'.format(
+            self.config['language'],
+            self.config['language'])
+        self.data.download_pages_dump(url)
 
 
 class DownloadLinksDump(Job):
-    def __init__(self, lang):
+    def __init__(self):
         super(DownloadLinksDump, self).__init__(
             'DOWNLOAD LINKS DUMP',
             alias='dload_links',
@@ -33,15 +47,18 @@ class DownloadLinksDump(Job):
             outputs=[P.links_dump])
 
         self.config = {
-            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-pagelinks.sql.gz'.format(lang, lang)
+            'language': 'en'
         }
 
     def __call__(self):
-        self.data.download_links_dump(self.config['url'])
+        url = 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-pagelinks.sql.gz'.format(
+            self.config['language'],
+            self.config['language'])
+        self.data.download_links_dump(url)
 
 
 class DownloadCategoryLinksDump(Job):
-    def __init__(self, lang):
+    def __init__(self):
         super(DownloadCategoryLinksDump, self).__init__(
             'DOWNLOAD CATEGORY LINKS DUMP',
             alias='dload_clinks',
@@ -49,15 +66,18 @@ class DownloadCategoryLinksDump(Job):
             outputs=[P.category_links_dump])
 
         self.config = {
-            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-categorylinks.sql.gz'.format(lang, lang)
+            'language': 'en'
         }
 
     def __call__(self):
-        self.data.download_category_links_dump(self.config['url'])
+        url = 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-categorylinks.sql.gz'.format(
+            self.config['language'],
+            self.config['language'])
+        self.data.download_category_links_dump(url)
 
 
 class DownloadPagePropertiesDump(Job):
-    def __init__(self, lang):
+    def __init__(self):
         super(DownloadPagePropertiesDump, self).__init__(
             'DOWNLOAD PAGE PROPERTIES DUMP',
             alias='dload_props',
@@ -65,15 +85,18 @@ class DownloadPagePropertiesDump(Job):
             outputs=[P.page_properties_dump])
 
         self.config = {
-            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-page_props.sql.gz'.format(lang, lang)
+            'language': 'en'
         }
 
     def __call__(self):
-        self.data.download_page_properties_dump(self.config['url'])
+        url = 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-page_props.sql.gz'.format(
+            self.config['language'],
+            self.config['language'])
+        self.data.download_page_properties_dump(url)
 
 
 class DownloadRedirectsDump(Job):
-    def __init__(self, lang):
+    def __init__(self):
         super(DownloadRedirectsDump, self).__init__(
             'DOWNLOAD REDIRECTS DUMP',
             alias='dload_reds',
@@ -81,11 +104,14 @@ class DownloadRedirectsDump(Job):
             outputs=[P.redirects_dump])
 
         self.config = {
-            'url': 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-redirect.sql.gz'.format(lang, lang)
+            'language': 'en'
         }
 
     def __call__(self):
-        self.data.download_redirects_dump(self.config['url'])
+        url = 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-redirect.sql.gz'.format(
+            self.config['language'],
+            self.config['language'])
+        self.data.download_redirects_dump(url)
 
 
 class DownloadEvaluationDatasets(Job):
@@ -96,12 +122,11 @@ class DownloadEvaluationDatasets(Job):
             inputs=[],
             outputs=[P.evaluation_datasets])
 
-        self.config = {
-            'url': 'https://www.dropbox.com/s/d61802lo5n3gdra/datasets.tar.gz?dl=1'
-        }
+        self.config = {}
 
     def __call__(self):
-        self.data.download_evaluation_datasets(self.config['url'])
+        url = 'https://www.dropbox.com/s/d61802lo5n3gdra/datasets.tar.gz?dl=1'
+        self.data.download_evaluation_datasets(url)
 
 
 class ImportPageTable(Job):

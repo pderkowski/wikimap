@@ -2,26 +2,14 @@ import sys
 import os
 from Planner import BuildPlanner
 from .. import Utils
-from Job import Properties
-from Build import Build
 from Config import BuildConfig
 from ..Paths import AbstractPaths as Paths
 
+
 class BuildManager(object):
-    def __init__(self, build):
-        self._build = build
+    def __init__(self, jobs, target_jobs, forced_jobs):
         self._logger = Utils.get_logger(__name__)
-
-    def plan(self, target_jobs, forced_jobs):
-        forced_jobs = set(forced_jobs)
-        target_jobs = set(target_jobs) | forced_jobs
-
-        for job in forced_jobs:
-            self._build[job].properties.append(Properties.Forced)
-
-        planner = BuildPlanner(self._build)
-        included_jobs_nums = planner.get_included_jobs(target_jobs)
-        self._build = Build([job for job in self._build if job.number in included_jobs_nums])
+        self._build = BuildPlanner(jobs).plan(target_jobs, forced_jobs)
 
     def configure(self, config):
         for job in self._build:
@@ -37,6 +25,7 @@ class BuildManager(object):
 
     def print_config(self):
         self._logger.info('\n\n'+str(BuildConfig.from_build(self._build))+'\n')
+
 
 class BuildRunner(object):
     def __init__(self, build, prev_config, prev_build_dir, new_build_dir, new_config):
