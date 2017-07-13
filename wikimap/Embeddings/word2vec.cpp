@@ -67,10 +67,7 @@ int main(int argc, const char* argv[]) {
     auto w2v = emb::Word2Vec<>(size, epochs, alpha, window, dynamic,
         negative, verbose);
 
-    auto text = emb::read(input, verbose);
-    emb::MemoryCorpus<decltype(w2v)::value_type> corpus(
-        text.begin(),
-        text.end());
+    emb::FileCorpus corpus(input);
     w2v.train(corpus);
     auto embeddings = w2v.get_embeddings();
     embeddings.save(output);

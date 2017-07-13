@@ -144,7 +144,7 @@ void Embeddings<Word>::save(const std::string& fname) const {
     }
 
     logging::log("- saved %lu embeddings\n", word_map_.size());
-    logging::log("- file size %dMB\n", io::estimate_file_size_mb(fname));
+    logging::log("- file size %dMB\n", io::get_file_size_mb(fname));
 
     io::close_file(out);
 }
