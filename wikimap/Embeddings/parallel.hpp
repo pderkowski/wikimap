@@ -41,8 +41,9 @@ template<class Word>
 CountingUnit<Word>::CountingUnit()
 :       inputs_(omp_get_max_threads()) {
 
+    counts_.reserve(3000000);
     for (int i = 0; i < inputs_.size(); ++i) {
-        inputs_[i].reserve(1000000);
+        inputs_[i].reserve(100000);
     }
 }
 
@@ -174,7 +175,7 @@ WordCount<Corpus>::WordCount(const Corpus& corpus)
 
 template<class Corpus>
 void WordCount<Corpus>::count_words(const Corpus& corpus) {
-    const Int max_batch_size = 10000;
+    const Int max_batch_size = 1000;
 
     for (Int i = 0; i < corpus.sentence_count(); i += max_batch_size) {
         logging::inline_log(
