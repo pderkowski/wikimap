@@ -329,13 +329,12 @@ void Training<Word>::train_on_sequence(
                 continue;
             }
 
-            vec::fill_with_zeros(word_embedding_delta);
             auto context = sequence[context_pos];
             auto gradient =
                 get_gradient_for_positive_sample(word, context)
                 * learning_rate;
 
-            vec::add_to(
+            vec::assign(
                 word_embedding_delta,
                 model_.context_embedding(context) * gradient);
             vec::add_to(

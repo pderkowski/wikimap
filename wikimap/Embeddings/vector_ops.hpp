@@ -14,10 +14,10 @@ inline void add_to(Target&& target, const Source& source) {
     }
 }
 
-template<class Target>
-inline void fill_with_zeros(Target&& target) {
-    for (size_t i = 0; i < target.size(); ++i) {
-        target[i] = 0;
+template<class Target, class Source>
+inline void assign(Target&& target, const Source& source) {
+    for (size_t i = 0; i < source.size(); ++i) {
+        target[i] = source[i];
     }
 }
 
