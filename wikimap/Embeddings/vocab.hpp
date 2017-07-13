@@ -48,8 +48,10 @@ public:
 
 template<class Word>
 Vocab<Word>::Vocab() {
-    word2id_.max_load_factor(0.5);
-    word2id_.reserve(1000000);
+    word2id_.max_load_factor(0.7);
+    word2id_.reserve(30000000);
+    id2word_.reserve(21000000);
+    id2count_.reserve(21000000);
 }
 
 template<class Word>
