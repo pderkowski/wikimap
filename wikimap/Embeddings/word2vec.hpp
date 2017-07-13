@@ -277,8 +277,8 @@ void Training<Word>::train(const Corpus& corpus, Int expected_sentences) {
 
             // only master thread reports progress
             if (    omp_get_thread_num() == 0
-                    && stg_.verbose
-                    && logging::time_since_last_log() > 0.1) {
+                    && logging::time_since_last_log() > 0.2
+                    && stg_.verbose) {
 
                 auto progress_rate = get_progress_rate(expected_sentences);
                 logging::inline_log(progress_str, progress_rate, learning_rate);
