@@ -79,8 +79,7 @@ PYBIND11_PLUGIN(embeddings) {
             const std::string& output_file) {
 
         auto w2v = Word2Vec<>();
-        auto text = emb::read(input_file);
-        emb::MemoryCorpus<> corpus(text.begin(), text.end());
+        emb::FileCorpus corpus(input_file);
         w2v.train(corpus);
         auto embeddings = w2v.get_embeddings();
         embeddings.save(output_file);
