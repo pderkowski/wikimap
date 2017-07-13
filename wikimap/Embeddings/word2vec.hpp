@@ -396,9 +396,8 @@ inline Float Training<Word>::get_gradient_for_negative_sample(
 
 template<class Word>
 inline int Training<Word>::get_context_size() const {
-    static std::uniform_int_distribution<int> dist(1, stg_.context_size);
     return stg_.dynamic_context ?
-        dist(Random::global_rng())
+        1 + Random::global_rng()() % stg_.context_size
         : stg_.context_size;
 }
 
