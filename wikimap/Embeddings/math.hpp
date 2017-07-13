@@ -14,7 +14,7 @@ namespace math {
 
 
 const Float MAX_EXPONENT = 6.0f;
-const int TABLE_SIZE = 10000;
+const int TABLE_SIZE = 1000;
 
 
 std::vector<Float> compute_sigmoid_table() {
