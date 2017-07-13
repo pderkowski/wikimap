@@ -10,10 +10,10 @@ word2vec
 Options:
     -h, -help, --help
         Print this message and exit.
-    -i, -input <file>
-        Use data from <file> to train the model. [Default: stdin]
+    -i, -input, -train <file>
+        Use data from <file> to train the model. REQUIRED.
     -o, -output <file>
-        Save word vectors to <file>. [Default: stdout]
+        Save word vectors to <file>. REQUIRED.
     -s, -size <int>
         Set size of word vectors. [Default: 100]
     -e, -epochs <int>
@@ -39,18 +39,30 @@ int main(int argc, const char* argv[]) {
 
     if (argc == 1 || args.has({"-h", "-help", "--help"})) {
         fprintf(stderr, "%s", help_message);
-        return 0;
+        return 1;
     }
 
-    auto input  = args.get({"-i", "-input", "-train"}, "stdin");
-    auto output = args.get({"-o", "-output"}, "stdout");
-    auto size = args.get({"-s", "-size"},   emb::def::DIMENSION);
-    auto epochs = args.get({"-e", "-epochs"},   emb::def::EPOCHS);
-    auto window = args.get({"-w", "-window"},   emb::def::CONTEXT_SIZE);
-    auto negative = args.get({"-n", "-negative"},   emb::def::NEGATIVE_SAMPLES);
-    auto alpha = args.get({"-a", "-alpha"}, emb::def::LEARNING_RATE);
-    auto dynamic = args.get({"-d", "-dynamic"}, emb::def::DYNAMIC_CONTEXT);
-    auto verbose = args.get({"-v", "-verbose"}, emb::def::VERBOSE);
+    if (!args.has({ "-i", "-input", "-train" })) {
+        fprintf(stderr, "%s", "Missing input argument.\n");
+        return 1;
+    }
+
+    if (!args.has({ "-o", "-output" })) {
+        fprintf(stderr, "%s", "Missing output argument.\n");
+        return 1;
+    }
+
+    auto input = args.get_string({"-i", "-input", "-train"});
+    auto output = args.get_string({"-o", "-output"});
+    auto size = args.get_int({"-s", "-size"}, emb::def::DIMENSION);
+    auto epochs = args.get_int({"-e", "-epochs"}, emb::def::EPOCHS);
+    auto window = args.get_int({"-w", "-window"}, emb::def::CONTEXT_SIZE);
+    auto negative = args.get_int(
+        {"-n", "-negative"},
+        emb::def::NEGATIVE_SAMPLES);
+    auto alpha = args.get_float({"-a", "-alpha"}, emb::def::LEARNING_RATE);
+    auto dynamic = args.get_int({"-d", "-dynamic"}, emb::def::DYNAMIC_CONTEXT);
+    auto verbose = args.get_int({"-v", "-verbose"}, emb::def::VERBOSE);
 
     auto w2v = emb::Word2Vec<>(size, epochs, alpha, window, dynamic,
         negative, verbose);
