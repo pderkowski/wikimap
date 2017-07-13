@@ -34,9 +34,9 @@ public:
 
 private:
     const Float* data_;
-    Int size_;
+    const Int size_;
 
-    Float multiplier_;
+    const Float multiplier_;
 };
 
 class View {
@@ -56,7 +56,7 @@ public:
 
 private:
     Float* data_;
-    Int size_;
+    const Int size_;
 };
 
 ConstView::ConstView(const Float* data, Int size, Float multiplier)
