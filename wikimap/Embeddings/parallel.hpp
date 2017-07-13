@@ -209,10 +209,9 @@ void WordCount<Corpus>::count_words_in_batch() {
 
 template<class Corpus>
 inline void WordCount<Corpus>::dispatch_word(const word_type& word) {
-    static std::hash<int> i_hash;
     static std::hash<word_type> s_hash;
 
-    auto hash_hash = i_hash(s_hash(word));
+    auto hash_hash = s_hash(word) >> 16;
     units_[hash_hash % units_.size()].add(word);
 }
 
