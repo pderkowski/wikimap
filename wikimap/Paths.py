@@ -29,6 +29,7 @@ class AbstractPathGroup(object):
 
 class AbstractPaths(object):
     config = AbstractPath('config')
+    summary = AbstractPath('summary.txt')
     pages_dump = AbstractPath('page.sql.gz')
     links_dump = AbstractPath('pagelinks.sql.gz')
     category_links_dump = AbstractPath('categorylinks.sql.gz')

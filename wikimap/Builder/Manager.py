@@ -61,6 +61,7 @@ class BuildRunner(object):
         finally:
             self._new_config.save(Paths.config(self._new_build_dir))
             self._logger.info('\n\n'+self._build.get_summary_str()+'\n')
+            self._build.save_summary(Paths.summary(self._new_build_dir))
             self._print_job_logs()
 
     def _run_job(self, job):

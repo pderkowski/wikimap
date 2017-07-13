@@ -62,3 +62,7 @@ class Build(object):
 
     def get_job_list_str(self):
         return Utils.make_table(['#', 'ALIAS', 'JOB NAME'], [[str(job.number), job.alias, job.name] for job in self], ['r', 'l', 'l'])
+
+    def save_summary(self, path):
+        with open(path, 'w') as output:
+            output.write(self.get_summary_str()+'\n')
