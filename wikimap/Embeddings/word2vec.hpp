@@ -304,16 +304,22 @@ void Training<Word>::train_on_sequence(
         const Sentence& sentence,
         Float learning_rate) {
 
-    auto start = sentence.begin();
-    auto end = sentence.end();
-
-    const auto size = end - start;
+    const auto size = sentence.size();
     if (size < 2) { return; } // nothing to do
+
+    std::vector<Id> sequence(sentence.size());
+    std::transform(
+        sentence.begin(),
+        sentence.end(),
+        sequence.begin(),
+        [&] (const Word& word) {
+            return vocab_.get_id(word);
+        });
 
     Embedding word_embedding_delta(stg_.dimension, 0);
 
     for (int word_pos = 0; word_pos < size; ++word_pos) {
-        auto word = vocab_.get_id(start[word_pos]);
+        auto word = sequence[word_pos];
         // context_size may be vary if -dynamic is on
         auto context_size = get_context_size();
 
@@ -324,8 +330,7 @@ void Training<Word>::train_on_sequence(
             }
 
             vec::fill_with_zeros(word_embedding_delta);
-
-            auto context = vocab_.get_id(start[context_pos]);
+            auto context = sequence[context_pos];
             auto gradient =
                 get_gradient_for_positive_sample(word, context)
                 * learning_rate;
