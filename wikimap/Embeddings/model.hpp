@@ -1,7 +1,8 @@
 #pragma once
 
+#include <cstdlib>
+
 #include <random>
-#include <memory>
 
 #include <omp.h>
 
@@ -103,15 +104,18 @@ inline ConstView operator * (Float multiplier, const ConstView& v) {
 }
 
 inline ConstView operator * (const ConstView& v, Float multiplier) {
-    ConstView copy(v);
-    copy.multiplier_ *= multiplier;
-    return copy;
+    return ConstView(v.data_, v.size_, v.multiplier_ * multiplier);
 }
 
 
 class Model {
 public:
     Model();
+    ~Model();
+
+    Model(const Model& other) = delete;
+    Model& operator =(const Model& other) = delete;
+    Model(Model&& other) = default;
 
     void resize(Int rows, Int cols);
     void init();
@@ -143,8 +147,8 @@ private:
     Int cols_;
     Int size_;
 
-    std::unique_ptr<Float[]> word_embeddings_;
-    std::unique_ptr<Float[]> context_embeddings_;
+    Float* word_embeddings_;
+    Float* context_embeddings_;
 };
 
 Model::Model()
@@ -152,12 +156,19 @@ Model::Model()
     word_embeddings_(nullptr), context_embeddings_(nullptr)
 { }
 
+Model::~Model() {
+    free(word_embeddings_);
+    free(context_embeddings_);
+}
+
 void Model::resize(Int rows, Int cols) {
     rows_ = rows;
     cols_ = cols;
     size_ = rows * cols;
-    word_embeddings_.reset(new Float[size_]);
-    context_embeddings_.reset(new Float[size_]);
+    free(word_embeddings_);
+    free(context_embeddings_);
+    word_embeddings_ = (Float*)malloc(size_ * sizeof(Float));
+    context_embeddings_ = (Float*)malloc(size_ * sizeof(Float));
 }
 
 void Model::init() {
@@ -178,19 +189,19 @@ Int Model::estimate_size_mb(Int rows, Int cols) const {
 }
 
 inline View Model::word_embedding(Int index) {
-    return get_row(index, word_embeddings_.get());
+    return get_row(index, word_embeddings_);
 }
 
 inline ConstView Model::word_embedding(Int index) const {
-    return get_row(index, word_embeddings_.get());
+    return get_row(index, word_embeddings_);
 }
 
 inline View Model::context_embedding(Int index) {
-    return get_row(index, context_embeddings_.get());
+    return get_row(index, context_embeddings_);
 }
 
 inline ConstView Model::context_embedding(Int index) const {
-    return get_row(index, context_embeddings_.get());
+    return get_row(index, context_embeddings_);
 }
 
 inline View Model::get_row(Int index, Float* matrix) {
@@ -217,13 +228,14 @@ void Model::init_context_embeddings() {
 }
 
 void Model::free_context_embeddings() {
-    context_embeddings_.reset();
+    free(context_embeddings_);
+    context_embeddings_ = nullptr;
 }
 
 std::vector<Float> Model::copy_word_embeddings() const {
     return std::vector<Float>(
-        word_embeddings_.get() + 0,
-        word_embeddings_.get() + size_);
+        word_embeddings_ + 0,
+        word_embeddings_ + size_);
 }
 
 
