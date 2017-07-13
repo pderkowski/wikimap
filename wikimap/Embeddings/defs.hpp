@@ -18,21 +18,6 @@ using Sentence = std::vector<Word>;
 template<class Word>
 using SentenceIterator = typename Sentence<Word>::const_iterator;
 
-template<class Word>
-class SentenceSpan {
-public:
-    SentenceSpan(SentenceIterator<Word> begin, SentenceIterator<Word> end)
-    :   begin_(begin), end_(end)
-    { }
-
-    SentenceIterator<Word> begin() const { return begin_; }
-    SentenceIterator<Word> end() const { return end_; }
-
-private:
-    SentenceIterator<Word> begin_;
-    SentenceIterator<Word> end_;
-};
-
 typedef int64_t Int;
 typedef int32_t Id;
 typedef std::pair<Id, Id> Edge;
