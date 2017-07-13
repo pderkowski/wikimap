@@ -143,7 +143,7 @@ inline std::pair<size_t, int> FileCorpus::scan_sentence(size_t pos) const {
     for (   ;
             pos < file_.size
                 && (words < io::MAX_SENTENCE_SIZE
-                & file_.data[pos] != '\n');
+                && file_.data[pos] != '\n');
             ++words) {
 
         pos = scan_word(++pos);
@@ -155,7 +155,7 @@ inline std::pair<size_t, int> FileCorpus::scan_sentence(size_t pos) const {
 inline size_t FileCorpus::scan_word(size_t pos) const {
     while (pos < file_.size) {
         const char c = file_.data[pos];
-        if (c == ' ' | c == '\n' | c == '\t') {
+        if ((c == ' ') | (c == '\n') | (c == '\t')) {
             break;
         }
         ++pos;
@@ -200,6 +200,7 @@ inline FileCorpus::iterator& FileCorpus::iterator::operator ++() {
     } else {
         pos_ = std::numeric_limits<size_t>::max();
     }
+    return *this;
 }
 
 
