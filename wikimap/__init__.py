@@ -1,5 +1,3 @@
-from Builder import Report, ReportConfig
-
 from Build import LANGUAGES, DEFAULT_LANGUAGE, DEFAULT_TARGET_JOBS,\
 DEFAULT_FORCED_JOBS, DEFAULT_SKIPPED_JOBS, Build
 
