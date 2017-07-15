@@ -167,8 +167,16 @@ void Model::resize(Int rows, Int cols) {
     size_ = rows * cols;
     free(word_embeddings_);
     free(context_embeddings_);
-    word_embeddings_ = (Float*)malloc(size_ * sizeof(Float));
-    context_embeddings_ = (Float*)malloc(size_ * sizeof(Float));
+    posix_memalign(
+        (void **)&word_embeddings_,
+        4 * sizeof(Float),
+        size_ * sizeof(Float));
+    posix_memalign(
+        (void **)&context_embeddings_,
+        4 * sizeof(Float),
+        size_ * sizeof(Float));
+    // word_embeddings_ = (Float*)malloc(size_ * sizeof(Float));
+    // context_embeddings_ = (Float*)malloc(size_ * sizeof(Float));
 }
 
 void Model::init() {
