@@ -108,7 +108,7 @@ public:
 private:
     std::function<Sentence<Word>(Int, Int)> generator_;
     Int sentence_count_;
-    std::vector<Int> seeds_;
+    Int seed_;
 };
 
 
@@ -116,18 +116,14 @@ template<class Word>
 GeneratingCorpus<Word>::GeneratingCorpus(
             std::function<Sentence<Word>(Int, Int)> generator,
             Int sentence_count)
-:       generator_(generator), sentence_count_(sentence_count) {
-
-    seeds_.resize(sentence_count);
-
-    for (auto& seed : seeds_) {
-        seed = Random::global_rng()();
-    }
-}
+:   generator_(generator),
+    sentence_count_(sentence_count),
+    seed_(Random::global_rng()())
+{ }
 
 template<class Word>
 inline Sentence<Word> GeneratingCorpus<Word>::get_sentence(Int index) const {
-    return generator_(index, seeds_[index]);
+    return generator_(index, seed_ + index);
 }
 
 
