@@ -1,6 +1,8 @@
 from Build import LANGUAGES, DEFAULT_LANGUAGE, DEFAULT_TARGET_JOBS,\
 DEFAULT_FORCED_JOBS, DEFAULT_SKIPPED_JOBS, Build
 
+from Builder import BuildExplorer
+
 from NearestNeighbors import DEFAULT_NEAREST_NEIGHBORS_COUNT
 
 from Embeddings import EMBEDDING_METHODS, DEFAULT_CONTEXT_SIZE,\
