@@ -12,3 +12,4 @@ wikimap/Graph/aggregate
 wikimap/Embeddings/Node2Vec/node2vec
 wikimap/Embeddings/Node2Vec/word2vec
 wikimap/Array/testarray
+export.py
