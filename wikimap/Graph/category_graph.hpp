@@ -3,10 +3,12 @@
 #include "graph.hpp"
 #include "algorithms.hpp"
 
-
-typedef std::string Category;
-typedef std::vector<std::string> Categories;
-typedef std::vector<int> Pages;
+typedef int Page;
+typedef int Category;
+typedef std::pair<Category, Page> CatPageLink;
+typedef std::pair<Category, Category> CatCatLink;
+typedef std::vector<Category> Categories;
+typedef std::vector<Page> Pages;
 
 
 class CategoryGraph {

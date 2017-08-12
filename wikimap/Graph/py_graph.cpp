@@ -1,6 +1,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <algorithm>
+#include <iterator>
+
 #include "category_aggregator.hpp"
 #include "graph.hpp"
 #include "algorithms.hpp"
@@ -12,11 +15,29 @@ PYBIND11_PLUGIN(graph) {
     py::module m("graph");
 
     m.def("aggregate", [] (
-            const std::vector<std::pair<Category, Page>>& cat_page_links,
-            const std::vector<std::pair<Category, Category>>& cat_cat_links,
+            py::iterable cat_page_links,
+            py::iterable cat_cat_links,
             int max_depth) {
 
-        CategoryAggregator aggregator(cat_page_links, cat_cat_links);
+        std::vector<CatPageLink> cat_page_links_v;
+        std::transform(
+            cat_page_links.begin(),
+            cat_page_links.end(),
+            std::back_inserter(cat_page_links_v),
+            [] (const py::handle& handle) {
+                return handle.cast<CatPageLink>();
+            });
+
+        std::vector<CatPageLink> cat_cat_links_v;
+        std::transform(
+            cat_cat_links.begin(),
+            cat_cat_links.end(),
+            std::back_inserter(cat_cat_links_v),
+            [] (const py::handle& handle) {
+                return handle.cast<CatCatLink>();
+            });
+
+        CategoryAggregator aggregator(cat_page_links_v, cat_cat_links_v);
         return aggregator.aggregate(max_depth);
     });
 

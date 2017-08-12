@@ -252,6 +252,19 @@ class Join(TableProxy):
 
         return self.select(query)
 
+    def select_id_category_id_of_tsne_points(self):
+        query = Query("""
+            SELECT
+                cl_from,
+                cl_to
+            FROM
+                categorylinks,
+                tsne
+            WHERE
+                tsne_id = cl_from""", "selecting nodes for wikicategories")
+
+        return self.select(query)
+
     # ONLY LINKS BETWEEN CATEGORIES, NOT BETWEEN A PAGE AND A CATEGORY
     def select_links_between_categories(self):
         query = Query("""

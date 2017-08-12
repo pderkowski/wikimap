@@ -450,14 +450,15 @@ class CreateWikimapCategoriesTable(Job):
         }
 
     def __call__(self):
-        ids_category_names = self.data.get_ids_category_names_of_tsne_points()
-        edges = self.data.get_edges_between_categories()
-        categories = Graph.aggregate(
-            ids_category_names,
-            edges,
-            depth=self.config['depth'])
-        self.data.set_wikimap_categories(categories)
+        category_id_page_id = self.data.get_reversed_edges_between_articles_and_categories_of_tsne_points()
+        category_links = self.data.get_edges_between_categories()
 
+        categories = Graph.aggregate(
+            category_id_page_id,
+            category_links,
+            depth=self.config['depth'])
+
+        self.data.set_wikimap_categories(categories.iteritems())
 
 class CreateZoomIndex(Job):
     def __init__(self):

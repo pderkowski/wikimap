@@ -85,6 +85,11 @@ class Data(object):
         pages_table = Tables.PageTable(self.P.pages)
         return dict(FlipIt(pages_table.select_id_title_of_categories()))
 
+    def get_category_id_2_title(self):
+        """Get a dict mapping id to title for categories (namespace 14)."""
+        pages_table = Tables.PageTable(self.P.pages)
+        return dict(pages_table.select_id_title_of_categories())
+
     def map_links_to_link_edges(self, links):
         """
         Map tuples from dump to edges.
@@ -279,13 +284,6 @@ class Data(object):
             self.P.pagerank)
         return joined_table.selectWikimapPoints()
 
-    def get_ids_category_names_of_tsne_points(self):
-        joined_table = Tables.Join(
-            self.P.category_links,
-            self.P.tsne,
-            self.P.pages)
-        return joined_table.select_id_category_name()
-
     def get_edges_between_categories(self):
         """Get links category -> category."""
         joined_table = Tables.Join(self.P.category_links, self.P.pages)
@@ -300,6 +298,27 @@ class Data(object):
         edges.populate(
             joined_table.select_links_between_articles_and_categories())
         return edges
+
+
+        def get_category_name_id_of_tsne_points(self):
+            joined_table = Tables.Join(
+                self.P.category_links,
+                self.P.tsne,
+                self.P.pages)
+            id_category_name = joined_table.select_id_category_name()
+            return FlipIt(id_category_name)
+
+    def get_reversed_edges_between_articles_and_categories_of_tsne_points(self):
+        """
+        Get a list of reversed category edges for tsne points.
+
+        Returns a list of pairs. Each pair is of form (category_id, page_id),
+        such that a page with this page_id belongs to a category with this
+        category_id. Also only for pages that were selected for tsne
+        projection.
+        """
+        joined_table = Tables.Join(self.P.category_links, self.P.tsne)
+        return FlipIt(joined_table.select_id_category_id_of_tsne_points())
 
     def get_coords_ids_of_points(self):
         joined_table = Tables.Join(self.P.wikimap_points, self.P.pagerank)
@@ -425,13 +444,19 @@ class Data(object):
         wikimap_points_table.populate(points)
 
     def set_wikimap_categories(self, categories):
+        def process_categories(categories):
+            id_2_title = self.get_category_id_2_title()
+            for category_id, articles in categories:
+                if len(articles) >= 5:
+                    yield id_2_title[category_id], articles, len(articles)
+
         category_table = Tables.WikimapCategoriesTable(
             self.P.wikimap_categories)
         category_table.create()
+
         category_table.populate(
             pipe(
-                imap(lambda (title, ids): (title, ids, len(ids)), categories),
-                NotEqualIt(0, 2),
+                process_categories(categories),
                 LogIt(100000)))
 
     def set_zoom_index(self, indexer):
