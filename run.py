@@ -186,6 +186,12 @@ def main():
         default=wikimap.DEFAULT_NEGATIVE_SAMPLES,
         help=("Number of noise samples drawn for each real sample coming from "
               "data. Can also be a comma-separated list of ints."))
+    parser.add_argument(
+        '--tsne.point_count',
+        type=wikimap.Utils.parse_comma_separated_ints,
+        default=wikimap.DEFAULT_TSNE_POINT_COUNT,
+        help=("Number of points in t-SNE projection to compute. Can also be a "
+              "comma-separated list of ints."))
 
     args = parser.parse_args()
 
@@ -200,7 +206,8 @@ def main():
         'ldnn.neighbors_count', 'embed.context_size', 'embed.walks_per_node',
         'embed.backtrack_probability', 'embed.dimension', 'embed.node_count',
         'embed.method', 'embed.epoch_count', 'embed.walk_length',
-        'embed.categories', 'embed.negative_samples', 'meta.language']
+        'embed.categories', 'embed.negative_samples', 'meta.language',
+        'tsne.point_count']
     grid_args = [
         (arg_name, vars(args)[arg_name])
         for arg_name
