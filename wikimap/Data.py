@@ -291,6 +291,12 @@ class Data(object):
         edges.populate(joined_table.select_links_between_categories())
         return edges
 
+    def get_reversed_edges_between_categories(self):
+        """Get links containing category -> contained category."""
+        edges = self.get_edges_between_categories()
+        edges.inverseEdges()
+        return edges
+
     def get_edges_between_articles_and_categories(self):
         """Get links article -> category."""
         joined_table = Tables.Join(self.P.category_links, self.P.pages)
@@ -299,14 +305,13 @@ class Data(object):
             joined_table.select_links_between_articles_and_categories())
         return edges
 
-
-        def get_category_name_id_of_tsne_points(self):
-            joined_table = Tables.Join(
-                self.P.category_links,
-                self.P.tsne,
-                self.P.pages)
-            id_category_name = joined_table.select_id_category_name()
-            return FlipIt(id_category_name)
+    def get_category_name_id_of_tsne_points(self):
+        joined_table = Tables.Join(
+            self.P.category_links,
+            self.P.tsne,
+            self.P.pages)
+        id_category_name = joined_table.select_id_category_name()
+        return FlipIt(id_category_name)
 
     def get_reversed_edges_between_articles_and_categories_of_tsne_points(self):
         """

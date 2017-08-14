@@ -451,7 +451,7 @@ class CreateWikimapCategoriesTable(Job):
 
     def __call__(self):
         category_id_page_id = self.data.get_reversed_edges_between_articles_and_categories_of_tsne_points()
-        category_links = self.data.get_edges_between_categories()
+        category_links = self.data.get_reversed_edges_between_categories()
 
         categories = Graph.aggregate(
             category_id_page_id,
