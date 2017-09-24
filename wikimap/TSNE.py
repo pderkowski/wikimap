@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-import bhtsne
+from external import bhtsne
 
 DEFAULT_POINT_COUNT = 100000
 
