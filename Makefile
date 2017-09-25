@@ -1,5 +1,5 @@
 export EXTERNAL = $(realpath external)
-export TSNEDIR = $(realpath external/bhtsne)
+export TSNEDIR = $(realpath wikimap/TSNE)
 export GRAPHDIR = $(realpath wikimap/Graph)
 export EMBEDDINGS = $(realpath wikimap/Embeddings/)
 export EDGEARRAYDIR = $(realpath wikimap/Tables/EdgeArray)

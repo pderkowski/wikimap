@@ -1,6 +1,3 @@
-[submodule "external/bhtsne"]
-	path = external/bhtsne
-	url = https://github.com/piotder/bhtsne.git
 [submodule "external/vptree"]
 	path = external/vptree
 	url = https://github.com/piotder/vptree.git
