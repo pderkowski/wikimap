@@ -1,23 +1,22 @@
-CXX = g++
 CXXFLAGS += -fopenmp
 
-.DEFAULT_GOAL := lib
-.PHONY: test lib clean
+.DEFAULT_GOAL := all
+.PHONY: test lib clean all
 
 TESTBIN = testarray
-EDGEARRAYLIB = edgearrayext.so
+LIB = edgearrayext.so
 
-PYTHONINCLUDE = ../../../env/include/python2.7
+all: lib
 
-lib: CXXFLAGS += -fPIC -I$(PYTHONINCLUDE)
+lib: CXXFLAGS += -shared -fPIC `python-config --cflags --ldflags`
+lib: INCLUDES += -I $(EXTERNAL)/pybind11/include
+lib: edgearrayext.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(LIB) $^
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-lib: edgearrayext.cpp
-	$(CXX) $(CXXFLAGS) -o $(EDGEARRAYLIB) $^ -shared -lboost_python
-
-test: lib $(TESTBIN)
+test: $(TESTBIN)
 
 $(TESTBIN): testarray.cpp
 	$(CXX) $(CXXFLAGS) -o $(TESTBIN) $^
@@ -25,4 +24,4 @@ $(TESTBIN): testarray.cpp
 	./TestEdgeArray.py
 
 clean:
-	rm -f $(TESTBIN) $(EDGEARRAYLIB) *.pyc
+	rm -f $(TESTBIN) $(LIB) *.pyc

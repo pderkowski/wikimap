@@ -98,7 +98,8 @@ class EdgeArray(object):
 
     def __iter__(self):
         self._ensureLoaded()
-        return iter(self._array)
+        for e in self._array:
+            yield e
 
     def getStartNodes(self):
         self._ensureLoaded()

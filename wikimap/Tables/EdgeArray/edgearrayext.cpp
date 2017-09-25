@@ -1,131 +1,195 @@
-#include "array.hpp"
 #include <array>
 #include <unordered_set>
-#include <boost/python.hpp>
-#include <boost/python/stl_iterator.hpp>
-#include <boost/iterator/transform_iterator.hpp>
+#include <iterator>
+#include <stdexcept>
 
-namespace py = boost::python;
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-typedef std::array<int, 2> Edge;
+#include "array.hpp"
 
-Edge PyTupleToEdge(py::tuple tuple) {
-    return Edge{py::extract<int>(tuple[0]), py::extract<int>(tuple[1])};
+namespace py = pybind11;
+
+
+typedef std::pair<int, int> Edge;
+
+template<class IteratorType, class TargetType>
+class casting_iterator {
+public:
+    typedef TargetType value_type;
+    typedef ptrdiff_t difference_type;
+    typedef TargetType* pointer;
+    typedef TargetType& reference;
+    typedef std::input_iterator_tag iterator_category;
+
+    typedef typename IteratorType::value_type source_type;
+
+    casting_iterator()
+    :   it_(), cast_()
+    { }
+
+    casting_iterator(
+            IteratorType it,
+            std::function<TargetType(const source_type&)> cast)
+
+    :   it_(it), cast_(cast)
+    { }
+
+    casting_iterator(const casting_iterator& other)
+    :   it_(other.it_), cast_(other.cast_)
+    { }
+
+    const value_type& operator*() const {
+        *it_;
+        value_ = cast_(*it_);
+        return value_;
+    }
+    const value_type* operator->() const { value_ = cast_(*it_); return &value_; }
+
+    casting_iterator& operator++() {
+        ++it_;
+        return *this;
+    }
+
+    casting_iterator operator++(int) {
+        casting_iterator tmp = *this;
+        ++*this;
+        return tmp;
+    }
+
+    bool operator ==(const casting_iterator& other) { return it_ == other.it_; }
+    bool operator !=(const casting_iterator& other) { return !(*this == other); }
+
+private:
+    IteratorType it_;
+    std::function<TargetType(const source_type&)> cast_;
+    mutable value_type value_;
+};
+
+
+
+Edge PyTupleToEdge(const py::handle& handle) {
+    auto tuple = py::reinterpret_borrow<py::tuple>(handle);
+    return Edge(tuple[0].cast<int>(), tuple[1].cast<int>());
 }
 
-py::tuple EdgeToPyTuple(const Edge& edge) {
-    return py::make_tuple(edge[0], edge[1]);
-}
-
-py::str EdgeToPyStr(const Edge& edge) {
-    std::string res(std::to_string(edge[0]));
-    res += " ";
-    res += std::to_string(edge[1]);
-    res += "\n";
-    return py::str(res);
-}
+// py::tuple EdgeToPyTuple(const Edge& edge) {
+//     return py::make_tuple(edge[0], edge[1]);
+// }
 
 class EdgeArrayExt {
 private:
     Array<Edge> array_;
 
 public:
-    typedef decltype(boost::make_transform_iterator(array_.begin(), EdgeToPyTuple)) iterator;
-    typedef decltype(boost::make_transform_iterator(array_.begin(), EdgeToPyStr)) strIterator;
+    typedef Array<Edge>::const_iterator const_iterator;
 
 public:
     explicit EdgeArrayExt();
 
-    void populate(py::object iterable);
+    void populate(py::iterable iterable);
 
-    void append(py::tuple edge);
-    void extend(py::object iterable);
+    void append(const Edge& edge);
+    void extend(py::iterable iterable);
 
-    void save(py::str path);
-    void load(py::str path);
+    void save(const std::string& path);
+    void load(const std::string& path);
 
     void sortByColumn(int column);
-    void filterByNodes(py::object iterable);
-    void filterColumnByNodes(py::object iterable, int column);
+    void filterByNodes(py::iterable iterable);
+    void filterColumnByNodes(py::iterable iterable, int column);
     void inverseEdges();
     void shuffle();
 
     int size();
 
-    iterator begin();
-    iterator end();
-
-    strIterator strBegin();
-    strIterator strEnd();
+    const_iterator begin() const;
+    const_iterator end() const;
 };
 
 EdgeArrayExt::EdgeArrayExt()
 : array_()
 { }
 
-void EdgeArrayExt::populate(py::object iterable) {
-    py::stl_input_iterator<py::tuple> pybegin(iterable), pyend;
-    auto begin = boost::make_transform_iterator(pybegin, PyTupleToEdge);
-    auto end = boost::make_transform_iterator(pyend, PyTupleToEdge);
-    array_.assign(begin, end);
+void EdgeArrayExt::populate(py::iterable iterable) {
+    py::iterator it = py::iter(iterable);
+    auto adapted_it = casting_iterator<py::iterator, Edge>(it, PyTupleToEdge);
+    array_.assign(adapted_it, decltype(adapted_it)());
 }
 
-void EdgeArrayExt::append(py::tuple edge) {
-    array_.append(PyTupleToEdge(edge));
+void EdgeArrayExt::append(const Edge& edge) {
+    array_.append(edge);
 }
 
-void EdgeArrayExt::extend(py::object iterable) {
-    py::stl_input_iterator<py::tuple> pybegin(iterable), pyend;
-    auto begin = boost::make_transform_iterator(pybegin, PyTupleToEdge);
-    auto end = boost::make_transform_iterator(pyend, PyTupleToEdge);
-    array_.extend(begin, end);
+void EdgeArrayExt::extend(py::iterable iterable) {
+    py::iterator it = py::iter(iterable);
+    auto adapted_it = casting_iterator<py::iterator, Edge>(it, PyTupleToEdge);
+    array_.extend(adapted_it, decltype(adapted_it)());
 }
 
-EdgeArrayExt::iterator EdgeArrayExt::begin() {
-    return boost::make_transform_iterator(array_.begin(), EdgeToPyTuple);
+EdgeArrayExt::const_iterator EdgeArrayExt::begin() const {
+    return array_.begin();
 }
 
-EdgeArrayExt::iterator EdgeArrayExt::end() {
-    return boost::make_transform_iterator(array_.end(), EdgeToPyTuple);
-}
-
-EdgeArrayExt::strIterator EdgeArrayExt::strBegin() {
-    return boost::make_transform_iterator(array_.begin(), EdgeToPyStr);
-}
-
-EdgeArrayExt::strIterator EdgeArrayExt::strEnd() {
-    return boost::make_transform_iterator(array_.end(), EdgeToPyStr);
+EdgeArrayExt::const_iterator EdgeArrayExt::end() const {
+    return array_.end();
 }
 
 void EdgeArrayExt::sortByColumn(int column) {
-    array_.sort([column] (const Edge& e1, const Edge& e2) {
-        return e1[column] < e2[column];
-    });
+    if (column == 0) {
+        array_.sort([] (const Edge& e1, const Edge& e2) {
+            return e1.first < e2.first;
+        });
+    } else if (column == 1) {
+        array_.sort([] (const Edge& e1, const Edge& e2) {
+            return e1.second < e2.second;
+        });
+    } else {
+        throw std::runtime_error("Invalid column number (must 0 or 1).");
+    }
 }
 
-void EdgeArrayExt::filterByNodes(py::object iterable) {
-    auto begin = py::stl_input_iterator<int>(iterable);
-    auto end = py::stl_input_iterator<int>();
+void EdgeArrayExt::filterByNodes(py::iterable iterable) {
+    py::iterator it = py::iter(iterable);
+    auto adapted_it = casting_iterator<py::iterator, int>(
+        it,
+        [] (const py::handle& handle) {
+            return handle.cast<int>();
+        });
 
-    std::unordered_set<int> allowed(begin, end);
+    std::unordered_set<int> allowed(adapted_it, decltype(adapted_it)());
     array_.filter([&allowed] (const Edge& e) {
-        return allowed.find(e[0]) != allowed.end() && allowed.find(e[1]) != allowed.end();
+        return allowed.find(e.first) != allowed.end()
+            && allowed.find(e.second) != allowed.end();
     });
 }
 
-void EdgeArrayExt::filterColumnByNodes(py::object iterable, int column) {
-    auto begin = py::stl_input_iterator<int>(iterable);
-    auto end = py::stl_input_iterator<int>();
+void EdgeArrayExt::filterColumnByNodes(py::iterable iterable, int column) {
+    py::iterator it = py::iter(iterable);
+    auto adapted_it = casting_iterator<py::iterator, int>(
+        it,
+        [] (const py::handle& handle) {
+            return handle.cast<int>();
+        });
 
-    std::unordered_set<int> allowed(begin, end);
-    array_.filter([&allowed, column] (const Edge& e) {
-        return allowed.find(e[column]) != allowed.end();
-    });
+    std::unordered_set<int> allowed(adapted_it, decltype(adapted_it)());
+
+    if (column == 0) {
+        array_.filter([&allowed] (const Edge& e) {
+            return allowed.find(e.first) != allowed.end();
+        });
+    } else if (column == 1) {
+        array_.filter([&allowed] (const Edge& e) {
+            return allowed.find(e.second) != allowed.end();
+        });
+    } else {
+        throw std::runtime_error("Invalid column number (must 0 or 1).");
+    }
 }
 
 void EdgeArrayExt::inverseEdges() {
     array_.for_each([] (Edge& e) {
-        std::swap(e[0], e[1]);
+        std::swap(e.first, e.second);
     });
 }
 
@@ -137,22 +201,25 @@ int EdgeArrayExt::size() {
     return array_.size();
 }
 
-void EdgeArrayExt::save(py::str path) {
-    array_.save(py::extract<std::string>(path));
+void EdgeArrayExt::save(const std::string& path) {
+    array_.save(path);
 }
 
-void EdgeArrayExt::load(py::str path) {
-    array_.load(py::extract<std::string>(path));
+void EdgeArrayExt::load(const std::string& path) {
+    array_.load(path);
 }
 
-BOOST_PYTHON_MODULE(edgearrayext)
+PYBIND11_PLUGIN(edgearrayext)
 {
-    py::class_<EdgeArrayExt>("EdgeArrayExt")
+    py::module m("edgearrayext");
+    py::class_<EdgeArrayExt>(m, "EdgeArrayExt")
+        .def(py::init<>())
         .def("populate", &EdgeArrayExt::populate)
         .def("append", &EdgeArrayExt::append)
         .def("extend", &EdgeArrayExt::extend)
-        .def("__iter__", py::iterator<EdgeArrayExt>())
-        .def("iterStrings", py::range(&EdgeArrayExt::strBegin, &EdgeArrayExt::strEnd))
+        .def("__iter__", [] (const EdgeArrayExt& self) {
+            return py::make_iterator(self.begin(), self.end());
+        }, py::keep_alive<0, 1>())
         .def("sortByColumn", &EdgeArrayExt::sortByColumn)
         .def("filterByNodes", &EdgeArrayExt::filterByNodes)
         .def("filterColumnByNodes", &EdgeArrayExt::filterColumnByNodes)
@@ -161,4 +228,6 @@ BOOST_PYTHON_MODULE(edgearrayext)
         .def("size", &EdgeArrayExt::size)
         .def("save", &EdgeArrayExt::save)
         .def("load", &EdgeArrayExt::load);
+
+    return m.ptr();
 }
