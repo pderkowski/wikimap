@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <iterator>
-#include "Python.h"
+#include <python2.7/Python.h>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
