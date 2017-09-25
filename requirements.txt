@@ -29,4 +29,3 @@ smart-open==1.5.3
 tabulate==0.7.7
 traitlets==4.3.2
 urllib3==1.21.1
-web==0.0.1
