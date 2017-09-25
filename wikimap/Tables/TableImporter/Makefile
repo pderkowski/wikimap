@@ -1,23 +1,24 @@
 SOURCES = sqltools.cpp records.cpp parser.cpp
-OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
 
-PYTHONINCLUDE = ../../../env/include/python2.7
+# PYTHONINCLUDE = ../../../env/include/python2.7
 
-CXX = g++
-CXXFLAGS = -O3 -std=c++11
+LIB = sqltools.so
 
-LIB = libsqltools.so
+.PHONY: all clean
 
-.DEFAULT_GOAL := lib
-.PHONY: lib clean
+all: $(LIB)
 
-lib: CXXFLAGS += -fPIC -I$(PYTHONINCLUDE)
+# lib: CXXFLAGS += -fPIC -I$(PYTHONINCLUDE)
+
+$(LIB): CXXFLAGS += -shared -fPIC `python-config --cflags --ldflags`
+$(LIB): INCLUDES += -I $(EXTERNAL)/pybind11/include
+$(LIB): $(SOURCES)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(LIB) $(SOURCES)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-lib: $(SOURCES)
-	$(CXX) $(CXXFLAGS) -o $(LIB) $^ -shared -lboost_python
-
 clean:
-	rm -f $(LIB) *.pyc $(OBJECTS)
+	rm -f $(LIB)
+	rm -f *.pyc
+	rm -f *.o

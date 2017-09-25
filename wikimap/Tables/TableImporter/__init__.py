@@ -1,4 +1,4 @@
-from libsqltools import *
+from sqltools import *
 import gzip
 
 class TableImporter(object):
