@@ -177,6 +177,8 @@ template<class Corpus>
 void WordCount<Corpus>::count_words(const Corpus& corpus) {
     const Int max_batch_size = 1000;
 
+    logging::log("Counting words with %d threads.\n", units_.size());
+
     for (Int i = 0; i < corpus.sentence_count(); i += max_batch_size) {
         logging::inline_log(
             "* progress: %6.2f%%",
@@ -197,6 +199,12 @@ void WordCount<Corpus>::count_words(const Corpus& corpus) {
     }
 
     logging::inline_log("- progress: 100.00%%\n");
+    logging::inline_log("Words per thread:\n");
+
+    int i = 0;
+    for (const auto& unit : units_) {
+        logging::log("%d: %d\n", ++i, unit.size());
+    }
 }
 
 template<class Corpus>
@@ -210,8 +218,9 @@ void WordCount<Corpus>::count_words_in_batch() {
 template<class Corpus>
 inline void WordCount<Corpus>::dispatch_word(const word_type& word) {
     static std::hash<word_type> s_hash;
+    static std::hash<size_t> i_hash;
 
-    auto hash_hash = s_hash(word) >> 16;
+    auto hash_hash = i_hash(s_hash(word));
     units_[hash_hash % units_.size()].add(word);
 }
 
