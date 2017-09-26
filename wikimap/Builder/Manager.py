@@ -42,6 +42,7 @@ class BuildRunner(object):
         self._logger.important('STARTING BUILD IN {}'.format(self._new_build_dir))
         self._logger.info('BUILD CONFIG:\n{}'.format(self._new_config))
         self._logger.important(Utils.thin_line_separator)
+        self._new_config.save(Paths.config(self._new_build_dir))
         try:
             for i, job in enumerate(self._build):
                 if self._should_run(job):
@@ -59,7 +60,6 @@ class BuildRunner(object):
             self._logger.exception("Unexpected error: {}".format(sys.exc_info()[0]))
             raise
         finally:
-            self._new_config.save(Paths.config(self._new_build_dir))
             self._logger.info('\n\n'+self._build.get_summary_str()+'\n')
             self._build.save_summary(Paths.summary(self._new_build_dir))
             self._print_job_logs()
