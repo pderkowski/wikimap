@@ -8,7 +8,7 @@ DEFAULT_NEGATIVE_SAMPLES
 
 EMBEDDING_METHODS = ['node2vec', 'bag_of_links', 'neighbor_list']
 DEFAULT_EMBEDDING_METHOD = 'node2vec'
-DEFAULT_EMBEDDING_NODE_COUNT = 1000000
+DEFAULT_EMBEDDING_NODE_COUNT = 100000
 DEFAULT_USE_CATEGORIES = 0
 
 def Word2Vec(sentences, dimension, context_size, epoch_count, dynamic_window,
