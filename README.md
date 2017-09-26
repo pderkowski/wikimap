@@ -12,16 +12,20 @@ and more.
 * gcc 4.8.4
 
 ## Installation
-1. Clone this repo. Use --recursive to checkout pybind11 too.
+1. Clone this repo:
 ```
-git clone --recursive git@github.com:pderkowski/wikimap.git wikimap
+git clone git@github.com:pderkowski/wikimap.git
 ```
-2. Build C++ libs.
+2. Download pybind11:
 ```
 cd wikimap
+git submodule update --init --recursive
+```
+3. Build C++ libs:
+```
 make
 ```
-3. Install Python libs listed in requirements.txt. I recommend using pip and
+4. Install Python libs listed in requirements.txt. I recommend using pip and
 virtualenv:
 ```
 virtualenv env --no-site-packages
@@ -41,3 +45,4 @@ Wikipedia:
 ```
 python ./run.py -t embed -b builds --lang pl
 ```
+The results will be written to builds/ directory.
