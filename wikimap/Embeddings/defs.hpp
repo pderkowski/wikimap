@@ -34,7 +34,7 @@ const int NEGATIVE_SAMPLES = 5;
 const bool VERBOSE = true;
 const Float SUMBSAMPLING_FACTOR = 0.75;
 const bool BINARY = false;
-const Float BACKTRACK_PROBABILITY = 0.5;
+const Float BACKTRACK_PROBABILITY = 0.0;
 const int WALK_LENGTH = 80;
 const int WALKS_PER_NODE = 10;
 
