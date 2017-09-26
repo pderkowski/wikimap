@@ -67,7 +67,11 @@ def main():
         dest='target_jobs',
         default=wikimap.DEFAULT_TARGET_JOBS,
         type=wikimap.Utils.parse_comma_separated_strings,
-        help="Choose jobs to do. Their dependencies will also be included.")
+        help="Choose jobs to do. Their dependencies will also be included. "
+             "The jobs should be specified as their aliases. Aliases can be "
+             "obtained with '--print-jobs' option. Multiple comma-separated "
+             "aliases are allowed. A wildcard 'all' can be used to select all "
+             "jobs.")
     parser.add_argument(
         '--forced', '-f',
         dest='forced_jobs',
@@ -75,14 +79,14 @@ def main():
         type=wikimap.Utils.parse_comma_separated_strings,
         help=("Add targets (like '-t' option) but also mark them for "
               "recomputation, even if their results could be copied from "
-              "previous runs."))
+              "previous runs. It expects the same kind of arguments as '-t'."))
     parser.add_argument(
         '--skip', '-s',
         dest='skipped_jobs',
         default=wikimap.DEFAULT_SKIPPED_JOBS,
         type=wikimap.Utils.parse_comma_separated_strings,
         help=("Choose jobs to skip unconditionally. Can't conflict with "
-              "forced jobs."))
+              "forced jobs. It expects the same kind of arguments as '-t'."))
     parser.add_argument(
         '--buildpath', '-b',
         type=str,
@@ -100,7 +104,10 @@ def main():
         dest='meta.language',
         type=wikimap.Utils.parse_comma_separated_strings,
         default=wikimap.DEFAULT_LANGUAGE,
-        help="Choose the edition of wikipedia to use.")
+        help="Choose an edition of wikipedia to use. Should be a valid "
+             "wikipedia code like 'en' or 'pl'. "
+             "https://en.wikipedia.org/wiki/List_of_Wikipedias provides a "
+             "list.")
     parser.add_argument(
         '--base',
         dest='base_build_index',

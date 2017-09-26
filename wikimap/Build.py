@@ -4,7 +4,7 @@ import Builder
 
 LANGUAGES = ['en', 'pl']
 DEFAULT_LANGUAGE = 'en'
-DEFAULT_TARGET_JOBS = '*'
+DEFAULT_TARGET_JOBS = 'all'
 DEFAULT_FORCED_JOBS = ''
 DEFAULT_SKIPPED_JOBS = ''
 
@@ -23,8 +23,14 @@ class Build(object):
 
         jobs = self._get_jobs(build_config)
 
-        if target_jobs[0] == '*':
+        if len(target_jobs) > 0 and target_jobs[0] == 'all':
             target_jobs = [j.alias for j in jobs]
+
+        if len(forced_jobs) > 0 and forced_jobs[0] == 'all':
+            forced_jobs = [j.alias for j in jobs]
+
+        if len(skipped_jobs) > 0 and skipped_jobs[0] == 'all':
+            skipped_jobs = [j.alias for j in jobs]
 
         self._manager = Builder.BuildManager(jobs, target_jobs, forced_jobs,
                                              skipped_jobs)
